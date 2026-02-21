@@ -19,7 +19,7 @@
           @change="updateQuantity(item)"
         />
       </div>
-      <button @click="remove(item.id)">❌</button>
+      <button type="button" @click="remove(item.id)">❌</button>
     </div>
 
     <h3 class="total">Total : {{ total }} €</h3>
