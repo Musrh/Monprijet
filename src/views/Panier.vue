@@ -1,127 +1,93 @@
 <template>
-<div class="panier">
-  <h2>🛒 Mon Panier</h2>
+  <div>
+    <h2>Mon Panier</h2>
 
-  <div v-if="cart.length === 0">
-    <p>Votre panier est vide.</p>
-  </div>
-
-  <div v-else>
-    <div v-for="item in cart" :key="item.id" class="cart-item">
-      <img :src="item.image" width="80" />
-      <div class="info">
-        <h3>{{ item.nom }}</h3>
-        <p>{{ item.prix }} €</p>
+    <!-- Liste des produits dans le panier -->
+    <ul v-if="panier.length">
+      <li v-for="item in panier" :key="item.id" style="margin-bottom: 10px;">
+        {{ item.name }} - {{ (item.amount / 100).toFixed(2) }} €
+        x
         <input
           type="number"
-          min="1"
           v-model.number="item.quantity"
-          @change="updateQuantity(item)"
+          min="1"
+          style="width: 50px;"
+          @change="modifier(item)"
         />
-      </div>
-      <button @click="remove(item.id)">❌</button>
-    </div>
+        <button @click="retirer(item.id)">Supprimer</button>
+      </li>
+    </ul>
 
-    <h3 class="total">Total : {{ total }} €</h3>
+    <!-- Panier vide -->
+    <p v-else>Votre panier est vide.</p>
 
-    <button class="pay-btn" @click="payer">
-      💳 Payer
-    </button>
+    <!-- Total -->
+    <p v-if="panier.length"><strong>Total : {{ totalPanier.toFixed(2) }} €</strong></p>
+
+    <!-- Bouton payer -->
+    <button v-if="panier.length" @click="checkout">Payer le panier</button>
   </div>
-</div>
 </template>
 
 <script>
-import { mapState } from "vuex"
+import { mapGetters, mapMutations } from "vuex";
 
 export default {
-computed: {
-  ...mapState(["cart"]),
-  total() {
-    return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0)
-  }
-},
-methods: {
-  remove(id) {
-    this.$store.dispatch("removeFromCart", id)
+  computed: {
+    ...mapGetters(["panier", "totalPanier"])
   },
-  updateQuantity(item) {
-    this.$store.dispatch("updateQuantity", {
-      id: item.id,
-      quantity: item.quantity
-    })
-  },
-  async payer() {
-    if (this.cart.length === 0) {
-      alert("Panier vide")
-      return
-    }
+  methods: {
+    ...mapMutations(["retirerDuPanier", "modifierQuantite", "viderPanier"]),
 
-    try {
-      // 🔹 Envoi du panier au backend Railway
-      const response = await fetch(
-        "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cart: this.cart })
-        }
-      )
+    // Supprimer un produit du panier
+    retirer(id) {
+      this.retirerDuPanier(id);
+    },
 
-      const data = await response.json()
-      console.log("Réponse backend :", data)
+    // Modifier la quantité d’un produit
+    modifier(item) {
+      if (item.quantity < 1) item.quantity = 1;
+      this.modifierQuantite({ produitId: item.id, quantity: item.quantity });
+    },
 
-      if (data.url) {
-        // 🔹 Ouvre Stripe Checkout dans le navigateur
-        window.location.href = data.url
-      } else {
-        alert(data.error || "Erreur Stripe")
+    // Checkout Stripe
+    async checkout() {
+      if (!this.panier.length) {
+        alert("Votre panier est vide !");
+        return;
       }
 
-    } catch (error) {
-      console.error("Erreur paiement :", error)
-      alert("Impossible de lancer le paiement")
+      // Ne garder que les champs que Stripe attend
+      const itemsStripe = this.panier.map(i => ({
+        name: i.name,
+        amount: i.amount,
+        quantity: i.quantity
+      }));
+
+      try {
+        const response = await fetch(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: itemsStripe })
+          }
+        );
+
+        const session = await response.json();
+        console.log("Session reçue du backend :", session);
+
+        if (session.url) {
+          this.viderPanier(); // vider le panier avant redirection
+          window.location.href = session.url; // redirection Stripe
+        } else {
+          alert("Erreur : URL Stripe manquante");
+        }
+      } catch (err) {
+        console.error("Erreur paiement:", err);
+        alert("Erreur paiement : " + err.message);
+      }
     }
   }
-}
-}
+};
 </script>
-
-<style scoped>
-.panier {
-max-width: 700px;
-margin: auto;
-}
-
-.cart-item {
-display: flex;
-align-items: center;
-gap: 15px;
-margin-bottom: 15px;
-border-bottom: 1px solid #ddd;
-padding-bottom: 10px;
-}
-
-.info {
-flex: 1;
-}
-
-.total {
-margin-top: 20px;
-}
-
-.pay-btn {
-margin-top: 20px;
-padding: 12px 25px;
-background-color: #42b983;
-color: white;
-border: none;
-border-radius: 6px;
-cursor: pointer;
-font-size: 16px;
-}
-
-.pay-btn:hover {
-background-color: #369870;
-}
-</style>
