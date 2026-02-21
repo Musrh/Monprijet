@@ -37,39 +37,40 @@ import { mapState } from "vuex";
 export default {
   computed: {
     ...mapState(["cart"]),
+
     total() {
-      return this.cart.reduce(
-        (sum, item) => sum + item.prix * item.quantity,
-        0
-      );
+      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
     },
   },
+
   methods: {
     remove(id) {
-      this.$store.dispatch("removeItem", id); // correspond à store.js
+      // Supprime un produit du panier
+      this.$store.dispatch("removeItem", id);
     },
+
     updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", {
+      // Met à jour la quantité dans le store
+      this.$store.commit("SET_QUANTITY", {
         id: item.id,
         quantity: item.quantity,
       });
     },
-    async payer() {
-      console.log("Cart au moment du clic :", this.cart);
 
+    async payer() {
       if (this.cart.length === 0) {
         alert("Panier vide");
         return;
       }
 
       try {
-        // 🔹 Envoi du panier au backend Railway sous "items"
+        // Envoi du panier au backend Stripe
         const response = await fetch(
           "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: this.cart }), // ⚠️ clé items
+            body: JSON.stringify({ items: this.cart }), // ⚠️ clé "items"
           }
         );
 
@@ -77,7 +78,7 @@ export default {
         console.log("Réponse backend :", data);
 
         if (data.url) {
-          // 🔹 Redirection vers Stripe Checkout
+          // Redirection vers Stripe Checkout
           window.location.href = data.url;
         } else {
           alert(data.error || "Erreur Stripe");
@@ -99,35 +100,4 @@ export default {
 
 .cart-item {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
-}
-
-.info {
-  flex: 1;
-}
-
-.total {
-  margin-top: 20px;
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.pay-btn {
-  margin-top: 20px;
-  padding: 12px 25px;
-  background-color: #42b983;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.pay-btn:hover {
-  background-color: #369870;
-}
-</style>
+  align
