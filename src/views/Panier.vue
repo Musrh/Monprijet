@@ -1,12 +1,12 @@
 <template>
   <div>
-    <h1>Panier</h1>
+    <h2>Mon Panier</h2>
     <ul>
       <li v-for="(item, index) in panier" :key="index">
-        {{ item.nom }} - {{ item.quantite }} x {{ item.prix }}€
+        {{ item.name }} - {{ (item.amount/100).toFixed(2) }}€ x {{ item.quantity }}
       </li>
     </ul>
-    <button @click="payer">Payer avec Stripe</button>
+    <button type="button" @click="checkout">Payer avec Stripe</button>
   </div>
 </template>
 
@@ -15,45 +15,37 @@ export default {
   data() {
     return {
       panier: [
-        { nom: "Produit A", prix: 20, quantite: 1 },
-        { nom: "Produit B", prix: 15, quantite: 2 }
+        { name: "Produit A", amount: 2000, quantity: 1 },
+        { name: "Produit B", amount: 3500, quantity: 2 }
       ]
-    }
+    };
   },
   methods: {
-    async payer() {
+    async checkout() {
       try {
-        if (!window.Stripe) {
-          console.error("Stripe.js n'est pas chargé !")
-          return
+        const response = await fetch(
+          'https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: this.panier })
+          }
+        );
+
+        const session = await response.json();
+        console.log("Session reçue du backend :", session);
+
+        if (session.url) {
+          window.location.href = session.url; // Stripe 2026
+        } else {
+          alert("Erreur : URL Stripe manquante");
         }
 
-        // Création de la session Checkout côté backend
-        const res = await fetch('https://ton-backend.up.railway.app/create-checkout-session', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ panier: this.panier })
-        })
-
-        const data = await res.json()
-        if (!data.id) {
-          console.error("Erreur création session:", data)
-          return
-        }
-
-        // Redirection vers Stripe Checkout
-        const stripe = Stripe('pk_test_51T20K6AwgHqDmd0F8LcnioXKpuzSyQv7aPkDhhmtPEH9BA98KOzf6F43K2O4A5WjhHHVlguyp48W0bmqMbwSvcDm00YINXIME3')
-        const { error } = await stripe.redirectToCheckout({ sessionId: data.id })
-
-        if (error) console.error("Erreur redirection Stripe:", error)
-
-      } catch (err) {
-        console.error("Erreur paiement:", err)
+      } catch (error) {
+        console.error("Erreur paiement:", error);
+        alert("Erreur paiement : " + error.message);
       }
     }
   }
 }
 </script>
-
-<!-- ⚠️ Assure-toi que Stripe.js est chargé dans ton index.html -->
-<!-- <script src="https://js.stripe.com/v3/"></script> -->
