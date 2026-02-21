@@ -21,6 +21,8 @@
       <button @click="add(produit)">
         Ajouter au panier
       </button>
+      <!-- Lien vers la page Panier -->
+    <router-link to="/panier">Voir le panier</router-link>
     </div>
   </div>
 </div>
