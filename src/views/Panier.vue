@@ -37,8 +37,12 @@ import { mapState } from "vuex"
 export default {
 computed: {
   ...mapState(["cart"]),
+
   total() {
-    return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0)
+    return this.cart.reduce(
+      (sum, item) => sum + item.prix * item.quantity,
+      0
+    )
   }
 },
 methods: {
