@@ -1,9 +1,11 @@
 <template>
   <div class="panier">
     <h2>🛒 Mon Panier</h2>
+
     <div v-if="cart.length === 0">
       <p>Votre panier est vide.</p>
     </div>
+
     <div v-else>
       <div v-for="item in cart" :key="item.id" class="cart-item">
         <img :src="item.image" width="80" />
@@ -23,38 +25,38 @@
 
 <script>
 import { mapState, mapGetters } from "vuex";
+
 export default {
   computed: {
     ...mapState(["cart"]),
     ...mapGetters(["cartTotal"]),
-    total() { return this.cartTotal; }
+    total() {
+      return this.cartTotal;
+    },
   },
   methods: {
-    remove(id) { this.$store.dispatch("removeItem", id); },
-    updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
-    async payer() {
-      if (this.cart.length === 0) return alert("Panier vide");
-      try {
-        const res = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items: this.cart })
-        });
-        const data = await res.json();
-        if (data.url) window.location.href = data.url;
-        else alert(data.error || "Erreur Stripe");
-      } catch (err) {
-        console.error(err);
-        alert("Impossible de lancer le paiement");
+    remove(id) {
+      this.$store.dispatch("removeItem", id);
+    },
+    updateQuantity(item) {
+      if (item.quantity < 1) item.quantity = 1;
+      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
+    },
+    payer() {
+      if (this.cart.length === 0) {
+        alert("Panier vide");
+        return;
       }
-    }
-  }
+      alert("Simuler paiement → console.log du panier");
+      console.log("Panier actuel :", this.cart);
+    },
+  },
 };
 </script>
 
 <style scoped>
 .panier { max-width: 700px; margin: auto; }
-.cart-item { display: flex; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px; align-items: center; }
+.cart-item { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
 .info { flex: 1; }
 .pay-btn { margin-top: 20px; padding: 12px 25px; background-color: #42b983; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
 .pay-btn:hover { background-color: #369870; }
