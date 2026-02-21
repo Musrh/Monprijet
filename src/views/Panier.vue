@@ -2,7 +2,6 @@
   <div>
     <h2>Mon Panier</h2>
 
-    <!-- Liste des produits dans le panier -->
     <ul v-if="panier.length">
       <li v-for="item in panier" :key="item.id" style="margin-bottom: 10px;">
         {{ item.name }} - {{ (item.amount / 100).toFixed(2) }} €
@@ -18,13 +17,10 @@
       </li>
     </ul>
 
-    <!-- Panier vide -->
     <p v-else>Votre panier est vide.</p>
 
-    <!-- Total -->
     <p v-if="panier.length"><strong>Total : {{ totalPanier.toFixed(2) }} €</strong></p>
 
-    <!-- Bouton payer -->
     <button v-if="panier.length" @click="checkout">Payer le panier</button>
   </div>
 </template>
@@ -39,25 +35,22 @@ export default {
   methods: {
     ...mapMutations(["retirerDuPanier", "modifierQuantite", "viderPanier"]),
 
-    // Supprimer un produit du panier
     retirer(id) {
       this.retirerDuPanier(id);
     },
 
-    // Modifier la quantité d’un produit
     modifier(item) {
       if (item.quantity < 1) item.quantity = 1;
       this.modifierQuantite({ produitId: item.id, quantity: item.quantity });
     },
 
-    // Checkout Stripe
     async checkout() {
       if (!this.panier.length) {
         alert("Votre panier est vide !");
         return;
       }
 
-      // Ne garder que les champs que Stripe attend
+      // Préparer les données que Stripe attend
       const itemsStripe = this.panier.map(i => ({
         name: i.name,
         amount: i.amount,
@@ -79,7 +72,7 @@ export default {
 
         if (session.url) {
           this.viderPanier(); // vider le panier avant redirection
-          window.location.href = session.url; // redirection Stripe
+          window.location.href = session.url;
         } else {
           alert("Erreur : URL Stripe manquante");
         }
