@@ -13,7 +13,7 @@ import Success from "./views/Success.vue"
 const routes = [
   { path: "/", component: Home },
   { path: "/produits", component: Produits },
-  { path: "/panier", component: Panier, meta: { requiresAuth: true } },
+  { path: "/panier", component: Panier },
   { path: "/login", component: Login },
   { path: "/contact", component: Contact },
   {
