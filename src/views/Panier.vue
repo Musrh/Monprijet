@@ -1,53 +1,127 @@
 <template>
-  <div>
-    <h2>Mon Panier</h2>
-    <ul>
-      <li v-for="(item, index) in panier" :key="index">
-        {{ item.name }} - {{ (item.amount/100).toFixed(2) }}€ x {{ item.quantity }}
-      </li>
-    </ul>
-    <button type="button" @click="checkout">Payer avec Stripe</button>
+<div class="panier">
+  <h2>🛒 Mon Panier</h2>
+
+  <div v-if="cart.length === 0">
+    <p>Votre panier est vide.</p>
   </div>
+
+  <div v-else>
+    <div v-for="item in cart" :key="item.id" class="cart-item">
+      <img :src="item.image" width="80" />
+      <div class="info">
+        <h3>{{ item.nom }}</h3>
+        <p>{{ item.prix }} €</p>
+        <input
+          type="number"
+          min="1"
+          v-model.number="item.quantity"
+          @change="updateQuantity(item)"
+        />
+      </div>
+      <button @click="remove(item.id)">❌</button>
+    </div>
+
+    <h3 class="total">Total : {{ total }} €</h3>
+
+    <button class="pay-btn" @click="payer">
+      💳 Payer
+    </button>
+  </div>
+</div>
 </template>
 
 <script>
+import { mapState } from "vuex"
+
 export default {
-  data() {
-    return {
-      panier: [
-        { name: "Produit A", amount: 2000, quantity: 1 },
-        { name: "Produit B", amount: 3500, quantity: 2 }
-      ]
-    };
+computed: {
+  ...mapState(["cart"]),
+  total() {
+    return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0)
+  }
+},
+methods: {
+  remove(id) {
+    this.$store.dispatch("removeFromCart", id)
   },
-  methods: {
-    async checkout() {
-      try {
-        // Envoi du panier au backend
-        const response = await fetch(
-          'https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: this.panier }) // ⚠️ on envoie sous "items"
-          }
-        );
+  updateQuantity(item) {
+    this.$store.dispatch("updateQuantity", {
+      id: item.id,
+      quantity: item.quantity
+    })
+  },
+  async payer() {
+    if (this.cart.length === 0) {
+      alert("Panier vide")
+      return
+    }
 
-        const session = await response.json();
-        console.log("Session reçue du backend :", session);
-
-        if (session.url) {
-          // 🔹 Redirection Stripe
-          window.location.href = session.url;
-        } else {
-          alert("Erreur : URL Stripe manquante");
+    try {
+      // 🔹 Envoi du panier au backend Railway
+      const response = await fetch(
+        "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cart: this.cart })
         }
+      )
 
-      } catch (error) {
-        console.error("Erreur paiement:", error);
-        alert("Erreur paiement : " + error.message);
+      const data = await response.json()
+      console.log("Réponse backend :", data)
+
+      if (data.url) {
+        // 🔹 Ouvre Stripe Checkout dans le navigateur
+        window.location.href = data.url
+      } else {
+        alert(data.error || "Erreur Stripe")
       }
+
+    } catch (error) {
+      console.error("Erreur paiement :", error)
+      alert("Impossible de lancer le paiement")
     }
   }
 }
+}
 </script>
+
+<style scoped>
+.panier {
+max-width: 700px;
+margin: auto;
+}
+
+.cart-item {
+display: flex;
+align-items: center;
+gap: 15px;
+margin-bottom: 15px;
+border-bottom: 1px solid #ddd;
+padding-bottom: 10px;
+}
+
+.info {
+flex: 1;
+}
+
+.total {
+margin-top: 20px;
+}
+
+.pay-btn {
+margin-top: 20px;
+padding: 12px 25px;
+background-color: #42b983;
+color: white;
+border: none;
+border-radius: 6px;
+cursor: pointer;
+font-size: 16px;
+}
+
+.pay-btn:hover {
+background-color: #369870;
+}
+</style>
