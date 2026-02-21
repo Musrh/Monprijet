@@ -23,12 +23,13 @@ export default {
   methods: {
     async checkout() {
       try {
+        // Envoi du panier au backend
         const response = await fetch(
           'https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session',
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: this.panier })
+            body: JSON.stringify({ items: this.panier }) // ⚠️ on envoie sous "items"
           }
         );
 
@@ -36,7 +37,8 @@ export default {
         console.log("Session reçue du backend :", session);
 
         if (session.url) {
-          window.location.href = session.url; // Stripe 2026
+          // 🔹 Redirection Stripe
+          window.location.href = session.url;
         } else {
           alert("Erreur : URL Stripe manquante");
         }
