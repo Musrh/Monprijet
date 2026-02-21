@@ -37,7 +37,7 @@ computed: {
 },
 methods: {
   add(produit) {
-    this.$store.dispatch("addToCart", produit)
+    this.$store.commit("addToCart", produit)
   }
 }
 }
