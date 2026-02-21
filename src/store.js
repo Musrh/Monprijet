@@ -44,11 +44,11 @@ export default createStore({
     isAdmin: state => state.role === "admin",
 
     cartItemCount: state =>
-      state.cart.reduce((t, item) => t + item.quantite, 0),
+      state.cart.reduce((t, item) => t + item.quantity, 0),
 
     cartTotal: state =>
       state.cart.reduce(
-        (t, item) => t + item.prix * item.quantite,
+        (t, item) => t + item.prix * item.quantity,
         0
       )
   },
@@ -86,13 +86,13 @@ const existing = state.cart.find(p => p.id === produit.id)
 
     INCREMENT_ITEM(state, id) {
       const item = state.cart.find(p => p.id === id)
-      if (item) item.quantite++
+      if (item) item.quantity++
     },
 
     DECREMENT_ITEM(state, id) {
       const item = state.cart.find(p => p.id === id)
-      if (item && item.quantite > 1) {
-        item.quantite--
+      if (item && item.quantity > 1) {
+        item.quantity--
       }
     },
 
