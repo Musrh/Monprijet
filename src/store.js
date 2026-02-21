@@ -62,6 +62,13 @@ export default createStore({
     SET_ROLE(state, role) {
       state.role = role
     },
+    
+    SET_QUANTITY(state, { id, quantity }) {
+  const item = state.cart.find(p => p.id === id);
+  if (item && quantity > 0) {
+    item.quantity = quantity;
+  }
+    },
 
     LOGOUT(state) {
       state.user = null
