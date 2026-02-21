@@ -56,6 +56,8 @@ methods: {
     })
   },
   async payer() {
+
+    console.log("Cart au moment du clic :", this.cart)
     if (this.cart.length === 0) {
       alert("Panier vide")
       return
