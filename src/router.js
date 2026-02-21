@@ -35,9 +35,9 @@ router.beforeEach((to, from, next) => {
     return next("/")
   }
 
- // if (to.meta.requiresAuth && !store.getters.isAuthenticated) {
-  //  return next("/login")
-  //}
+  if (to.meta.requiresAuth && !store.getters.isAuthenticated) {
+  return next("/login")
+  }
 
   next()
 })
