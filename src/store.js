@@ -70,13 +70,18 @@ export default createStore({
     },
 
     ADD_TO_CART(state, produit) {
-      const item = state.cart.find(p => p.id === produit.id)
 
-      if (item) {
-        item.quantite++
-      } else {
-        state.cart.push({ ...produit, quantite: 1 })
-      }
+const existing = state.cart.find(p => p.id === produit.id)
+
+  if (existing) {
+    existing.quantity++
+  } else {
+    state.cart.push({
+      ...produit,
+      quantity: 1   // ✅ IMPORTANT
+    })
+  }
+      
     },
 
     INCREMENT_ITEM(state, id) {
