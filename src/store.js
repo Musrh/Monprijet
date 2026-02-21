@@ -22,52 +22,37 @@ import produit1 from "./assets/hero.png"
 import produit2 from "./assets/hero.png"
 import produit3 from "./assets/hero.png"
 
-
 export default createStore({
-
   state: {
     user: null,
     role: null,
     cart: [],
 
     produits: [
-          { id: 1, nom: "Produit A", prix: 100, image: produit1 },
-              { id: 2, nom: "Produit B", prix: 200, image: produit2 },
-                  { id: 3, nom: "Produit C", prix: 300, image: produit3 }
-                    ]
-                      
-                      },
-    
+      { id: 1, nom: "Produit A", prix: 100, image: produit1 },
+      { id: 2, nom: "Produit B", prix: 200, image: produit2 },
+      { id: 3, nom: "Produit C", prix: 300, image: produit3 }
+    ]
+  },
 
   getters: {
     isAuthenticated: state => !!state.user,
     isAdmin: state => state.role === "admin",
 
     cartItemCount: state =>
-      state.cart.reduce((t, item) => t + item.quantity, 0),
+      state.cart.reduce((total, item) => total + item.quantity, 0),
 
     cartTotal: state =>
-      state.cart.reduce(
-        (t, item) => t + item.prix * item.quantity,
-        0
-      )
+      state.cart.reduce((total, item) => total + item.prix * item.quantity, 0)
   },
 
   mutations: {
-
     SET_USER(state, user) {
       state.user = user
     },
 
     SET_ROLE(state, role) {
       state.role = role
-    },
-    
-    SET_QUANTITY(state, { id, quantity }) {
-  const item = state.cart.find(p => p.id === id);
-  if (item && quantity > 0) {
-    item.quantity = quantity;
-  }
     },
 
     LOGOUT(state) {
@@ -77,29 +62,11 @@ export default createStore({
     },
 
     ADD_TO_CART(state, produit) {
-
-const existing = state.cart.find(p => p.id === produit.id)
-
-  if (existing) {
-    existing.quantity++
-  } else {
-    state.cart.push({
-      ...produit,
-      quantity: 1   // ✅ IMPORTANT
-    })
-  }
-      
-    },
-
-    INCREMENT_ITEM(state, id) {
-      const item = state.cart.find(p => p.id === id)
-      if (item) item.quantity++
-    },
-
-    DECREMENT_ITEM(state, id) {
-      const item = state.cart.find(p => p.id === id)
-      if (item && item.quantity > 1) {
-        item.quantity--
+      const existing = state.cart.find(p => p.id === produit.id)
+      if (existing) {
+        existing.quantity++
+      } else {
+        state.cart.push({ ...produit, quantity: 1 })
       }
     },
 
@@ -109,64 +76,50 @@ const existing = state.cart.find(p => p.id === produit.id)
 
     CLEAR_CART(state) {
       state.cart = []
+    },
+
+    SET_QUANTITY(state, { id, quantity }) {
+      const item = state.cart.find(p => p.id === id)
+      if (item && quantity > 0) {
+        item.quantity = quantity
+      }
     }
   },
 
   actions: {
-
-    // 🔹 Init Auth
+    // 🔹 Auth
     initAuth({ commit }) {
       onAuthStateChanged(auth, async (user) => {
         if (user) {
           commit("SET_USER", user)
-
           const docRef = doc(db, "users", user.uid)
           const docSnap = await getDoc(docRef)
-
-          if (docSnap.exists()) {
-            commit("SET_ROLE", docSnap.data().role)
-          }
+          if (docSnap.exists()) commit("SET_ROLE", docSnap.data().role)
         }
       })
     },
 
-    // 🔹 Register
     async register({ commit }, { email, password }) {
-
-      const userCredential =
-        await createUserWithEmailAndPassword(auth, email, password)
-
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
-
       await setDoc(doc(db, "users", user.uid), {
         email: user.email,
         role: "user",
         createdAt: serverTimestamp()
       })
-
       commit("SET_USER", user)
       commit("SET_ROLE", "user")
     },
 
-    // 🔹 Login
     async login({ commit }, { email, password }) {
-
-      const userCredential =
-        await signInWithEmailAndPassword(auth, email, password)
-
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
-
       commit("SET_USER", user)
-
       const docRef = doc(db, "users", user.uid)
       const docSnap = await getDoc(docRef)
-
-      if (docSnap.exists()) {
-        commit("SET_ROLE", docSnap.data().role)
-      }
+      if (docSnap.exists()) commit("SET_ROLE", docSnap.data().role)
     },
 
-    // 🔹 Logout
     async logout({ commit }) {
       await signOut(auth)
       commit("LOGOUT")
@@ -177,72 +130,16 @@ const existing = state.cart.find(p => p.id === produit.id)
       commit("ADD_TO_CART", produit)
     },
 
-    incrementItem({ commit }, id) {
-      commit("INCREMENT_ITEM", id)
-    },
-
-    decrementItem({ commit }, id) {
-      commit("DECREMENT_ITEM", id)
-    },
-
     removeItem({ commit }, id) {
       commit("REMOVE_ITEM", id)
     },
 
-    // 🔹 Checkout → création commande
-    async checkout({ state, commit, getters }) {
-
-      if (!state.user) {
-        alert("Vous devez être connecté")
-        return
-      }
-
-      if (state.cart.length === 0) {
-        alert("Panier vide")
-        return
-      }
-
-      try {
-
-        await addDoc(collection(db, "orders"), {
-          userId: state.user.uid,
-          email: state.user.email,
-          items: state.cart,
-          total: getters.cartTotal,
-          status: "en attente",
-          createdAt: serverTimestamp()
-        })
-
-        alert("Commande enregistrée ✅")
-        commit("CLEAR_CART")
-
-      } catch (error) {
-        console.error(error)
-        alert("Erreur commande")
-      }
+    clearCart({ commit }) {
+      commit("CLEAR_CART")
     },
 
-    // 🔹 Admin : modifier statut
-    async updateOrderStatus({ state }, { orderId, newStatus }) {
+    updateQuantity({ commit }, payload) {
+      commit("SET_QUANTITY", payload)
+    },
 
-      if (state.role !== "admin") {
-        alert("Accès refusé")
-        return
-      }
-
-      try {
-        const orderRef = doc(db, "orders", orderId)
-
-        await updateDoc(orderRef, {
-          status: newStatus
-        })
-
-        alert("Statut mis à jour ✅")
-
-      } catch (error) {
-        console.error(error)
-        alert("Erreur mise à jour")
-      }
-    }
-  }
-})
+    // 🔹 Checkout → enregistre commande
