@@ -2,6 +2,7 @@
   <div>
     <h2>Mon Panier</h2>
 
+    <!-- Liste des produits -->
     <ul v-if="panier.length">
       <li v-for="item in panier" :key="item.id" style="margin-bottom: 10px;">
         {{ item.name }} - {{ (item.amount / 100).toFixed(2) }} €
@@ -17,11 +18,22 @@
       </li>
     </ul>
 
+    <!-- Panier vide -->
     <p v-else>Votre panier est vide.</p>
 
+    <!-- Total -->
     <p v-if="panier.length"><strong>Total : {{ totalPanier.toFixed(2) }} €</strong></p>
 
-    <button v-if="panier.length" @click="checkout">Payer le panier</button>
+    <!-- Bouton Payer -->
+    <button
+      :disabled="!panier.length"
+      @click="checkout"
+    >
+      Payer le panier
+    </button>
+
+    <!-- Debug -->
+    <p>DEBUG : {{ panier }}</p>
   </div>
 </template>
 
