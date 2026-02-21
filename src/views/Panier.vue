@@ -12,15 +12,12 @@
         <div class="info">
           <h3>{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
-
-          <label>
-            Quantité :
-            <input
-              type="number"
-              min="1"
-              v-model.number="item.quantity"
-            />
-          </label>
+          <input
+            type="number"
+            min="1"
+            v-model.number="item.quantity"
+            @change="updateQuantity(item)"
+          />
         </div>
         <button type="button" @click="remove(item.id)">❌</button>
       </div>
@@ -35,61 +32,69 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex"
+import { mapState } from "vuex";
 
 export default {
   computed: {
     ...mapState(["cart"]),
-    ...mapGetters(["cartTotal"]),
-
     total() {
-      return this.cartTotal
-    }
+      return this.cart.reduce(
+        (sum, item) => sum + item.prix * item.quantity,
+        0
+      );
+    },
   },
   methods: {
     remove(id) {
-      this.$store.dispatch("removeItem", id)
+      this.$store.dispatch("removeItem", id); // correspond à store.js
     },
-
+    updateQuantity(item) {
+      this.$store.dispatch("updateQuantity", {
+        id: item.id,
+        quantity: item.quantity,
+      });
+    },
     async payer() {
+      console.log("Cart au moment du clic :", this.cart);
+
       if (this.cart.length === 0) {
-        alert("Panier vide")
-        return
+        alert("Panier vide");
+        return;
       }
 
       try {
+        // 🔹 Envoi du panier au backend Railway sous "items"
         const response = await fetch(
           "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: this.cart }) // ✅ Stripe attend "items"
+            body: JSON.stringify({ items: this.cart }), // ⚠️ clé items
           }
-        )
+        );
 
-        const data = await response.json()
-        console.log("Réponse backend :", data)
+        const data = await response.json();
+        console.log("Réponse backend :", data);
 
         if (data.url) {
-          window.location.href = data.url
+          // 🔹 Redirection vers Stripe Checkout
+          window.location.href = data.url;
         } else {
-          alert(data.error || "Erreur Stripe")
+          alert(data.error || "Erreur Stripe");
         }
-
       } catch (error) {
-        console.error("Erreur paiement :", error)
-        alert("Impossible de lancer le paiement")
+        console.error("Erreur paiement :", error);
+        alert("Impossible de lancer le paiement");
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style scoped>
 .panier {
   max-width: 700px;
   margin: auto;
-  padding: 20px;
 }
 
 .cart-item {
