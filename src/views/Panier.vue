@@ -23,14 +23,30 @@ export default {
   methods: {
     async payer() {
       try {
+        if (!window.Stripe) {
+          console.error("Stripe.js n'est pas chargé !")
+          return
+        }
+
+        // Création de la session Checkout côté backend
         const res = await fetch('https://ton-backend.up.railway.app/create-checkout-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.panier) // ⚠️ envoie directement le tableau
+          body: JSON.stringify({ panier: this.panier })
         })
+
         const data = await res.json()
-        const stripe = Stripe('pk_test_XXXXXX') // ta clé publique Stripe
-        await stripe.redirectToCheckout({ sessionId: data.id })
+        if (!data.id) {
+          console.error("Erreur création session:", data)
+          return
+        }
+
+        // Redirection vers Stripe Checkout
+        const stripe = Stripe('pk_test_51T20K6AwgHqDmd0F8LcnioXKpuzSyQv7aPkDhhmtPEH9BA98KOzf6F43K2O4A5WjhHHVlguyp48W0bmqMbwSvcDm00YINXIME3')
+        const { error } = await stripe.redirectToCheckout({ sessionId: data.id })
+
+        if (error) console.error("Erreur redirection Stripe:", error)
+
       } catch (err) {
         console.error("Erreur paiement:", err)
       }
@@ -38,3 +54,6 @@ export default {
   }
 }
 </script>
+
+<!-- ⚠️ Assure-toi que Stripe.js est chargé dans ton index.html -->
+<!-- <script src="https://js.stripe.com/v3/"></script> -->
