@@ -34,8 +34,8 @@ export default createStore({
           { id: 1, nom: "Produit A", prix: 100, image: produit1 },
               { id: 2, nom: "Produit B", prix: 200, image: produit2 },
                   { id: 3, nom: "Produit C", prix: 300, image: produit3 }
-                    ],
-                      cart: []
+                    ]
+                      
                       },
     
 
