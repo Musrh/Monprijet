@@ -7,7 +7,7 @@ import Panier from "./views/Panier.vue";
 import Login from "./views/Login.vue";
 import Contact from "./views/Contact.vue";
 import Success from "./views/Success.vue";
-import admin from "./views/AdminPanel.vue";
+import AdminPanel from "./views/AdminPanel.vue";
 
 const routes = [
   { path: "/", component: Home },
