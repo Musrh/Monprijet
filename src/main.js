@@ -1,16 +1,9 @@
-import { createApp } from "vue";
-import App from "./App.vue";
-import router from "./router";
-import store from "./store";
+<template>
+  <div>
+    <h1 style="color:red">APP FONCTIONNE</h1>
+  </div>
+</template>
 
-const app = createApp(App);
-
-app.use(store);
-
-app.use(router);
-
-
-// 🔥 Important : initialise Firebase Auth
-store.dispatch("initAuth");
-
-app.mount("#app");
+<script>
+export default {}
+</script>
