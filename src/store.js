@@ -41,6 +41,14 @@ export default createStore({
   },
 
   actions: {
+
+    initAuth({ commit }) {
+  onAuthStateChanged(auth, user => {
+    commit("SET_USER", user);
+  });
+}
+
+    
     addToCart({ commit }, produit) {
       commit("ADD_TO_CART", produit);
     },
