@@ -17,6 +17,11 @@ const routes = [
   { path: "/login", component: Login },
   { path: "/contact", component: Contact },
   {
+  path: '/admin',
+  name: 'AdminPanel',
+  component: () => import('./views/AdminPanel.vue')
+  },
+  {
     path: "/admin-commandes",
     component: AdminCommandes,
     meta: { requiresAdmin: true }
