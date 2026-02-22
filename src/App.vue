@@ -1,55 +1,53 @@
 <template>
   <div>
-    <h1>Admin Panel</h1>
+    <nav>
+      <router-link to="/">Home</router-link> |
+      <router-link to="/contact">Contact</router-link> |
+      <router-link to="/produits">Produits</router-link> |
 
-    <p v-if="loading">Chargement...</p>
+      <router-link v-if="isAdmin" to="/admin">
+        Admin
+      </router-link> |
 
-    <div v-else>
-      <p>Email: {{ user?.email }}</p>
-      <p>Role: {{ user?.role }}</p>
+      <router-link v-if="!isAuthenticated" to="/login">
+        Login
+      </router-link> |
 
-      <div v-if="isAdmin">
-        <h2>Bienvenue Admin 👑</h2>
-      </div>
+      <router-link to="/panier">
+        🛒 ({{ cartItemCount }})
+      </router-link> |
 
-      <div v-else>
-        <h2>Accès refusé ❌</h2>
-      </div>
-    </div>
+      <router-link v-if="isAdmin" to="/admin-commandes">
+        Admin Commandes
+      </router-link>
+
+      <span v-if="isAuthenticated">
+        | {{ userEmail }}
+        <button @click="logout">Logout</button>
+      </span>
+    </nav>
+
+    <router-view />
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from "vue"
-import { auth, db } from "@/firebase"
-import { onAuthStateChanged } from "firebase/auth"
-import { doc, getDoc } from "firebase/firestore"
+import { mapGetters } from "vuex";
 
 export default {
-  setup() {
-    const user = ref(null)
-    const isAdmin = ref(false)
-    const loading = ref(true)
-
-    onMounted(() => {
-      onAuthStateChanged(auth, async (currentUser) => {
-        if (!currentUser) {
-          loading.value = false
-          return
-        }
-
-        const snap = await getDoc(doc(db, "users", currentUser.uid))
-
-        if (snap.exists()) {
-          user.value = snap.data()
-          isAdmin.value = snap.data().role === "admin"
-        }
-
-        loading.value = false
-      })
-    })
-
-    return { user, isAdmin, loading }
+  computed: {
+    ...mapGetters([
+      "isAuthenticated",
+      "userEmail",
+      "isAdmin",
+      "cartItemCount"
+    ])
+  },
+  methods: {
+    logout() {
+      this.$store.dispatch("logout");
+      this.$router.push("/");
+    }
   }
-}
+};
 </script>
