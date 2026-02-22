@@ -98,4 +98,155 @@
 
         <div
           v-for="product in products"
-          :key="
+          :key="product.id"
+          class="border p-3 mb-2 rounded flex justify-between items-center"
+        >
+          <span>
+            {{ product.name }} - {{ product.price }} € - Stock: {{ product.stock }}
+          </span>
+
+          <button
+            @click="deleteProduct(product.id)"
+            class="bg-red-500 text-white px-2 py-1 rounded"
+          >
+            Supprimer
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, onMounted } from "vue"
+import { db } from "@/firebase"
+import {
+  collection,
+  getDocs,
+  doc,
+  deleteDoc,
+  updateDoc,
+  addDoc
+} from "firebase/firestore"
+import { mapGetters } from "vuex"
+
+export default {
+  setup() {
+    const users = ref([])
+    const orders = ref([])
+    const products = ref([])
+    const newProduct = ref({
+      name: "",
+      price: 0,
+      stock: 0,
+      description: ""
+    })
+
+    // ================= FETCH =================
+
+    const fetchUsers = async () => {
+      const snap = await getDocs(collection(db, "users"))
+      users.value = snap.docs.map(d => ({
+        uid: d.id,
+        ...d.data()
+      }))
+    }
+
+    const fetchOrders = async () => {
+      const snap = await getDocs(collection(db, "orders"))
+      orders.value = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }))
+    }
+
+    const fetchProducts = async () => {
+      const snap = await getDocs(collection(db, "products"))
+      products.value = snap.docs.map(d => ({
+        id: d.id,
+        ...d.data()
+      }))
+    }
+
+    // ================= USERS =================
+
+    const deleteUser = async (uid) => {
+      if (confirm("Supprimer cet utilisateur ?")) {
+        await deleteDoc(doc(db, "users", uid))
+        fetchUsers()
+      }
+    }
+
+    const toggleAdmin = async (userItem) => {
+      const newRole = userItem.role === "admin" ? "user" : "admin"
+      await updateDoc(doc(db, "users", userItem.uid), {
+        role: newRole
+      })
+      fetchUsers()
+    }
+
+    // ================= COMMANDES =================
+
+    const updateStatus = async (order) => {
+      await updateDoc(doc(db, "orders", order.id), {
+        status: order.status
+      })
+    }
+
+    const deleteOrder = async (id) => {
+      if (confirm("Supprimer cette commande ?")) {
+        await deleteDoc(doc(db, "orders", id))
+        fetchOrders()
+      }
+    }
+
+    // ================= PRODUITS =================
+
+    const addProduct = async () => {
+      await addDoc(collection(db, "products"), { ...newProduct.value })
+      newProduct.value = { name: "", price: 0, stock: 0, description: "" }
+      fetchProducts()
+    }
+
+    const deleteProduct = async (id) => {
+      if (confirm("Supprimer ce produit ?")) {
+        await deleteDoc(doc(db, "products", id))
+        fetchProducts()
+      }
+    }
+
+    onMounted(() => {
+      fetchUsers()
+      fetchOrders()
+      fetchProducts()
+    })
+
+    return {
+      users,
+      orders,
+      products,
+      newProduct,
+      deleteUser,
+      toggleAdmin,
+      updateStatus,
+      deleteOrder,
+      addProduct,
+      deleteProduct
+    }
+  },
+
+  computed: {
+    ...mapGetters(["isAdmin"])
+  }
+}
+</script>
+
+<style scoped>
+button:hover {
+  opacity: 0.8;
+  cursor: pointer;
+}
+section {
+  margin-bottom: 40px;
+}
+</style>
