@@ -38,6 +38,8 @@
     <p>isAuthenticated: {{ isAuthenticated }}</p>
 <p>userEmail: {{ userEmail }}</p>
 <p>isAdmin: {{ isAdmin }}</p>
+
+    <h1 style="color:red">TEST</h1>
     
     <router-view />
   </div>
