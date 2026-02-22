@@ -1,37 +1,30 @@
 import { createStore } from "vuex";
 import { auth, db } from "./firebase";
-import {
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut
-} from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
-// Produits exemples
+// Exemple produits
 import produit1 from "./assets/hero.png";
 import produit2 from "./assets/hero.png";
 import produit3 from "./assets/hero.png";
 
 export default createStore({
   state: {
-    user: null,  // 🔥 contient uid, email, role
+    user: null,
     cart: [],
     produits: [
       { id: 1, nom: "Produit A", prix: 100, image: produit1 },
       { id: 2, nom: "Produit B", prix: 200, image: produit2 },
       { id: 3, nom: "Produit C", prix: 300, image: produit3 },
-    ],
+    ]
   },
 
   getters: {
     isAuthenticated: state => !!state.user,
     isAdmin: state => state.user?.role === "admin",
     userEmail: state => state.user?.email || "",
-    cartItemCount: state =>
-      state.cart.reduce((total, item) => total + item.quantity, 0),
-    cartTotal: state =>
-      state.cart.reduce((total, item) => total + item.prix * item.quantity, 0),
+    cartItemCount: state => state.cart.reduce((total, item) => total + item.quantity, 0),
+    cartTotal: state => state.cart.reduce((total, item) => total + item.prix * item.quantity, 0),
   },
 
   mutations: {
@@ -47,4 +40,69 @@ export default createStore({
       state.cart = state.cart.filter(p => p.id !== id);
     },
     SET_QUANTITY(state, { id, quantity }) {
-      const item
+      const item = state.cart.find(p => p.id === id);
+      if (item && quantity > 0) item.quantity = quantity;
+    },
+    CLEAR_CART(state) {
+      state.cart = [];
+    },
+  },
+
+  actions: {
+    async initAuth({ commit }) {
+      return new Promise(resolve => {
+        onAuthStateChanged(auth, async (user) => {
+          if (user) {
+            const snap = await getDoc(doc(db, "users", user.uid));
+            commit("SET_USER", {
+              uid: user.uid,
+              email: user.email,
+              role: snap.exists() ? snap.data().role : "user"
+            });
+          } else {
+            commit("SET_USER", null);
+          }
+          resolve();
+        });
+      });
+    },
+
+    async login({ commit }, { email, password }) {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      const snap = await getDoc(doc(db, "users", user.uid));
+      commit("SET_USER", {
+        uid: user.uid,
+        email: user.email,
+        role: snap.exists() ? snap.data().role : "user"
+      });
+    },
+
+    async register({ commit }, { email, password }) {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      commit("SET_USER", {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        role: "user"
+      });
+    },
+
+    async logout({ commit }) {
+      await signOut(auth);
+      commit("SET_USER", null);
+    },
+
+    addToCart({ commit }, produit) {
+      commit("ADD_TO_CART", produit);
+    },
+    removeItem({ commit }, id) {
+      commit("REMOVE_ITEM", id);
+    },
+    updateQuantity({ commit }, payload) {
+      commit("SET_QUANTITY", payload);
+    },
+    clearCart({ commit }) {
+      commit("CLEAR_CART");
+    },
+  },
+});
