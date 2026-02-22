@@ -18,7 +18,7 @@ const routes = [
   { path: "/success", component: Success },
 
   {
-    path: "/admin",
+    path: "/AdminPanel",
     component:AdminPanel,
     meta: { requiresAdmin: true }
   }
