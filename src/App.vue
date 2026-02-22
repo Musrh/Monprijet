@@ -34,6 +34,10 @@
 
 <!-- 👇 AJOUTE ÇA POUR DEBUG -->
     <p>Admin: {{ isAdmin }}</p>
+
+    <p>isAuthenticated: {{ isAuthenticated }}</p>
+<p>userEmail: {{ userEmail }}</p>
+<p>isAdmin: {{ isAdmin }}</p>
     
     <router-view />
   </div>
