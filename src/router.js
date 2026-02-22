@@ -8,7 +8,7 @@ import Login from "./views/Login.vue"
 import AdminCommandes from "./views/AdminCommandes.vue"
 import Contact from "./views/Contact.vue"
 import Success from "./views/Success.vue"
-import AdminPanel from './views/AdminPanel.vue';
+import AdminPanel from './views/AdminPanel.vue'
 
 
 const routes = [
@@ -19,11 +19,7 @@ const routes = [
   { path: "/contact", component: Contact },
   
 
-  {
-  path: '/admin',
-  name: 'AdminPanel',
-  component:AdminPanel
-},
+  {path: "/admin", component :AdminPanel },
   
   {
     path: "/admin-commandes",
