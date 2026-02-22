@@ -39,6 +39,13 @@ export default {
     updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
 
     async payer() {
+
+if (!this.$store.state.user) {
+    alert("Veuillez vous connecter avant de payer");
+    this.$router.push("/login");
+    return;
+  }
+      
       if (!this.cart.length) return alert("Panier vide");
 
       try {
