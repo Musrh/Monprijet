@@ -1,9 +1,15 @@
-<template>
-  <div>
-    <h1 style="color:red">APP FONCTIONNE</h1>
-  </div>
-</template>
+import { createApp } from "vue";
+import App from "./App.vue";
+import router from "./router";
+import store from "./store";
 
-<script>
-export default {}
-</script>
+const app = createApp(App);
+
+// 🔥 Important : initialise Vuex et le router
+app.use(store);
+app.use(router);
+
+// 🔥 Initialisation de l'auth Firebase avant rendu du menu
+store.dispatch("initAuth").then(() => {
+  app.mount("#app");
+});
