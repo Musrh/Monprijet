@@ -8,6 +8,7 @@ import Login from "./views/Login.vue"
 import AdminCommandes from "./views/AdminCommandes.vue"
 import Contact from "./views/Contact.vue"
 import Success from "./views/Success.vue"
+import AdminPanel from './views/AdminPanel.vue';
 
 
 const routes = [
@@ -21,7 +22,7 @@ const routes = [
   {
   path: '/admin',
   name: 'AdminPanel',
-  component: () => import('./views/AdminPanel.vue')
+  component:AdminPanel
 },
   
   {
