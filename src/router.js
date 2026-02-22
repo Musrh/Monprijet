@@ -16,11 +16,22 @@ const routes = [
   { path: "/panier", component: Panier },
   { path: "/login", component: Login },
   { path: "/contact", component: Contact },
+  
   {
   path: '/admin',
   name: 'AdminPanel',
-  component: () => import('./views/AdminPanel.vue')
-  },
+  component: () => import('./views/AdminPanel.vue'),
+  beforeEnter: (to, from, next) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return next('/login');
+    const userDoc = getDoc(doc(db, 'users', currentUser.uid));
+    userDoc.then(docSnap => {
+      if (docSnap.exists() && docSnap.data().role === 'admin') next();
+      else next('/'); // redirige si pas admin
+    });
+  }
+},
+  
   {
     path: "/admin-commandes",
     component: AdminCommandes,
