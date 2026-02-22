@@ -23,6 +23,11 @@ export default createStore({
   },
 
   mutations: {
+
+    SET_USER(state, user) {
+    state.user = user;
+    }
+    
     ADD_TO_CART(state, produit) {
       const existing = state.cart.find(p => p.id === produit.id);
       if (existing) existing.quantity++;
