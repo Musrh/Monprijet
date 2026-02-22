@@ -27,6 +27,9 @@
       </span>
     </nav>
 
+<p>User: {{ $store.state.user }}</p>
+<p>isAdmin: {{ $store.getters.isAdmin }}</p>
+    
     <router-view />
   </div>
 </template>
