@@ -1,11 +1,13 @@
 import { createStore } from "vuex";
 import { auth } from "./firebase";
+import { db } from "./firebase";
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut
 } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 // Produits exemples
 import produit1 from "./assets/hero.png";
@@ -14,7 +16,7 @@ import produit3 from "./assets/hero.png";
 
 export default createStore({
   state: {
-    user: null,   // 🔥 important
+    user: null,
     cart: [],
     produits: [
       { id: 1, nom: "Produit A", prix: 100, image: produit1 },
@@ -25,6 +27,10 @@ export default createStore({
 
   getters: {
     isAuthenticated: state => !!state.user,
+
+    isAdmin: state => state.user?.role === "admin",
+
+    userEmail: state => state.user?.email || "",
 
     cartItemCount: state =>
       state.cart.reduce((total, item) => total + item.quantity, 0),
@@ -59,10 +65,22 @@ export default createStore({
   },
 
   actions: {
+
     // 🔥 INIT AUTH
     initAuth({ commit }) {
-      onAuthStateChanged(auth, user => {
-        commit("SET_USER", user);
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          const snap = await getDoc(doc(db, "users", user.uid));
+
+          commit("SET_USER", {
+            uid: user.uid,
+            email: user.email,
+            role: snap.exists() ? snap.data().role : "user"
+          });
+
+        } else {
+          commit("SET_USER", null);
+        }
       });
     },
 
@@ -71,7 +89,14 @@ export default createStore({
       const userCredential =
         await signInWithEmailAndPassword(auth, email, password);
 
-      commit("SET_USER", userCredential.user);
+      const user = userCredential.user;
+      const snap = await getDoc(doc(db, "users", user.uid));
+
+      commit("SET_USER", {
+        uid: user.uid,
+        email: user.email,
+        role: snap.exists() ? snap.data().role : "user"
+      });
     },
 
     // 🔥 REGISTER
@@ -79,7 +104,11 @@ export default createStore({
       const userCredential =
         await createUserWithEmailAndPassword(auth, email, password);
 
-      commit("SET_USER", userCredential.user);
+      commit("SET_USER", {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        role: "user"
+      });
     },
 
     // 🔥 LOGOUT
