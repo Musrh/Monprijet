@@ -5,7 +5,7 @@
       <router-link to="/contact">Contact</router-link> |
       <router-link to="/produits">Produits</router-link> |
 
-      <router-link v-if="isAdmin" to="/AdminPanel">
+      <router-link v-if="isAdmin" to="/admin">
         Admin
       </router-link> |
 
