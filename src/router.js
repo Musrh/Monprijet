@@ -21,26 +21,7 @@ const routes = [
   {
   path: '/admin',
   name: 'AdminPanel',
-  component: () => import('./views/AdminPanel.vue'),
-  beforeEnter: async (to, from, next) => {
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
-      return next('/login'); // redirige si pas connecté
-    }
-
-    try {
-      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-      if (userDoc.exists() && userDoc.data().role?.toLowerCase() === 'admin') {
-        next(); // autorisé
-      } else {
-        next('/'); // redirige si pas admin
-      }
-    } catch (error) {
-      console.error('Erreur vérification rôle admin:', error);
-      next('/'); // en cas d'erreur, redirige
-    }
-  }
+  component: () => import('./views/AdminPanel.vue')
 },
   
   {
@@ -48,6 +29,7 @@ const routes = [
     component: AdminCommandes,
     meta: { requiresAdmin: true }
   },
+
   { path: "/success", component: Success }
 ]
 
