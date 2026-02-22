@@ -4,10 +4,11 @@
   <div class="p-4">
     <h1 class="text-3xl font-bold mb-6">Admin Panel</h1>
 
-    <!-- Vérification Admin -->
-    <div v-if="!isAdmin">
-      <p class="text-red-600 font-semibold">Accès refusé ❌</p>
-    </div>
+<div class="p-4">
+    <h1 style="color:red">VERSION 2 ADMIN</h1>
+    <h1 class="text-3xl font-bold mb-6">Admin Panel</h1>
+
+    
 
     <div v-else>
       <!-- ================= UTILISATEURS ================= -->
