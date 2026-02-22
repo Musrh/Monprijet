@@ -17,18 +17,29 @@ const routes = [
   { path: "/login", component: Login },
   { path: "/contact", component: Contact },
   
+
   {
   path: '/admin',
   name: 'AdminPanel',
   component: () => import('./views/AdminPanel.vue'),
-  beforeEnter: (to, from, next) => {
+  beforeEnter: async (to, from, next) => {
     const currentUser = auth.currentUser;
-    if (!currentUser) return next('/login');
-    const userDoc = getDoc(doc(db, 'users', currentUser.uid));
-    userDoc.then(docSnap => {
-      if (docSnap.exists() && docSnap.data().role === 'admin') next();
-      else next('/'); // redirige si pas admin
-    });
+
+    if (!currentUser) {
+      return next('/login'); // redirige si pas connecté
+    }
+
+    try {
+      const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+      if (userDoc.exists() && userDoc.data().role?.toLowerCase() === 'admin') {
+        next(); // autorisé
+      } else {
+        next('/'); // redirige si pas admin
+      }
+    } catch (error) {
+      console.error('Erreur vérification rôle admin:', error);
+      next('/'); // en cas d'erreur, redirige
+    }
   }
 },
   
