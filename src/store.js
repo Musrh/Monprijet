@@ -1,6 +1,5 @@
 import { createStore } from "vuex";
-import { auth } from "./firebase";
-import { db } from "./firebase";
+import { auth, db } from "./firebase";
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -16,7 +15,7 @@ import produit3 from "./assets/hero.png";
 
 export default createStore({
   state: {
-    user: null,
+    user: null,  // 🔥 contient uid, email, role
     cart: [],
     produits: [
       { id: 1, nom: "Produit A", prix: 100, image: produit1 },
@@ -27,14 +26,10 @@ export default createStore({
 
   getters: {
     isAuthenticated: state => !!state.user,
-
     isAdmin: state => state.user?.role === "admin",
-
     userEmail: state => state.user?.email || "",
-
     cartItemCount: state =>
       state.cart.reduce((total, item) => total + item.quantity, 0),
-
     cartTotal: state =>
       state.cart.reduce((total, item) => total + item.prix * item.quantity, 0),
   },
@@ -43,95 +38,13 @@ export default createStore({
     SET_USER(state, user) {
       state.user = user;
     },
-
     ADD_TO_CART(state, produit) {
       const existing = state.cart.find(p => p.id === produit.id);
       if (existing) existing.quantity++;
       else state.cart.push({ ...produit, quantity: 1 });
     },
-
     REMOVE_ITEM(state, id) {
       state.cart = state.cart.filter(p => p.id !== id);
     },
-
     SET_QUANTITY(state, { id, quantity }) {
-      const item = state.cart.find(p => p.id === id);
-      if (item && quantity > 0) item.quantity = quantity;
-    },
-
-    CLEAR_CART(state) {
-      state.cart = [];
-    },
-  },
-
-  actions: {
-
-    // 🔥 INIT AUTH
-    initAuth({ commit }) {
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          const snap = await getDoc(doc(db, "users", user.uid));
-
-          commit("SET_USER", {
-            uid: user.uid,
-            email: user.email,
-            role: snap.exists() ? snap.data().role : "user"
-          });
-
-        } else {
-          commit("SET_USER", null);
-        }
-      });
-    },
-
-    // 🔥 LOGIN
-    async login({ commit }, { email, password }) {
-      const userCredential =
-        await signInWithEmailAndPassword(auth, email, password);
-
-      const user = userCredential.user;
-      const snap = await getDoc(doc(db, "users", user.uid));
-
-      commit("SET_USER", {
-        uid: user.uid,
-        email: user.email,
-        role: snap.exists() ? snap.data().role : "user"
-      });
-    },
-
-    // 🔥 REGISTER
-    async register({ commit }, { email, password }) {
-      const userCredential =
-        await createUserWithEmailAndPassword(auth, email, password);
-
-      commit("SET_USER", {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        role: "user"
-      });
-    },
-
-    // 🔥 LOGOUT
-    async logout({ commit }) {
-      await signOut(auth);
-      commit("SET_USER", null);
-    },
-
-    // PANIER
-    addToCart({ commit }, produit) {
-      commit("ADD_TO_CART", produit);
-    },
-
-    removeItem({ commit }, id) {
-      commit("REMOVE_ITEM", id);
-    },
-
-    updateQuantity({ commit }, payload) {
-      commit("SET_QUANTITY", payload);
-    },
-
-    clearCart({ commit }) {
-      commit("CLEAR_CART");
-    },
-  },
-});
+      const item
