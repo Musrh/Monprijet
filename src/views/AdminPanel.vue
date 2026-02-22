@@ -28,17 +28,48 @@
       </section>
 
       <!-- Section Commandes -->
-      <section class="mb-8">
-        <h2 class="text-2xl font-semibold mb-2">Commandes</h2>
-        <div v-if="orders.length === 0">Aucune commande</div>
-        <ul>
-          <li v-for="order in orders" :key="order.id" class="mb-2 border p-2 rounded">
-            <strong>Utilisateur:</strong> {{ order.userEmail }} |
-            <strong>Produits:</strong> {{ order.products.map(p => p.name + ' x' + p.quantity).join(', ') }} |
-            <strong>Status:</strong> {{ order.status }}
-          </li>
-        </ul>
-      </section>
+
+<section class="mb-8">
+  <h2 class="text-2xl font-semibold mb-4">Gestion des Commandes</h2>
+
+  <div v-if="orders.length === 0">
+    Aucune commande
+  </div>
+
+  <div v-for="order in orders" :key="order.id" class="border p-4 mb-4 rounded shadow">
+
+    <p><strong>Client:</strong> {{ order.userEmail }}</p>
+    <p><strong>Total:</strong> {{ order.total }} €</p>
+
+    <p><strong>Produits:</strong></p>
+    <ul class="ml-4 list-disc">
+      <li v-for="(product, index) in order.products" :key="index">
+        {{ product.name }} x{{ product.quantity }}
+      </li>
+    </ul>
+
+    <p class="mt-2">
+      <strong>Status:</strong>
+      <select v-model="order.status" @change="updateStatus(order)">
+        <option>En attente</option>
+        <option>Payée</option>
+        <option>Expédiée</option>
+        <option>Livrée</option>
+        <option>Annulée</option>
+      </select>
+    </p>
+
+    <button
+      @click="deleteOrder(order.id)"
+      class="mt-2 bg-red-500 text-white px-3 py-1 rounded"
+    >
+      Supprimer
+    </button>
+
+  </div>
+</section>
+
+      
 
       <!-- Section Produits -->
       <section>
