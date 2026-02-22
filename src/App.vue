@@ -1,75 +1,55 @@
 <template>
   <div>
-    <nav>
-      <router-link to="/">Home</router-link> |
-      <router-link to="/contact">Contact</router-link> |
-      <router-link to="/produits">Produits</router-link> |
+    <h1>Admin Panel</h1>
 
-      <!-- Admin panel -->
-      <router-link v-if="isAdmin" to="/admin">
-        Admin
-      </router-link> |
+    <p v-if="loading">Chargement...</p>
 
-      <!-- Login -->
-      <router-link v-if="!isAuthenticated" to="/login">
-        Login
-      </router-link> |
+    <div v-else>
+      <p>Email: {{ user?.email }}</p>
+      <p>Role: {{ user?.role }}</p>
 
-      <!-- Panier -->
-      <router-link to="/panier">
-        🛒 ({{ cartItemCount }})
-      </router-link> |
+      <div v-if="isAdmin">
+        <h2>Bienvenue Admin 👑</h2>
+      </div>
 
-      <!-- Admin commandes -->
-      <router-link v-if="isAdmin" to="/admin-commandes">
-        Admin Commandes
-      </router-link>
-
-      <!-- User info -->
-      <span v-if="isAuthenticated">
-        | {{ userEmail }}
-        <button @click="logout">Logout</button>
-      </span>
-    </nav>
-
-<!-- 👇 AJOUTE ÇA POUR DEBUG -->
-    <p>Admin: {{ isAdmin }}</p>
-
-    <p>isAuthenticated: {{ isAuthenticated }}</p>
-<p>userEmail: {{ userEmail }}</p>
-<p>isAdmin: {{ isAdmin }}</p>
-
-    <h1 style="color:red">TEST</h1>
-    
-    <router-view />
+      <div v-else>
+        <h2>Accès refusé ❌</h2>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
+import { ref, onMounted } from "vue"
+import { auth, db } from "@/firebase"
+import { onAuthStateChanged } from "firebase/auth"
+import { doc, getDoc } from "firebase/firestore"
 
 export default {
-  computed: {
-    ...mapGetters([
-      "isAuthenticated",
-      "userEmail",
-      "isAdmin",
-      "cartItemCount"
-    ])
-  },
+  setup() {
+    const user = ref(null)
+    const isAdmin = ref(false)
+    const loading = ref(true)
 
-  methods: {
-    logout() {
-      this.$store.dispatch("logout");
-      this.$router.push("/"); // ✅ CORRECT
-    }
+    onMounted(() => {
+      onAuthStateChanged(auth, async (currentUser) => {
+        if (!currentUser) {
+          loading.value = false
+          return
+        }
+
+        const snap = await getDoc(doc(db, "users", currentUser.uid))
+
+        if (snap.exists()) {
+          user.value = snap.data()
+          isAdmin.value = snap.data().role === "admin"
+        }
+
+        loading.value = false
+      })
+    })
+
+    return { user, isAdmin, loading }
   }
-};
-</script>
-
-<style>
-nav {
-  font-weight: bold;
-  color: green;
 }
-</style>
+</script>
