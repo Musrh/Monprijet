@@ -1,4 +1,3 @@
-
 <template>
   <div v-if="isAdmin" class="admin-panel p-4">
     <h1 class="text-2xl font-bold mb-4">Admin Panel</h1>
@@ -21,11 +20,11 @@
       <h2 class="text-xl font-semibold mb-2">Utilisateurs</h2>
       <div v-if="users.length === 0">Aucun utilisateur</div>
       <ul>
-        <li v-for="user in users" :key="user.uid" class="mb-2 border p-2 rounded flex justify-between items-center">
-          <span>{{ user.email }} ({{ user.role }})</span>
+        <li v-for="userItem in users" :key="userItem.uid" class="mb-2 border p-2 rounded flex justify-between items-center">
+          <span>{{ userItem.email }} ({{ userItem.role }})</span>
           <div>
-            <button @click="editUser(user)" class="mr-2 bg-blue-500 text-white px-2 rounded">Modifier</button>
-            <button @click="deleteUser(user.uid)" class="bg-red-500 text-white px-2 rounded">Supprimer</button>
+            <button @click="editUser(userItem)" class="mr-2 bg-blue-500 text-white px-2 rounded">Modifier</button>
+            <button @click="deleteUser(userItem.uid)" class="bg-red-500 text-white px-2 rounded">Supprimer</button>
           </div>
         </li>
       </ul>
@@ -57,23 +56,19 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
-import { getFirestore, collection, getDocs, addDoc, doc, deleteDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { ref, onMounted } from 'vue';
+import { auth, db } from '@/firebase';
+import { collection, getDocs, addDoc, doc, deleteDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default {
   name: 'AdminPanel',
   setup() {
-    const db = getFirestore();
-    const auth = getAuth();
-
-    const user = ref(null);
     const isAdmin = ref(false);
-
+    const user = ref(null);
     const users = ref([]);
     const orders = ref([]);
     const products = ref([]);
-
     const newProduct = ref({
       name: '',
       price: 0,
@@ -81,40 +76,32 @@ export default {
       description: ''
     });
 
-    const fetchUser = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
-      // Récupération role depuis Firestore
-      const userSnap = await getDocs(collection(db, 'users'));
-      userSnap.forEach(u => {
-        if (u.id === currentUser.uid) {
-          user.value = { ...u.data(), uid: u.id };
-          if (user.value.role === 'admin') isAdmin.value = true;
-        }
-      });
-    };
-
+    // Récupère les utilisateurs depuis Firestore
     const fetchUsers = async () => {
       const querySnap = await getDocs(collection(db, 'users'));
       users.value = querySnap.docs.map(doc => ({ uid: doc.id, ...doc.data() }));
     };
 
+    // Récupère les commandes depuis Firestore
     const fetchOrders = async () => {
       const querySnap = await getDocs(collection(db, 'orders'));
       orders.value = querySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     };
 
+    // Récupère les produits depuis Firestore
     const fetchProducts = async () => {
       const querySnap = await getDocs(collection(db, 'products'));
       products.value = querySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     };
 
+    // Ajouter un produit
     const addProduct = async () => {
       await addDoc(collection(db, 'products'), { ...newProduct.value });
       newProduct.value = { name: '', price: 0, stock: 0, description: '' };
       fetchProducts();
     };
 
+    // Supprimer un utilisateur
     const deleteUser = async (uid) => {
       if (confirm('Voulez-vous vraiment supprimer cet utilisateur ?')) {
         await deleteDoc(doc(db, 'users', uid));
@@ -122,6 +109,7 @@ export default {
       }
     };
 
+    // Supprimer un produit
     const deleteProduct = async (id) => {
       if (confirm('Voulez-vous vraiment supprimer ce produit ?')) {
         await deleteDoc(doc(db, 'products', id));
@@ -129,41 +117,17 @@ export default {
       }
     };
 
-    const editUser = (user) => {
-      const newEmail = prompt('Nouvel email', user.email);
+    // Modifier un utilisateur (email)
+    const editUser = async (userItem) => {
+      const newEmail = prompt('Nouvel email', userItem.email);
       if (newEmail) {
-        doc(db, 'users', user.uid).update({ email: newEmail });
+        await updateDoc(doc(db, 'users', userItem.uid), { email: newEmail });
         fetchUsers();
       }
     };
 
-    onMounted(async () => {
-      await fetchUser();
-      if (isAdmin.value) {
-        fetchUsers();
-        fetchOrders();
-        fetchProducts();
-      }
-    });
+    onMounted(() => {
+      onAuthStateChanged(auth, async (currentUser) => {
+        if (!currentUser) return;
 
-    return {
-      isAdmin,
-      users,
-      orders,
-      products,
-      newProduct,
-      addProduct,
-      deleteUser,
-      deleteProduct,
-      editUser
-    };
-  }
-};
-</script>
-
-<style scoped>
-.admin-panel {
-  max-width: 800px;
-  margin: auto;
-}
-</style>
+        const userDoc = await getDoc(doc(db, 'users', currentUser.uid
