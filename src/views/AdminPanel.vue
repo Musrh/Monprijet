@@ -14,7 +14,7 @@
 
 <script>
 import { ref, onMounted } from 'vue';
-import { auth, db } from '@/firebase';
+import { auth, db } from './firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
 
