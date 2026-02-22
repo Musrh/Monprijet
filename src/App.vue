@@ -32,6 +32,9 @@
       </span>
     </nav>
 
+<!-- 👇 AJOUTE ÇA POUR DEBUG -->
+    <p>Admin: {{ isAdmin }}</p>
+    
     <router-view />
   </div>
 </template>
