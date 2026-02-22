@@ -1,34 +1,36 @@
 <template>
-  <div v-if="adminLoaded">
+  <div v-if="loading">
+    <p>Chargement...</p>
+  </div>
+
+  <div v-else>
     <div v-if="isAdmin">
-      <!-- Panneau admin complet -->
       <h1>Admin Panel</h1>
+      <p>Bienvenue, {{ user.email }}</p>
+      <!-- Ici tu peux ajouter commandes, utilisateurs, produits -->
     </div>
     <div v-else>
       <p>Vous n'êtes pas admin.</p>
     </div>
-  </div>
-  <div v-else>
-    <p>Chargement...</p>
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
 import { auth, db } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default {
   setup() {
+    const loading = ref(true);
     const user = ref(null);
     const isAdmin = ref(false);
-    const adminLoaded = ref(false); // ← ajoute cette variable pour attendre Firebase
 
     onMounted(() => {
       onAuthStateChanged(auth, async (currentUser) => {
         if (!currentUser) {
-          adminLoaded.value = true; // chargé mais non connecté
+          loading.value = false;
           return;
         }
 
@@ -37,11 +39,11 @@ export default {
           user.value = { uid: currentUser.uid, ...userDoc.data() };
           isAdmin.value = user.value.role?.toLowerCase() === 'admin';
         }
-        adminLoaded.value = true; // indique que la vérification est terminée
+        loading.value = false; // fin du chargement, on peut afficher le panneau
       });
     });
 
-    return { user, isAdmin, adminLoaded };
+    return { loading, user, isAdmin };
   }
 };
 </script>
