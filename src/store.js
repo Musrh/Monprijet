@@ -79,7 +79,7 @@ export default createStore({
         isActive
       });
 
-      return { role, isActive };
+      return { role, isActive }; // 🔹 Retour du rôle pour Login.vue
     },
 
     async register({ commit }, { email, password }) {
