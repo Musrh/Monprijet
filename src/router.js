@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory } from "vue-router";
+import { createRouter, createWebHistory } from "vue-router";
 import store from "./store";
 
 import Home from "./views/Home.vue";
@@ -26,7 +26,7 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHashHistory(), // 🔹 hash mode pour GitHub Pages
+  history: createWebHistory(), // 🔹 hash mode pour GitHub Pages
   routes
 });
 
