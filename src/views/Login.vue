@@ -2,6 +2,7 @@
   <div class="p-4 max-w-md mx-auto">
     <h2 class="text-2xl font-bold mb-4">Authentication</h2>
 
+    <!-- REGISTER -->
     <div class="mb-6">
       <h3 class="text-xl font-semibold">Register</h3>
       <input v-model="regEmail" placeholder="Email" class="border p-2 w-full mb-2" />
@@ -11,6 +12,7 @@
 
     <hr class="my-6" />
 
+    <!-- LOGIN -->
     <div>
       <h3 class="text-xl font-semibold">Login</h3>
       <input v-model="logEmail" placeholder="Email" class="border p-2 w-full mb-2" />
@@ -47,12 +49,7 @@ export default {
           return;
         }
 
-        // 🔹 Redirection selon le rôle
-        if (role === "admin") {
-          this.$router.push("/admin");
-        } else {
-          this.$router.push("/dashboard");
-        }
+        this.$router.push(role === "admin" ? "/admin" : "/dashboard");
       } catch (err) {
         this.error = err.message;
       }
@@ -70,12 +67,7 @@ export default {
           return;
         }
 
-        // 🔹 Redirection selon le rôle
-        if (role === "admin") {
-          this.$router.push("/admin");
-        } else {
-          this.$router.push("/dashboard");
-        }
+        this.$router.push(role === "admin" ? "/admin" : "/dashboard");
       } catch (err) {
         this.error = err.message;
       }
