@@ -104,7 +104,7 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { db } from "@/firebase";
+import { db } from "../firebase";
 import {
   collection,
   getDocs,
