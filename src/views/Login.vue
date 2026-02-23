@@ -1,24 +1,24 @@
 <template>
-  <div>
-    <h2>Authentication</h2>
+  <div class="p-4 max-w-md mx-auto">
+    <h2 class="text-2xl font-bold mb-4">Authentication</h2>
 
-    <div>
-      <h3>Register</h3>
-      <input v-model="regEmail" placeholder="Email" />
-      <input v-model="regPassword" type="password" placeholder="Password" />
-      <button @click="register">Register</button>
+    <div class="mb-6">
+      <h3 class="text-xl font-semibold">Register</h3>
+      <input v-model="regEmail" placeholder="Email" class="border p-2 w-full mb-2" />
+      <input v-model="regPassword" type="password" placeholder="Password" class="border p-2 w-full mb-2" />
+      <button @click="register" class="bg-green-500 text-white px-4 py-2 rounded">Register</button>
     </div>
 
-    <hr />
+    <hr class="my-6" />
 
     <div>
-      <h3>Login</h3>
-      <input v-model="logEmail" placeholder="Email" />
-      <input v-model="logPassword" type="password" placeholder="Password" />
-      <button @click="login">Login</button>
+      <h3 class="text-xl font-semibold">Login</h3>
+      <input v-model="logEmail" placeholder="Email" class="border p-2 w-full mb-2" />
+      <input v-model="logPassword" type="password" placeholder="Password" class="border p-2 w-full mb-2" />
+      <button @click="login" class="bg-blue-500 text-white px-4 py-2 rounded">Login</button>
     </div>
 
-    <p v-if="error" style="color:red">{{ error }}</p>
+    <p v-if="error" class="text-red-600 mt-4">{{ error }}</p>
   </div>
 </template>
 
@@ -33,16 +33,21 @@ export default {
       error: ""
     };
   },
+
   methods: {
     async register() {
       try {
-        await this.$store.dispatch("register", {
+        const { role, isActive } = await this.$store.dispatch("register", {
           email: this.regEmail,
           password: this.regPassword
         });
 
-        // 🔹 après inscription, redirige selon rôle
-        if (this.$store.getters.isAdmin) {
+        if (!isActive) {
+          this.error = "Compte désactivé ❌";
+          return;
+        }
+
+        if (role === "admin") {
           this.$router.push("/admin");
         } else {
           this.$router.push("/dashboard");
@@ -54,13 +59,17 @@ export default {
 
     async login() {
       try {
-        await this.$store.dispatch("login", {
+        const { role, isActive } = await this.$store.dispatch("login", {
           email: this.logEmail,
           password: this.logPassword
         });
 
-        // 🔹 après login, redirige vers /admin si admin
-        if (this.$store.getters.isAdmin) {
+        if (!isActive) {
+          this.error = "Compte désactivé ❌";
+          return;
+        }
+
+        if (role === "admin") {
           this.$router.push("/admin");
         } else {
           this.$router.push("/dashboard");
@@ -72,3 +81,13 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+input {
+  display: block;
+}
+button:hover {
+  opacity: 0.8;
+  cursor: pointer;
+}
+</style>
