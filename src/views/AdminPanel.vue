@@ -1,64 +1,51 @@
 <template>
   <div class="p-4">
-    <!-- En-tête -->
     <h1 class="text-3xl font-bold mb-6">Admin Panel</h1>
 
-    <!-- Chargement -->
-    <div v-if="loading">
-      <p>Chargement du panneau admin...</p>
-    </div>
-
-    <!-- Accès refusé si pas admin -->
-    <div v-else-if="!isAdmin">
+    <!-- 🔹 Vérification admin -->
+    <div v-if="!isAdmin">
       <p class="text-red-600 font-semibold">Accès refusé ❌</p>
     </div>
 
-    <!-- Panneau admin -->
     <div v-else>
-      <!-- ======== UTILISATEURS ======== -->
+      <!-- ================= UTILISATEURS ================= -->
       <section class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Gestion Utilisateurs</h2>
         <div v-if="users.length === 0">Aucun utilisateur</div>
-        <div
-          v-for="userItem in users"
-          :key="userItem.uid"
-          class="border p-3 mb-2 rounded flex justify-between items-center"
-        >
-          <span>{{ userItem.email }} ({{ userItem.role }})</span>
-          <div>
-            <button
-              @click="toggleAdmin(userItem)"
-              class="bg-blue-500 text-white px-2 py-1 rounded mr-2"
-            >
-              {{ userItem.role === 'admin' ? 'Retirer Admin' : 'Rendre Admin' }}
-            </button>
-            <button
-              @click="deleteUser(userItem.uid)"
-              class="bg-red-500 text-white px-2 py-1 rounded"
-            >
-              Supprimer
-            </button>
-          </div>
-        </div>
+        <ul>
+          <li v-for="userItem in users" :key="userItem.uid" class="mb-2 flex justify-between items-center border p-2 rounded">
+            <span>{{ userItem.email }} ({{ userItem.role }})</span>
+            <div>
+              <button @click="toggleAdmin(userItem)" class="mr-2 bg-blue-500 text-white px-2 rounded">
+                {{ userItem.role === 'admin' ? 'Retirer Admin' : 'Rendre Admin' }}
+              </button>
+              <button @click="deleteUser(userItem.uid)" class="bg-red-500 text-white px-2 rounded">
+                Supprimer
+              </button>
+            </div>
+          </li>
+        </ul>
       </section>
 
-      <!-- ======== COMMANDES ======== -->
+      <!-- ================= COMMANDES ================= -->
       <section class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Gestion Commandes</h2>
-        <div v-if="orders.length === 0">Aucune commande trouvée</div>
-        <div
-          v-for="order in orders"
-          :key="order.id"
-          class="border p-4 mb-4 rounded shadow"
-        >
+
+        <div v-if="orders.length === 0">
+          Aucune commande trouvée
+        </div>
+
+        <div v-for="order in orders" :key="order.id" class="border p-4 mb-4 rounded shadow">
           <p><strong>Client :</strong> {{ order.userEmail }}</p>
           <p><strong>Total :</strong> {{ order.total }} €</p>
+
           <p><strong>Produits :</strong></p>
-          <ul>
-            <li v-for="(product, index) in order.products" :key="index">
+          <ul class="ml-4 list-disc">
+            <li v-for="(product, idx) in order.products" :key="idx">
               {{ product.name }} x{{ product.quantity }}
             </li>
           </ul>
+
           <p class="mt-2">
             <strong>Status :</strong>
             <select v-model="order.status" @change="updateStatus(order)">
@@ -69,41 +56,33 @@
               <option>Annulée</option>
             </select>
           </p>
-          <button
-            @click="deleteOrder(order.id)"
-            class="bg-red-500 text-white px-3 py-1 rounded mt-2"
-          >
+
+          <button @click="deleteOrder(order.id)" class="mt-2 bg-red-500 text-white px-3 py-1 rounded">
             Supprimer
           </button>
         </div>
       </section>
 
-      <!-- ======== PRODUITS ======== -->
+      <!-- ================= PRODUITS ================= -->
       <section>
         <h2 class="text-2xl font-semibold mb-4">Gestion Produits</h2>
-        <form @submit.prevent="addProduct" class="mb-4 flex flex-wrap gap-2">
-          <input v-model="newProduct.name" placeholder="Nom" required />
-          <input v-model.number="newProduct.price" type="number" placeholder="Prix" required />
-          <input v-model.number="newProduct.stock" type="number" placeholder="Stock" required />
-          <input v-model="newProduct.description" placeholder="Description" required />
-          <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded">
-            Ajouter
-          </button>
+
+        <form @submit.prevent="addProduct" class="mb-4 flex gap-2 flex-wrap">
+          <input v-model="newProduct.name" placeholder="Nom" class="border p-1 rounded" required />
+          <input v-model.number="newProduct.price" type="number" placeholder="Prix" class="border p-1 rounded" required />
+          <input v-model.number="newProduct.stock" type="number" placeholder="Stock" class="border p-1 rounded" required />
+          <input v-model="newProduct.description" placeholder="Description" class="border p-1 rounded" required />
+          <button type="submit" class="bg-green-500 text-white px-3 rounded">Ajouter</button>
         </form>
 
-        <div
-          v-for="product in products"
-          :key="product.id"
-          class="border p-3 mb-2 rounded flex justify-between items-center"
-        >
-          <span>{{ product.name }} - {{ product.price }} € - Stock: {{ product.stock }}</span>
-          <button
-            @click="deleteProduct(product.id)"
-            class="bg-red-500 text-white px-2 py-1 rounded"
-          >
-            Supprimer
-          </button>
-        </div>
+        <ul>
+          <li v-for="product in products" :key="product.id" class="mb-2 flex justify-between items-center border p-2 rounded">
+            <span>{{ product.name }} - {{ product.price }} € - Stock: {{ product.stock }}</span>
+            <button @click="deleteProduct(product.id)" class="bg-red-500 text-white px-2 rounded">
+              Supprimer
+            </button>
+          </li>
+        </ul>
       </section>
     </div>
   </div>
@@ -111,51 +90,21 @@
 
 <script>
 import { ref, onMounted } from "vue"
-import { auth, db } from "../firebase"
-import { onAuthStateChanged } from "firebase/auth"
-import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, getDoc } from "firebase/firestore"
+import { db } from "@/firebase"
+import { collection, getDocs, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore"
 import { mapGetters } from "vuex"
 
 export default {
   setup() {
-    const loading = ref(true)
-    const isAdmin = ref(false)
     const users = ref([])
     const orders = ref([])
     const products = ref([])
     const newProduct = ref({ name: "", price: 0, stock: 0, description: "" })
 
-    // Vérification admin
-    const checkAdmin = async (currentUser) => {
-      if (!currentUser) return false
-      const snap = await getDoc(doc(db, "users", currentUser.uid))
-      if (!snap.exists()) return false
-      isAdmin.value = snap.data().role === "admin"
-      return isAdmin.value
-    }
-
-    // Fetch Data
+    // 🔹 Utilisateurs
     const fetchUsers = async () => {
       const snap = await getDocs(collection(db, "users"))
       users.value = snap.docs.map(d => ({ uid: d.id, ...d.data() }))
-    }
-
-    const fetchOrders = async () => {
-      const snap = await getDocs(collection(db, "orders"))
-      orders.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    }
-
-    const fetchProducts = async () => {
-      const snap = await getDocs(collection(db, "products"))
-      products.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-    }
-
-    // Actions
-    const deleteUser = async (uid) => {
-      if (confirm("Supprimer cet utilisateur ?")) {
-        await deleteDoc(doc(db, "users", uid))
-        fetchUsers()
-      }
     }
 
     const toggleAdmin = async (userItem) => {
@@ -164,9 +113,21 @@ export default {
       fetchUsers()
     }
 
+    const deleteUser = async (uid) => {
+      if (confirm("Supprimer cet utilisateur ?")) {
+        await deleteDoc(doc(db, "users", uid))
+        fetchUsers()
+      }
+    }
+
+    // 🔹 Commandes
+    const fetchOrders = async () => {
+      const snap = await getDocs(collection(db, "orders"))
+      orders.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    }
+
     const updateStatus = async (order) => {
       await updateDoc(doc(db, "orders", order.id), { status: order.status })
-      fetchOrders()
     }
 
     const deleteOrder = async (id) => {
@@ -174,6 +135,12 @@ export default {
         await deleteDoc(doc(db, "orders", id))
         fetchOrders()
       }
+    }
+
+    // 🔹 Produits
+    const fetchProducts = async () => {
+      const snap = await getDocs(collection(db, "products"))
+      products.value = snap.docs.map(d => ({ id: d.id, ...d.data() }))
     }
 
     const addProduct = async () => {
@@ -189,33 +156,13 @@ export default {
       }
     }
 
-    // On mounted
     onMounted(() => {
-      onAuthStateChanged(auth, async (currentUser) => {
-        const admin = await checkAdmin(currentUser)
-        if (admin) {
-          await fetchUsers()
-          await fetchOrders()
-          await fetchProducts()
-        }
-        loading.value = false
-      })
+      fetchUsers()
+      fetchOrders()
+      fetchProducts()
     })
 
-    return {
-      loading,
-      isAdmin,
-      users,
-      orders,
-      products,
-      newProduct,
-      deleteUser,
-      toggleAdmin,
-      updateStatus,
-      deleteOrder,
-      addProduct,
-      deleteProduct
-    }
+    return { users, orders, products, newProduct, toggleAdmin, deleteUser, updateStatus, deleteOrder, addProduct, deleteProduct }
   },
 
   computed: {
