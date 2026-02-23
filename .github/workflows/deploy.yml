@@ -1,9 +1,10 @@
 name: Deploy Vue.js site to GitHub Pages
 
+# 🔹 Déclenche le workflow à chaque push sur main
 on:
   push:
     branches:
-      - main  # Branche principale à surveiller pour déploiement
+      - main
 
 jobs:
   build-and-deploy:
@@ -33,4 +34,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_branch: gh-pages   # 🔹 branche où le site sera publié
+          publish_dir: ./dist        # 🔹 dossier build de Vue
