@@ -8,6 +8,7 @@ import Login from "./views/Login.vue";
 import Contact from "./views/Contact.vue";
 import Success from "./views/Success.vue";
 import AdminPanel from "./views/AdminPanel.vue";
+import Dashboard from "./views/Dashboard.vue"
 
 const routes = [
   { path: "/", component: Home },
@@ -16,6 +17,11 @@ const routes = [
   { path: "/login", component: Login },
   { path: "/contact", component: Contact },
   { path: "/success", component: Success },
+  {
+    path: "/dashboard",
+    name: "Dashboard",
+    component: Dashboard
+  },
 
   {
     path: "/admin",
