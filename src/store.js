@@ -67,58 +67,6 @@ export default createStore({
     async login({ commit }, { email, password }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
       const snap = await getDoc(doc(db, "users", user.uid));
       const role = snap.exists() ? snap.data().role : "user";
-      const isActive = snap.exists() ? snap.data().isActive : true;
-
-      commit("SET_USER", {
-        uid: user.uid,
-        email: user.email,
-        role,
-        isActive
-      });
-
-      return { role, isActive }; // 🔹 Retour du rôle pour Login.vue
-    },
-
-    async register({ commit }, { email, password }) {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      // 🔹 Crée le document Firestore pour le nouvel utilisateur
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        email,
-        role: "user",
-        isActive: true,
-        createdAt: new Date()
-      });
-
-      commit("SET_USER", {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        role: "user",
-        isActive: true
-      });
-
-      return { role: "user", isActive: true };
-    },
-
-    async logout({ commit }) {
-      await signOut(auth);
-      commit("SET_USER", null);
-    },
-
-    addToCart({ commit }, produit) {
-      commit("ADD_TO_CART", produit);
-    },
-    removeItem({ commit }, id) {
-      commit("REMOVE_ITEM", id);
-    },
-    updateQuantity({ commit }, payload) {
-      commit("SET_QUANTITY", payload);
-    },
-    clearCart({ commit }) {
-      commit("CLEAR_CART");
-    }
-  }
-});
+      const
