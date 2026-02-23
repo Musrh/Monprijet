@@ -47,6 +47,7 @@ export default {
           return;
         }
 
+        // 🔹 Redirection selon le rôle
         if (role === "admin") {
           this.$router.push("/admin");
         } else {
@@ -69,6 +70,7 @@ export default {
           return;
         }
 
+        // 🔹 Redirection selon le rôle
         if (role === "admin") {
           this.$router.push("/admin");
         } else {
