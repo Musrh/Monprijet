@@ -2,7 +2,6 @@
   <div>
     <h2>Authentication</h2>
 
-    <!-- REGISTER -->
     <div>
       <h3>Register</h3>
       <input v-model="regEmail" placeholder="Email" />
@@ -12,7 +11,6 @@
 
     <hr />
 
-    <!-- LOGIN -->
     <div>
       <h3>Login</h3>
       <input v-model="logEmail" placeholder="Email" />
@@ -25,75 +23,52 @@
 </template>
 
 <script>
-import { ref } from "vue"
-import { auth, db } from "../firebase"
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword 
-} from "firebase/auth"
-import { doc, setDoc } from "firebase/firestore"
-
 export default {
-  setup(_, { emit }) {
-    const regEmail = ref("")
-    const regPassword = ref("")
-    const logEmail = ref("")
-    const logPassword = ref("")
-    const error = ref("")
-
-    // 🔹 REGISTER
-    const register = async () => {
-      error.value = ""
-      try {
-        const userCredential = await createUserWithEmailAndPassword(
-          auth,
-          regEmail.value,
-          regPassword.value
-        )
-
-        const user = userCredential.user
-
-        // Ajouter dans Firestore
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          role: "user",
-          isActive: true,
-          createdAt: new Date()
-        })
-
-        window.location.href = "/dashboard"
-
-      } catch (err) {
-        error.value = err.message
-      }
-    }
-
-    // 🔹 LOGIN
-    const login = async () => {
-      error.value = ""
-      try {
-        await signInWithEmailAndPassword(
-          auth,
-          logEmail.value,
-          logPassword.value
-        )
-
-        window.location.href = "/dashboard"
-
-      } catch (err) {
-        error.value = err.message
-      }
-    }
-
+  data() {
     return {
-      regEmail,
-      regPassword,
-      logEmail,
-      logPassword,
-      register,
-      login,
-      error
+      regEmail: "",
+      regPassword: "",
+      logEmail: "",
+      logPassword: "",
+      error: ""
+    };
+  },
+  methods: {
+    async register() {
+      try {
+        await this.$store.dispatch("register", {
+          email: this.regEmail,
+          password: this.regPassword
+        });
+
+        // 🔹 après inscription, redirige selon rôle
+        if (this.$store.getters.isAdmin) {
+          this.$router.push("/admin");
+        } else {
+          this.$router.push("/dashboard");
+        }
+      } catch (err) {
+        this.error = err.message;
+      }
+    },
+
+    async login() {
+      try {
+        await this.$store.dispatch("login", {
+          email: this.logEmail,
+          password: this.logPassword
+        });
+
+        // 🔹 après login, redirige vers /admin si admin
+        if (this.$store.getters.isAdmin) {
+          this.$router.push("/admin");
+        } else {
+          this.$router.push("/dashboard");
+        }
+      } catch (err) {
+        this.error = err.message;
+      }
     }
   }
-}
+};
 </script>
