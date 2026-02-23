@@ -1,0 +1,36 @@
+name: Deploy Vue.js site to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # Branche principale à surveiller pour déploiement
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ Récupérer le dépôt
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2️⃣ Installer Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      # 3️⃣ Installer les dépendances
+      - name: Install dependencies
+        run: npm ci
+
+      # 4️⃣ Construire le projet Vue
+      - name: Build project
+        run: npm run build
+
+      # 5️⃣ Déployer sur GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
