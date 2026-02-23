@@ -28,7 +28,6 @@
       <!-- ================= COMMANDES ================= -->
       <section class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Gestion Commandes</h2>
-
         <div v-if="commandes.length === 0">Aucune commande trouvée</div>
 
         <div v-for="commande in commandes" :key="commande.id" class="border p-4 mb-4 rounded shadow">
@@ -36,7 +35,7 @@
           <p><strong>Date :</strong> {{ commande.date?.toDate().toLocaleString() || '' }}</p>
           <p><strong>Devise :</strong> {{ commande.devise }}</p>
           <p><strong>Montant :</strong> {{ commande.montant }} {{ commande.devise }}</p>
-          <p><strong>Statut :</strong> {{ commande.statut }}</p>
+          <p><strong>Statut :</strong> {{ commande.Statut }}</p>
 
           <p><strong>Produits :</strong></p>
           <ul class="ml-4 list-disc">
@@ -45,7 +44,7 @@
             </li>
           </ul>
 
-          <select v-model="commande.statut" @change="updateStatut(commande)" class="mt-2 border p-1 rounded">
+          <select v-model="commande.Statut" @change="updateStatut(commande)" class="mt-2 border p-1 rounded">
             <option>En attente</option>
             <option>Payé</option>
           </select>
@@ -85,13 +84,12 @@
 <script>
 import { ref, onMounted } from "vue";
 import { db } from "../firebase";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { collection, getDocs, doc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { mapGetters } from "vuex";
 
 export default {
   setup() {
     const users = ref([]);
-    const produits = ref([]);
     const commandes = ref([]);
     const products = ref([]);
     const newProduct = ref({ nom: "", prix: 0, stock: 0, image: "" });
@@ -114,31 +112,3 @@ export default {
     };
 
     // 🔹 COMMANDES
-    const fetchCommandes = async () => {
-      const snap = await getDocs(collection(db, "commandes"));
-      commandes.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    };
-    const updateStatut = async (commande) => {
-      await updateDoc(doc(db, "commandes", commande.id), { statut: commande.statut });
-    };
-    const deleteCommande = async (id) => {
-      if (confirm("Supprimer cette commande ?")) {
-        await deleteDoc(doc(db, "commandes", id));
-        fetchCommandes();
-      }
-    };
-
-    // 🔹 PRODUCTS
-    const fetchProducts = async () => {
-      const snap = await getDocs(collection(db, "products"));
-      products.value = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    };
-    const addProduct = async () => {
-      if (!newProduct.value.nom || !newProduct.value.prix) return;
-      await addDoc(collection(db, "products"), { ...newProduct.value });
-      newProduct.value = { nom: "", prix: 0, stock: 0, image: "" };
-      fetchProducts();
-    };
-    const editProduct = async (product) => {
-      const newName = prompt("Nom du produit :", product.nom);
-      const newPrice = prompt("Prix
