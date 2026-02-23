@@ -86,7 +86,7 @@
 
 <script>
 import { ref, onMounted, computed } from "vue"
-import { db } from "@/firebase"
+import { db } from "../firebase"
 import { collection, getDocs, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore"
 import { useStore } from "vuex"
 
