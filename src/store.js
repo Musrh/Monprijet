@@ -8,30 +8,19 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
-// Exemple produits
-import produit1 from "./assets/hero.png";
-import produit2 from "./assets/hero.png";
-import produit3 from "./assets/hero.png";
-
 export default createStore({
   state: {
     user: null,
-    cart: [],
-    produits: [
-      { id: 1, nom: "Produit A", prix: 100, image: produit1 },
-      { id: 2, nom: "Produit B", prix: 200, image: produit2 },
-      { id: 3, nom: "Produit C", prix: 300, image: produit3 },
-    ]
+    cart: []
   },
 
   getters: {
     isAuthenticated: state => !!state.user,
     isAdmin: state => state.user?.role === "admin",
     userEmail: state => state.user?.email || "",
-    cartItemCount: state =>
-      state.cart.reduce((total, item) => total + item.quantity, 0),
-    cartTotal: state =>
-      state.cart.reduce((total, item) => total + item.prix * item.quantity, 0),
+    isActive: state => state.user?.isActive ?? true,
+    cartItemCount: state => state.cart.reduce((total, item) => total + item.quantity, 0),
+    cartTotal: state => state.cart.reduce((total, item) => total + item.prix * item.quantity, 0)
   },
 
   mutations: {
@@ -52,104 +41,73 @@ export default createStore({
     },
     CLEAR_CART(state) {
       state.cart = [];
-    },
+    }
   },
 
   actions: {
-
-    // 🔹 Initialise l'utilisateur au refresh
     async initAuth({ commit }) {
       return new Promise(resolve => {
-        onAuthStateChanged(auth, async (user) => {
+        onAuthStateChanged(auth, async user => {
           if (user) {
             const snap = await getDoc(doc(db, "users", user.uid));
-
-            if (snap.exists()) {
-              const data = snap.data();
-
-              commit("SET_USER", {
-                uid: user.uid,
-                email: user.email,
-                role: data.role || "user",
-                isActive: data.isActive ?? true
-              });
-
-            } else {
-              // Si document absent → logout sécurité
-              await signOut(auth);
-              commit("SET_USER", null);
-            }
+            commit("SET_USER", {
+              uid: user.uid,
+              email: user.email,
+              role: snap.exists() ? snap.data().role : "user",
+              isActive: snap.exists() ? snap.data().isActive : true
+            });
           } else {
             commit("SET_USER", null);
           }
-
           resolve();
         });
       });
     },
 
-    // 🔹 LOGIN
     async login({ commit }, { email, password }) {
-
-      const userCredential =
-        await signInWithEmailAndPassword(auth, email, password);
-
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       const snap = await getDoc(doc(db, "users", user.uid));
-
-      if (!snap.exists()) {
-        await signOut(auth);
-        throw new Error("Profil utilisateur introuvable");
-      }
-
-      const data = snap.data();
-
-      // Vérification isActive
-      if (data.isActive === false) {
-        await signOut(auth);
-        throw new Error("Compte désactivé");
-      }
+      const role = snap.exists() ? snap.data().role : "user";
+      const isActive = snap.exists() ? snap.data().isActive : true;
 
       commit("SET_USER", {
         uid: user.uid,
         email: user.email,
-        role: data.role || "user",
-        isActive: data.isActive ?? true
+        role,
+        isActive
       });
+
+      return { role, isActive };
     },
 
-    // 🔹 REGISTER
     async register({ commit }, { email, password }) {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-      const userCredential =
-        await createUserWithEmailAndPassword(auth, email, password);
-
-      const user = userCredential.user;
-
-      // Création du document Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        email: user.email,
+      // 🔹 Crée le document Firestore pour le nouvel utilisateur
+      await setDoc(doc(db, "users", userCredential.user.uid), {
+        email,
         role: "user",
         isActive: true,
         createdAt: new Date()
       });
 
       commit("SET_USER", {
-        uid: user.uid,
-        email: user.email,
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
         role: "user",
         isActive: true
       });
+
+      return { role: "user", isActive: true };
     },
 
-    // 🔹 LOGOUT
     async logout({ commit }) {
       await signOut(auth);
       commit("SET_USER", null);
     },
 
-    // 🔹 PANIER
     addToCart({ commit }, produit) {
       commit("ADD_TO_CART", produit);
     },
@@ -161,6 +119,6 @@ export default createStore({
     },
     clearCart({ commit }) {
       commit("CLEAR_CART");
-    },
-  },
+    }
+  }
 });
