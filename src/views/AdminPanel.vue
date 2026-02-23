@@ -12,7 +12,6 @@
       <section class="mb-8">
         <h2 class="text-2xl font-semibold mb-4">Gestion Utilisateurs</h2>
         <div v-if="users.length === 0">Aucun utilisateur</div>
-
         <ul>
           <li v-for="user in users" :key="user.uid" class="border p-2 mb-2 flex justify-between items-center rounded">
             <span>{{ user.email }} ({{ user.role }})</span>
@@ -21,7 +20,7 @@
                 @click="toggleAdmin(user)"
                 class="mr-2 bg-blue-500 text-white px-2 py-1 rounded"
               >
-                {{ user.role === "admin" ? "Retirer Admin" : "Rendre Admin" }}
+                {{ user.role === 'admin' ? 'Retirer Admin' : 'Rendre Admin' }}
               </button>
               <button
                 @click="deleteUser(user.uid)"
@@ -39,14 +38,14 @@
         <h2 class="text-2xl font-semibold mb-4">Gestion Produits</h2>
 
         <form @submit.prevent="addOrUpdateProduct" class="mb-4 flex gap-2 flex-wrap">
-          <input v-model="productForm.name" placeholder="Nom" required />
-          <input v-model.number="productForm.price" type="number" placeholder="Prix" required />
-          <input v-model.number="productForm.stock" type="number" placeholder="Stock" required />
-          <input v-model="productForm.description" placeholder="Description" required />
+          <input v-model="productForm.name" placeholder="Nom" required class="border p-1 rounded" />
+          <input v-model.number="productForm.price" type="number" placeholder="Prix" required class="border p-1 rounded" />
+          <input v-model.number="productForm.stock" type="number" placeholder="Stock" required class="border p-1 rounded" />
+          <input v-model="productForm.description" placeholder="Description" required class="border p-1 rounded" />
           <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded">
             {{ productForm.id ? "Modifier" : "Ajouter" }}
           </button>
-          <button type="button" v-if="productForm.id" @click="resetProductForm" class="bg-gray-500 text-white px-3 py-1 rounded">
+          <button v-if="productForm.id" type="button" @click="resetProductForm" class="bg-gray-500 text-white px-3 py-1 rounded">
             Annuler
           </button>
         </form>
@@ -66,24 +65,24 @@
       <section>
         <h2 class="text-2xl font-semibold mb-4">Gestion Commandes</h2>
 
-        <div>
+        <div class="mb-2">
           <label>Filtrer par status:</label>
-          <select v-model="filterStatus" @change="fetchOrders">
+          <select v-model="filterStatus" @change="fetchCommandes" class="border p-1 rounded ml-2">
             <option value="">Tous</option>
             <option value="en attente">En attente</option>
             <option value="payée">Payée</option>
           </select>
         </div>
 
-        <div v-if="orders.length === 0" class="mt-2">
+        <div v-if="commandes.length === 0">
           Aucune commande trouvée
         </div>
 
-        <div v-for="order in orders" :key="order.id" class="border p-3 mb-3 rounded shadow">
-          <p><strong>Client:</strong> {{ order.userEmail }}</p>
-          <p><strong>Total:</strong> {{ order.total }} €</p>
+        <div v-for="commande in commandes" :key="commande.id" class="border p-3 mb-3 rounded shadow">
+          <p><strong>Client:</strong> {{ commande.userEmail }}</p>
+          <p><strong>Total:</strong> {{ commande.total }} €</p>
           <p><strong>Status:</strong>
-            <select v-model="order.status" @change="updateOrderStatus(order)">
+            <select v-model="commande.status" @change="updateCommandeStatus(commande)" class="border p-1 rounded">
               <option>en attente</option>
               <option>payée</option>
               <option>expédiée</option>
@@ -93,9 +92,11 @@
           </p>
           <p><strong>Produits:</strong></p>
           <ul class="ml-4 list-disc">
-            <li v-for="(p, idx) in order.products" :key="idx">{{ p.name }} x{{ p.quantity }}</li>
+            <li v-for="(p, idx) in commande.products" :key="idx">{{ p.name }} x{{ p.quantity }}</li>
           </ul>
-          <button @click="deleteOrder(order.id)" class="mt-2 bg-red-500 text-white px-3 py-1 rounded">Supprimer</button>
+          <button @click="deleteCommande(commande.id)" class="mt-2 bg-red-500 text-white px-3 py-1 rounded">
+            Supprimer
+          </button>
         </div>
       </section>
     </div>
@@ -105,21 +106,14 @@
 <script>
 import { ref, onMounted } from "vue";
 import { db } from "../firebase";
-import {
-  collection,
-  getDocs,
-  doc,
-  deleteDoc,
-  updateDoc,
-  addDoc
-} from "firebase/firestore";
+import { collection, getDocs, doc, deleteDoc, updateDoc, addDoc } from "firebase/firestore";
 import { mapGetters } from "vuex";
 
 export default {
   setup() {
     const users = ref([]);
     const products = ref([]);
-    const orders = ref([]);
+    const commandes = ref([]);
     const filterStatus = ref("");
     const productForm = ref({ id: null, name: "", price: 0, stock: 0, description: "" });
 
@@ -148,8 +142,9 @@ export default {
     };
 
     const addOrUpdateProduct = async () => {
+      if (!productForm.value.name) return; // validation simple
+
       if (productForm.value.id) {
-        // update
         await updateDoc(doc(db, "products", productForm.value.id), {
           name: productForm.value.name,
           price: productForm.value.price,
@@ -157,7 +152,6 @@ export default {
           description: productForm.value.description
         });
       } else {
-        // add
         await addDoc(collection(db, "products"), { ...productForm.value });
       }
       productForm.value = { id: null, name: "", price: 0, stock: 0, description: "" };
@@ -180,37 +174,37 @@ export default {
     };
 
     // --- COMMANDES ---
-    const fetchOrders = async () => {
+    const fetchCommandes = async () => {
       let snap = await getDocs(collection(db, "commandes"));
-      let allOrders = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      let allCommandes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       if (filterStatus.value) {
-        allOrders = allOrders.filter(o => o.status.toLowerCase() === filterStatus.value.toLowerCase());
+        allCommandes = allCommandes.filter(c => c.status.toLowerCase() === filterStatus.value.toLowerCase());
       }
-      orders.value = allOrders;
+      commandes.value = allCommandes;
     };
 
-    const updateOrderStatus = async (order) => {
-      await updateDoc(doc(db, "commandes", order.id), { status: order.status });
-      fetchOrders();
+    const updateCommandeStatus = async (commande) => {
+      await updateDoc(doc(db, "commandes", commande.id), { status: commande.status });
+      fetchCommandes();
     };
 
-    const deleteOrder = async (id) => {
+    const deleteCommande = async (id) => {
       if (confirm("Supprimer cette commande ?")) {
         await deleteDoc(doc(db, "commandes", id));
-        fetchOrders();
+        fetchCommandes();
       }
     };
 
     onMounted(() => {
       fetchUsers();
       fetchProducts();
-      fetchOrders();
+      fetchCommandes();
     });
 
     return {
       users,
       products,
-      orders,
+      commandes,
       productForm,
       filterStatus,
       toggleAdmin,
@@ -219,9 +213,9 @@ export default {
       editProduct,
       deleteProduct,
       resetProductForm,
-      fetchOrders,
-      updateOrderStatus,
-      deleteOrder
+      fetchCommandes,
+      updateCommandeStatus,
+      deleteCommande
     };
   },
 
