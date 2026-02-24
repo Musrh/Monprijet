@@ -1,13 +1,11 @@
 import { createStore } from "vuex";
 import { auth, db } from "./firebase";
-
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut
 } from "firebase/auth";
-
 import {
   doc,
   getDoc,
@@ -64,28 +62,24 @@ export default createStore({
   },
 
   actions: {
-
     // 🔥 Initialisation au démarrage
     initAuth({ commit }) {
       return new Promise(resolve => {
         onAuthStateChanged(auth, async user => {
           if (user) {
             const snap = await getDoc(doc(db, "users", user.uid));
-
             if (snap.exists()) {
               const data = snap.data();
-
               commit("SET_USER", {
                 uid: user.uid,
                 email: data.email,
-                role: data.role,
+                role: data.role.trim(),
                 isActive: data.isActive
               });
             }
           } else {
             commit("SET_USER", null);
           }
-
           resolve();
         });
       });
@@ -101,7 +95,6 @@ export default createStore({
 
       const user = userCredential.user;
       const snap = await getDoc(doc(db, "users", user.uid));
-
       if (snap.exists()) {
         const data = snap.data();
 
@@ -114,7 +107,7 @@ export default createStore({
         commit("SET_USER", {
           uid: user.uid,
           email: data.email,
-          role: data.role,
+          role: data.role.trim(),
           isActive: data.isActive
         });
       }
@@ -130,6 +123,7 @@ export default createStore({
 
       const uid = userCredential.user.uid;
 
+      // 🔥 Création document complet dans Firestore
       await setDoc(doc(db, "users", uid), {
         email: email,
         role: "user",
