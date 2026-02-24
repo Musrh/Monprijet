@@ -2,6 +2,7 @@
   <div>
     <h1>Admin Panel</h1>
 
+    <!-- Message si pas admin -->
     <p v-if="!isAdmin">Vous n'êtes pas autorisé à voir cette page.</p>
 
     <div v-else>
@@ -20,6 +21,7 @@
             <td>{{ user.role }}</td>
             <td>{{ user.isActive ? "Oui" : "Non" }}</td>
             <td>
+              <!-- Empêche l'admin de se désactiver lui-même -->
               <button
                 v-if="user.uid !== currentUser.uid"
                 @click="toggleActive(user)"
@@ -48,6 +50,7 @@ export default {
     const currentUser = computed(() => store.state.user || {});
     const isAdmin = computed(() => store.getters.isAdmin);
 
+    // Récupère tous les utilisateurs
     const fetchUsers = async () => {
       try {
         const snapshot = await getDocs(collection(db, "users"));
@@ -60,14 +63,22 @@ export default {
       }
     };
 
+    // Activer / désactiver un utilisateur
     const toggleActive = async (user) => {
       try {
         const userRef = doc(db, "users", user.uid);
         await updateDoc(userRef, { isActive: !user.isActive });
+
+        // Mise à jour locale immédiate
         user.isActive = !user.isActive;
+
         console.log("Mise à jour réussie:", user.email, user.isActive);
+
+        // Optionnel : recharger la liste complète
+        // await fetchUsers();
       } catch (error) {
         console.error("Erreur toggleActive:", error);
+        alert("Impossible de modifier le compte. Vérifie les permissions Firestore.");
       }
     };
 
