@@ -1,21 +1,13 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHashHistory } from "vue-router";
 import store from "./store";
 
-import Home from "./views/Home.vue";
-import Produits from "./views/Produits.vue";
-import Panier from "./views/Panier.vue";
-import Login from "./views/Login.vue";
-import Contact from "./views/Contact.vue";
-import Success from "./views/Success.vue";
-
 const routes = [
-  { path: "/", component: Home },
-  { path: "/produits", component: Produits },
-  { path: "/panier", component: Panier },
-  { path: "/login", component: Login },
-  { path: "/contact", component: Contact },
-  { path: "/success", component: Success },
-
+  { path: "/", component: () => import("./views/Home.vue") },
+  { path: "/produits", component: () => import("./views/Produits.vue") },
+  { path: "/panier", component: () => import("./views/Panier.vue") },
+  { path: "/login", component: () => import("./views/Login.vue") },
+  { path: "/contact", component: () => import("./views/Contact.vue") },
+  { path: "/success", component: () => import("./views/Success.vue") },
   {
     path: "/admin",
     component: () => import("./views/AdminPanel.vue"),
@@ -24,13 +16,14 @@ const routes = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHashHistory(),
   routes
 });
 
+// 🔹 Protection route admin
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAdmin && !store.getters.isAdmin) {
-    return next("/");
+    return next("/login");  // ou "/" si tu préfères
   }
   next();
 });
