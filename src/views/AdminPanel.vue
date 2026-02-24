@@ -1,115 +1,63 @@
 <template>
-  <div class="p-4">
-    <h1 class="text-3xl font-bold mb-6">Admin Panel - Utilisateurs</h1>
+  <div>
+    <h1>Admin Panel</h1>
 
-    <!-- Vérification admin -->
-    <div v-if="!isAdmin">
-      <p class="text-red-600 font-semibold">Accès refusé ❌</p>
-    </div>
-
-    <div v-else>
-      <!-- Liste des utilisateurs -->
-      <section>
-        <h2 class="text-2xl font-semibold mb-4">Gestion Utilisateurs</h2>
-
-        <div v-if="users.length === 0" class="text-gray-500">
-          Aucun utilisateur trouvé
-        </div>
-
-        <ul>
-          <li
-            v-for="user in users"
-            :key="user.uid"
-            class="mb-2 flex justify-between items-center border p-2 rounded"
-          >
-            <span>{{ user.email }} - Rôle: {{ user.role }}</span>
-            <div>
-              <button
-                @click="toggleAdmin(user)"
-                class="mr-2 bg-blue-500 text-white px-2 py-1 rounded"
-              >
-                {{ user.role === "admin" ? "Retirer Admin" : "Rendre Admin" }}
-              </button>
-
-              <button
-                @click="deleteUser(user.uid)"
-                class="bg-red-500 text-white px-2 py-1 rounded"
-              >
-                Supprimer
-              </button>
-            </div>
-          </li>
-        </ul>
-      </section>
-    </div>
+    <table border="1" cellpadding="5">
+      <thead>
+        <tr>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Actif</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="user in users" :key="user.uid">
+          <td>{{ user.email }}</td>
+          <td>{{ user.role }}</td>
+          <td>{{ user.isActive ? "Oui" : "Non" }}</td>
+          <td>
+            <button @click="toggleActive(user)">
+              {{ user.isActive ? "Désactiver" : "Activer" }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from "vue"
-import { db } from "../firebase"
-import { collection, getDocs, doc, deleteDoc, updateDoc } from "firebase/firestore"
-import { mapGetters } from "vuex"
+import { ref, onMounted } from "vue";
+import { db } from "../firebase";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 
 export default {
   setup() {
-    const users = ref([])
+    const users = ref([]);
 
-    // 🔹 Fetch Users
     const fetchUsers = async () => {
+      const snapshot = await getDocs(collection(db, "users"));
+      users.value = snapshot.docs.map(doc => ({
+        uid: doc.id,
+        ...doc.data()
+      }));
+    };
+
+    const toggleActive = async (user) => {
       try {
-        const snap = await getDocs(collection(db, "users"))
-        users.value = snap.docs.map(d => ({ uid: d.id, ...d.data() }))
-      } catch (err) {
-        console.error("Erreur fetch users:", err)
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, { isActive: !user.isActive });
+        // Mettre à jour localement
+        user.isActive = !user.isActive;
+      } catch (error) {
+        console.error("Erreur mise à jour isActive:", error);
       }
-    }
+    };
 
-    // 🔹 Modifier le rôle admin
-    const toggleAdmin = async (user) => {
-      try {
-        const newRole = user.role === "admin" ? "user" : "admin"
-        await updateDoc(doc(db, "users", user.uid), { role: newRole })
-        fetchUsers()
-      } catch (err) {
-        console.error("Erreur toggle admin:", err)
-      }
-    }
+    onMounted(fetchUsers);
 
-    // 🔹 Supprimer un utilisateur
-    const deleteUser = async (uid) => {
-      if (!confirm("Supprimer cet utilisateur ?")) return
-      try {
-        await deleteDoc(doc(db, "users", uid))
-        fetchUsers()
-      } catch (err) {
-        console.error("Erreur delete user:", err)
-      }
-    }
-
-    onMounted(() => {
-      fetchUsers()
-    })
-
-    return {
-      users,
-      toggleAdmin,
-      deleteUser
-    }
-  },
-
-  computed: {
-    ...mapGetters(["isAdmin"])
+    return { users, toggleActive };
   }
-}
+};
 </script>
-
-<style scoped>
-button:hover {
-  opacity: 0.8;
-  cursor: pointer;
-}
-section {
-  margin-bottom: 40px;
-}
-</style>
