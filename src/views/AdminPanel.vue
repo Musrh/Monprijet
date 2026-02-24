@@ -68,17 +68,23 @@ export default {
     };
 
     // Activer ou désactiver un utilisateur
-    const toggleActive = async (user) => {
-      try {
-        const userRef = doc(db, "users", user.uid);
-        await updateDoc(userRef, { isActive: !user.isActive });
-        // Mise à jour locale
-        user.isActive = !user.isActive;
-      } catch (error) {
-        console.error("Erreur toggleActive:", error);
-      }
-    };
 
+const toggleActive = async (user) => {
+  try {
+    const userRef = doc(db, "users", user.uid);
+    await updateDoc(userRef, { isActive: !user.isActive });
+    // Mise à jour locale
+    user.isActive = !user.isActive;
+    console.log(user.email, "isActive mis à jour :", user.isActive);
+  } catch (error) {
+    console.error("Erreur toggleActive:", error);
+  }
+};
+
+
+
+
+    
     onMounted(() => {
       if (isAdmin.value) fetchUsers();
     });
