@@ -35,43 +35,38 @@ export default {
     }
   },
   methods: {
-    remove(id) { this.$store.dispatch("removeItem", id); },
-    updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
+    remove(id) { 
+      this.$store.dispatch("removeItem", id); 
+    },
+    updateQuantity(item) { 
+      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); 
+    },
 
     async payer() {
+      console.log("CLICK PAYER");
+      console.log("USER =", this.$store.state.user);
+      console.log("CART =", this.cart);
 
-if (!this.$store.state.user) {
-    alert("Veuillez vous connecter avant de payer");
-    this.$router.push("/login");
-    return;
-  }
-      
-      if (!this.cart.length) return alert("Panier vide");
+      if (!this.$store.state.user) {
+        alert("Veuillez vous connecter avant de payer");
+        this.$router.push("/login");
+        return;
+      }
+
+      if (!this.cart.length) {
+        alert("Panier vide");
+        return;
+      }
 
       try {
-        const response = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items: this.cart }) // 🔹 important
-        });
+        const response = await fetch(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: this.cart })
+          }
+        );
 
+        console.log("RESPONSE STATUS =", response.status);
         const data = await response.json();
-        if (data.url) window.location.href = data.url;
-        else alert(data.error || "Erreur Stripe");
-      } catch (err) {
-        console.error("Erreur paiement :", err);
-        alert("Impossible de lancer le paiement");
-      }
-    }
-  }
-}
-</script>
-
-<style scoped>
-.panier { max-width:700px; margin:auto; }
-.cart-item { display:flex; align-items:center; gap:15px; margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:10px; }
-.info { flex:1; }
-.total { margin-top:20px; }
-.pay-btn { margin-top:20px; padding:12px 25px; background-color:#42b983; color:white; border:none; border-radius:6px; cursor:pointer; font-size:16px; }
-.pay-btn:hover { background-color:#369870; }
-</style>
