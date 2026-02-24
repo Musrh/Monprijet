@@ -3,10 +3,20 @@ import { auth, db } from "../firebase"; // 🔹 chemin relatif
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
+// Exemple produits (chemins relatifs)
+import produit1 from "../assets/hero.png";
+import produit2 from "../assets/hero.png";
+import produit3 from "../assets/hero.png";
+
 export default createStore({
   state: {
     user: null,
-    cart: []
+    cart: [],
+    produits: [
+      { id: 1, nom: "Produit A", prix: 100, image: produit1 },
+      { id: 2, nom: "Produit B", prix: 200, image: produit2 },
+      { id: 3, nom: "Produit C", prix: 300, image: produit3 },
+    ]
   },
 
   getters: {
@@ -89,3 +99,13 @@ export default createStore({
         isActive: true
       });
     },
+
+    async logout({ commit }) {
+      await signOut(auth);
+      commit("SET_USER", null);
+    },
+
+    addToCart({ commit }, produit) {
+      commit("ADD_TO_CART", produit);
+    },
+    removeItem({ commit }, id
