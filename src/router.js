@@ -28,10 +28,9 @@ const router = createRouter({
   routes
 });
 
-// 🔹 Vérifier l’accès admin
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAdmin && !store.getters.isAdmin) {
-    return next("/"); // redirige si pas admin
+    return next("/");
   }
   next();
 });
