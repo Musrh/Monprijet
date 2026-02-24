@@ -5,7 +5,7 @@ import store from "./store";
 
 const app = createApp(App);
 
-// 🔹 Initialiser l'utilisateur avant de monter l'app
+// 🔹 Charger Firebase Auth avant de monter l'app
 store.dispatch("initAuth").then(() => {
   app.use(store);
   app.use(router);
