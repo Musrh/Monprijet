@@ -1,22 +1,17 @@
 import { createStore } from "vuex";
 import { auth, db } from "./firebase";
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-
-// Exemple produits
-import produit1 from "./assets/hero.png";
-import produit2 from "./assets/hero.png";
-import produit3 from "./assets/hero.png";
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut
+} from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 export default createStore({
   state: {
     user: null,
     cart: [],
-    produits: [
-      { id: 1, nom: "Produit A", prix: 100, image: produit1 },
-      { id: 2, nom: "Produit B", prix: 200, image: produit2 },
-      { id: 3, nom: "Produit C", prix: 300, image: produit3 },
-    ]
   },
 
   getters: {
@@ -49,6 +44,7 @@ export default createStore({
   },
 
   actions: {
+    // 🔹 Initialise l'utilisateur à l'ouverture de l'app
     async initAuth({ commit }) {
       return new Promise(resolve => {
         onAuthStateChanged(auth, async (user) => {
@@ -57,7 +53,8 @@ export default createStore({
             commit("SET_USER", {
               uid: user.uid,
               email: user.email,
-              role: snap.exists() ? snap.data().role : "user"
+              role: snap.exists() ? snap.data().role : "user",
+              isActive: snap.exists() ? snap.data().isActive : true
             });
           } else {
             commit("SET_USER", null);
@@ -67,23 +64,43 @@ export default createStore({
       });
     },
 
+    // 🔹 Login
     async login({ commit }, { email, password }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
       const snap = await getDoc(doc(db, "users", user.uid));
+      const role = snap.exists() ? snap.data().role : "user";
+      const isActive = snap.exists() ? snap.data().isActive : true;
+
       commit("SET_USER", {
         uid: user.uid,
         email: user.email,
-        role: snap.exists() ? snap.data().role : "user"
+        role,
+        isActive
       });
+
+      return { role, isActive };
     },
 
+    // 🔹 Register : ajoute dans Auth et dans collection users
     async register({ commit }, { email, password }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const uid = userCredential.user.uid;
+
+      // Création dans Firestore collection users
+      await setDoc(doc(db, "users", uid), {
+        email,
+        role: "user",
+        isActive: true,
+        createdAt: new Date()
+      });
+
       commit("SET_USER", {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        role: "user"
+        uid,
+        email,
+        role: "user",
+        isActive: true
       });
     },
 
