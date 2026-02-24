@@ -8,6 +8,7 @@ import Login from "./views/Login.vue";
 import Contact from "./views/Contact.vue";
 import Success from "./views/Success.vue";
 import AdminPanel from "./views/AdminPanel.vue";
+import Dashboard from "./views/Dashboard.vue"
 
 const routes = [
   { path: "/", component: Home },
@@ -17,23 +18,26 @@ const routes = [
   { path: "/contact", component: Contact },
   { path: "/success", component: Success },
   {
-    path: "/admin",
-    component: AdminPanel,
-    meta: { requiresAdmin: true }
+    path: "/dashboard",
+    name: "Dashboard",
+    component: Dashboard
   },
-  // fallback pour rediriger vers home si route inconnue
-  { path: "/:pathMatch(.*)*", redirect: "/" }
+
+  {
+    path: "/admin",
+    component:AdminPanel,
+    meta: { requiresAdmin: true }
+  }
 ];
 
 const router = createRouter({
-  history: createWebHistory(), // 🔹 hash mode pour GitHub Pages
+  history: createWebHashHistory(),
   routes
 });
 
-// Guard pour protéger les routes admin
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAdmin && !store.getters.isAdmin) {
-    return next("/"); // redirige si pas admin
+    return next("/");
   }
   next();
 });
