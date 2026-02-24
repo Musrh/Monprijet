@@ -2,7 +2,7 @@
   <div class="p-4 max-w-md mx-auto">
     <h2 class="text-2xl font-bold mb-4">Authentication</h2>
 
-    <!-- 🔹 Register -->
+    <!-- Register -->
     <div class="mb-6">
       <h3 class="text-xl font-semibold mb-2">Register</h3>
       <input v-model="regEmail" placeholder="Email" class="border p-2 w-full mb-2" />
@@ -12,7 +12,7 @@
 
     <hr class="my-4" />
 
-    <!-- 🔹 Login -->
+    <!-- Login -->
     <div>
       <h3 class="text-xl font-semibold mb-2">Login</h3>
       <input v-model="logEmail" placeholder="Email" class="border p-2 w-full mb-2" />
@@ -43,7 +43,7 @@ export default {
           password: this.regPassword
         });
 
-        // 🔹 Rediriger vers /admin si admin, sinon /dashboard
+        // 🔹 Redirection selon rôle
         if (this.$store.getters.isAdmin) this.$router.push("/admin");
         else this.$router.push("/dashboard");
       } catch (err) {
@@ -58,7 +58,7 @@ export default {
           password: this.logPassword
         });
 
-        // 🔹 Rediriger vers /admin si admin
+        // 🔹 Redirection selon rôle
         if (this.$store.getters.isAdmin) this.$router.push("/admin");
         else this.$router.push("/dashboard");
       } catch (err) {
