@@ -2,7 +2,6 @@
   <div>
     <h1>Admin Panel</h1>
 
-    <!-- Vérification admin -->
     <p v-if="!isAdmin">Vous n'êtes pas autorisé à voir cette page.</p>
 
     <div v-else>
@@ -21,7 +20,6 @@
             <td>{{ user.role }}</td>
             <td>{{ user.isActive ? "Oui" : "Non" }}</td>
             <td>
-              <!-- On empêche l'admin de se désactiver lui-même -->
               <button
                 v-if="user.uid !== currentUser.uid"
                 @click="toggleActive(user)"
@@ -47,13 +45,9 @@ export default {
     const store = useStore();
     const users = ref([]);
 
-    // Current user connecté
     const currentUser = computed(() => store.state.user || {});
-
-    // Vérification admin
     const isAdmin = computed(() => store.getters.isAdmin);
 
-    // Récupérer tous les utilisateurs
     const fetchUsers = async () => {
       try {
         const snapshot = await getDocs(collection(db, "users"));
@@ -61,40 +55,27 @@ export default {
           uid: doc.id,
           ...doc.data()
         }));
-        console.log("Users loaded:", users.value);
       } catch (error) {
         console.error("Erreur fetchUsers:", error);
       }
     };
 
-    // Activer ou désactiver un utilisateur
+    const toggleActive = async (user) => {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        await updateDoc(userRef, { isActive: !user.isActive });
+        user.isActive = !user.isActive;
+        console.log("Mise à jour réussie:", user.email, user.isActive);
+      } catch (error) {
+        console.error("Erreur toggleActive:", error);
+      }
+    };
 
-const toggleActive = async (user) => {
-  try {
-    const userRef = doc(db, "users", user.uid);
-    await updateDoc(userRef, { isActive: !user.isActive });
-    // Mise à jour locale
-    user.isActive = !user.isActive;
-    console.log(user.email, "isActive mis à jour :", user.isActive);
-  } catch (error) {
-    console.error("Erreur toggleActive:", error);
-  }
-};
-
-
-
-
-    
     onMounted(() => {
       if (isAdmin.value) fetchUsers();
     });
 
-    return {
-      users,
-      toggleActive,
-      currentUser,
-      isAdmin
-    };
+    return { users, toggleActive, currentUser, isAdmin };
   }
 };
 </script>
