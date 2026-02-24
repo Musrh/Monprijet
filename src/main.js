@@ -5,9 +5,11 @@ import store from "./store";
 
 const app = createApp(App);
 
-// 🔹 Charger Firebase Auth avant de monter l'app
+// 🔥 Important : initialise Vuex et le router
+app.use(store);
+app.use(router);
+
+// 🔥 Initialisation de l'auth Firebase avant rendu du menu
 store.dispatch("initAuth").then(() => {
-  app.use(store);
-  app.use(router);
   app.mount("#app");
 });
