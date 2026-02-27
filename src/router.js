@@ -7,6 +7,7 @@ import Panier from "./views/Panier.vue";
 import Login from "./views/Login.vue";
 import Contact from "./views/Contact.vue";
 import Success from "./views/Success.vue";
+import AdminCommandes from "./views/AdminCommandes.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -20,7 +21,14 @@ const routes = [
     path: "/admin",
     component: () => import("./views/AdminPanel.vue"),
     meta: { requiresAdmin: true }
-  }
+  },
+  {
+    path: "/admin-commandes",
+    component: AdminCommandes,
+    meta: { requiresAdmin: true },
+  },
+
+  
 ];
 
 const router = createRouter({
