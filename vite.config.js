@@ -1,8 +1,22 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill'
 
-// 🔹 Important : base doit correspondre au nom de ton dépôt GitHub
 export default defineConfig({
   plugins: [vue()],
-  base: '/Monprijet/'  // ✅ Change 'Monprijet' par le nom exact de ton dépôt
+  base: '/Monprijet/',  // ✅ Nom exact de ton dépôt GitHub
+  define: {
+    'process.env': {}   // pour certains packages qui lisent process.env
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: { global: 'globalThis' },
+      plugins: [
+        NodeGlobalsPolyfillPlugin({
+          buffer: true,
+          process: true
+        })
+      ]
+    }
+  }
 })
