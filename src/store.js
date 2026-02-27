@@ -1,6 +1,6 @@
 // store.js
 import { createStore } from "vuex";
-import { auth, db } from "@/firebase"; // ton fichier firebase.js
+import { auth, db } from "./firebase"; // ton fichier firebase.js
 import { onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
 
