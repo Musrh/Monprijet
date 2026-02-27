@@ -5,7 +5,7 @@
     <p v-if="!isAdmin">Vous n'êtes pas autorisé à voir cette page.</p>
 
     <div v-else>
-      <table border="1" cellpadding="5">
+      <table border="1" cellpadding="5" v-if="commandes.length">
         <thead>
           <tr>
             <th>Email</th>
@@ -33,6 +33,8 @@
           </tr>
         </tbody>
       </table>
+
+      <p v-else>Chargement des commandes ou aucune commande trouvée...</p>
     </div>
   </div>
 </template>
@@ -57,21 +59,22 @@ export default {
         commandes.value = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
-          date: doc.data().date?.toDate(), // timestamp Firestore → JS Date
+          date: doc.data().date?.toDate(),
         }));
+        console.log("Commandes récupérées:", commandes.value);
       } catch (err) {
         console.error("Erreur fetchCommandes:", err);
       }
     };
 
+    onMounted(() => {
+      if (isAdmin.value) fetchCommandes();
+    });
+
     const formatDate = (date) => {
       if (!date) return "";
       return date.toLocaleString();
     };
-
-    onMounted(() => {
-      if (isAdmin.value) fetchCommandes();
-    });
 
     return { commandes, isAdmin, formatDate };
   },
