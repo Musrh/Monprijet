@@ -26,3 +26,42 @@
               <li v-for="item in commande.items" :key="item.id">
                 {{ item.nom }} × {{ item.quantity }}
               </li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</template>
+
+<script>
+import { ref, onMounted } from "vue";
+import { db } from "../firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+
+export default {
+  setup() {
+    const commandes = ref([]);
+    const loading = ref(true);
+
+    const fetchCommandes = async () => {
+      loading.value = true;
+      try {
+        const q = query(collection(db, "commandes"), orderBy("date", "desc"));
+        const snapshot = await getDocs(q);
+        commandes.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      } catch (err) {
+        console.error("Erreur fetchCommandes:", err);
+      } finally {
+        loading.value = false;
+      }
+    };
+
+    onMounted(() => {
+      fetchCommandes();
+    });
+
+    return { commandes, loading };
+  }
+};
+</script>
