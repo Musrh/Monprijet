@@ -1,82 +1,28 @@
 <template>
-  <div>
-    <h1>Commandes des utilisateurs</h1>
+  <div class="p-4">
+    <h1 class="text-2xl font-bold mb-4">Commandes des utilisateurs</h1>
 
-    <p v-if="!isAdmin">Vous n'êtes pas autorisé à voir cette page.</p>
+    <div v-if="loading" class="text-gray-600">Chargement des commandes...</div>
+    <div v-else-if="commandes.length === 0" class="text-red-500">Aucune commande trouvée...</div>
 
-    <div v-else>
-      <table border="1" cellpadding="5" v-if="commandes.length">
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Montant</th>
-            <th>Devise</th>
-            <th>Statut</th>
-            <th>Date</th>
-            <th>Items</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="cmd in commandes" :key="cmd.id">
-            <td>{{ cmd.email }}</td>
-            <td>{{ cmd.montant.toFixed(2) }} €</td>
-            <td>{{ cmd.devise.toUpperCase() }}</td>
-            <td>{{ cmd.statut }}</td>
-            <td>{{ formatDate(cmd.date) }}</td>
-            <td>
-              <ul>
-                <li v-for="item in cmd.items" :key="item.id">
-                  {{ item.nom }} x {{ item.quantity }}
-                </li>
-              </ul>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p v-else>Chargement des commandes ou aucune commande trouvée...</p>
-    </div>
-  </div>
-</template>
-
-<script>
-import { ref, onMounted, computed } from "vue";
-import { db } from "../firebase";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
-import { useStore } from "vuex";
-
-export default {
-  setup() {
-    const store = useStore();
-    const commandes = ref([]);
-
-    const isAdmin = computed(() => store.getters.isAdmin);
-
-    const fetchCommandes = async () => {
-      try {
-        const q = query(collection(db, "commandes"), orderBy("date", "desc"));
-        const snapshot = await getDocs(q);
-        commandes.value = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date?.toDate(),
-        }));
-        console.log("Commandes récupérées:", commandes.value);
-      } catch (err) {
-        console.error("Erreur fetchCommandes:", err);
-      }
-    };
-
-    onMounted(() => {
-      if (isAdmin.value) fetchCommandes();
-    });
-
-    const formatDate = (date) => {
-      if (!date) return "";
-      return date.toLocaleString();
-    };
-
-    return { commandes, isAdmin, formatDate };
-  },
-};
-</script>
+    <table v-else class="min-w-full border border-gray-300">
+      <thead>
+        <tr class="bg-gray-200">
+          <th class="border p-2">Email</th>
+          <th class="border p-2">Montant</th>
+          <th class="border p-2">Statut</th>
+          <th class="border p-2">Date</th>
+          <th class="border p-2">Items</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="commande in commandes" :key="commande.id">
+          <td class="border p-2">{{ commande.email }}</td>
+          <td class="border p-2">{{ commande.montant }} {{ commande.devise }}</td>
+          <td class="border p-2">{{ commande.statut }}</td>
+          <td class="border p-2">{{ commande.date?.toDate().toLocaleString() }}</td>
+          <td class="border p-2">
+            <ul>
+              <li v-for="item in commande.items" :key="item.id">
+                {{ item.nom }} × {{ item.quantity }}
+              </li>
