@@ -2,7 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Couleur primaire globale si tu veux */
-:root {
-  --primary: #22c55e;
+/* Mini thème e-commerce */
+body {
+  @apply bg-gray-100 text-gray-800 font-sans;
+}
+
+h1, h2, h3 {
+  @apply font-bold;
+}
+
+button {
+  @apply bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition;
+}
+
+input[type="number"] {
+  @apply border rounded px-2 py-1 w-16;
+}
+
+.cart-item {
+  @apply flex items-center gap-4 p-3 border-b border-gray-300;
 }
