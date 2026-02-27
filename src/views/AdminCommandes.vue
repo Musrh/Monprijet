@@ -1,132 +1,79 @@
 <template>
-<div class="admin">
-  <h2>Gestion des commandes</h2>
+  <div>
+    <h1>Commandes des utilisateurs</h1>
 
-  <div
-    v-for="commande in commandes"
-    :key="commande.id"
-    class="card"
-  >
-    <h3>Commande ID : {{ commande.id }}</h3>
+    <p v-if="!isAdmin">Vous n'êtes pas autorisé à voir cette page.</p>
 
-    <p><strong>Email :</strong> {{ commande.email }}</p>
-    <p><strong>User ID :</strong> {{ commande.userId }}</p>
-    <p><strong>Statut :</strong> {{ commande.statut }}</p>
-    <p><strong>Total :</strong> {{ commande.total }} €</p>
-    <p>
-      <strong>Date :</strong>
-      {{ formatDate(commande.date) }}
-    </p>
-
-    <h4>Produits :</h4>
-    <ul>
-      <li
-        v-for="item in commande.items"
-        :key="item.id"
-      >
-        {{ item.nom }} —
-        {{ item.prix }} € ×
-        {{ item.quantite }}
-      </li>
-    </ul>
-
-    
-    <button
-    v-if="commande.status==='en attente'"
-    @click="validerCommande(commande.id)"
-  >
-    Valider
-  </button>
-
-    <!-- BOUTON SUPPRIMER -->
-    <button
-      class="delete"
-      @click="supprimerCommande(commande.id)"
-    >
-      Supprimer
-    </button>
-
+    <div v-else>
+      <table border="1" cellpadding="5">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Montant</th>
+            <th>Devise</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="cmd in commandes" :key="cmd.id">
+            <td>{{ cmd.email }}</td>
+            <td>{{ cmd.montant.toFixed(2) }} €</td>
+            <td>{{ cmd.devise.toUpperCase() }}</td>
+            <td>{{ cmd.statut }}</td>
+            <td>{{ formatDate(cmd.date) }}</td>
+            <td>
+              <ul>
+                <li v-for="item in cmd.items" :key="item.id">
+                  {{ item.nom }} x {{ item.quantity }}
+                </li>
+              </ul>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
 </template>
 
 <script>
-import { db } from "../firebase"
-import {
-collection,
-getDocs,
-updateDoc,
-deleteDoc,
-doc
-} from "firebase/firestore"
+import { ref, onMounted, computed } from "vue";
+import { db } from "../firebase";
+import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { useStore } from "vuex";
 
 export default {
-data() {
-  return {
-    commandes: []
-  }
-},
+  setup() {
+    const store = useStore();
+    const commandes = ref([]);
 
-async mounted() {
-  await this.loadCommandes()
-},
+    const isAdmin = computed(() => store.getters.isAdmin);
 
-methods: {
+    const fetchCommandes = async () => {
+      try {
+        const q = query(collection(db, "commandes"), orderBy("date", "desc"));
+        const snapshot = await getDocs(q);
+        commandes.value = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date?.toDate(), // timestamp Firestore → JS Date
+        }));
+      } catch (err) {
+        console.error("Erreur fetchCommandes:", err);
+      }
+    };
 
-  async loadCommandes() {
-    const snapshot = await getDocs(collection(db, "orders"))
+    const formatDate = (date) => {
+      if (!date) return "";
+      return date.toLocaleString();
+    };
 
-    this.commandes = snapshot.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }))
+    onMounted(() => {
+      if (isAdmin.value) fetchCommandes();
+    });
+
+    return { commandes, isAdmin, formatDate };
   },
-
-  async validerCommande(id) {
-    await updateDoc(doc(db, "orders", id), {
-      statut: "validée"
-    })
-    await this.loadCommandes()
-  },
-
-
-  async supprimerCommande(id) {
-    const confirmation = confirm("Supprimer cette commande ?")
-    if (!confirmation) return
-
-    await deleteDoc(doc(db, "orders", id))
-    await this.loadCommandes()
-  },
-
-  formatDate(timestamp) {
-    if (!timestamp) return ""
-    const date = timestamp.toDate()
-    return date.toLocaleString()
-  }
-}
-}
+};
 </script>
-
-<style scoped>
-.admin {
-padding: 20px;
-}
-
-.card {
-border: 1px solid #ddd;
-padding: 15px;
-margin-bottom: 20px;
-border-radius: 6px;
-background: #f9f9f9;
-}
-
-button {
-margin-right: 10px;
-padding: 6px 10px;
-}
-
-.delete {
-background: red;
-color: white;
-}
-</style>
