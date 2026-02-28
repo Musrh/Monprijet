@@ -10,9 +10,8 @@
         :key="produit.id"
         class="border p-4 rounded shadow"
       >
-        <!-- Utilisation du champ 'image' -->
         <img
-          :src="produit.image"
+          :src="produit.images?.[0]"
           class="w-full h-40 object-cover rounded mb-2"
         />
 
@@ -45,20 +44,21 @@ const produits = ref([]);
 const loading = ref(true);
 
 const fetchProduits = async () => {
-  const snap = await getDocs(collection(db, "products")); // ton nom de collection
-  produits.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const snapshot = await getDocs(collection(db, "products"));
+  produits.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   loading.value = false;
 };
 
 const ajouterAuPanier = (produit) => {
-  const item = {
+  // On ajoute la première image pour le panier
+  store.commit("ADD_TO_CART", {
     id: produit.id,
     nom: produit.nom,
     prix: produit.prix,
-    image: produit.image, // <-- important
+    description: produit.description,
+    image: produit.images?.[0] || "",
     quantity: 1
-  };
-  store.commit("ADD_TO_CART", item);
+  });
   alert("Produit ajouté au panier");
 };
 
