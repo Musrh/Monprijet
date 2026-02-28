@@ -1,39 +1,92 @@
 <template>
   <div class="min-h-screen bg-gray-100">
-    <!-- Menu -->
-    <nav class="bg-gray-800 text-white p-4 flex flex-wrap items-center space-x-4">
-      <router-link to="/" class="hover:text-yellow-400">Home</router-link>
-      <router-link to="/contact" class="hover:text-yellow-400">Contact</router-link>
-      <router-link to="/produits" class="hover:text-yellow-400">Produits</router-link>
+    
+    <!-- NAVBAR -->
+    <nav class="bg-white shadow-md">
+      <div class="max-w-7xl mx-auto px-4">
+        <div class="flex justify-between items-center h-16">
 
-      <router-link v-if="isAdmin" to="/admin" class="hover:text-yellow-400">Admin</router-link>
-      <router-link v-if="!isAuthenticated" to="/login" class="hover:text-yellow-400">Login</router-link>
+          <!-- Logo / Left -->
+          <div class="flex items-center space-x-6">
+            <router-link 
+              to="/" 
+              class="text-xl font-bold text-gray-800 hover:text-blue-600 transition">
+              EasyShopping
+            </router-link>
 
-      <router-link to="/panier" class="hover:text-yellow-400">🛒 ({{ cartItemCount }})</router-link>
-      <router-link v-if="isAdmin" to="/admin-commandes" class="hover:text-yellow-400">Admin-Commandes</router-link>
+            <router-link to="/produits" class="nav-link">
+              Produits
+            </router-link>
 
-      <router-link v-if="isAdmin" to="/upload" class="hover:text-yellow-400">
-  UploadProduit
-</router-link>
+            <router-link to="/contact" class="nav-link">
+              Contact
+            </router-link>
 
-      <router-link v-if="isAdmin" to="/adminproduits" class="hover:text-yellow-400">
-  Admin-Produits
-</router-link>
-      <!-- Utilisateur connecté à droite -->
-      <span v-if="isAuthenticated" class="ml-auto flex items-center space-x-2">
-        <span>{{ userEmail }}</span>
-        <button @click="logout" class="bg-red-500 hover:bg-red-600 px-2 py-1 rounded text-white">Logout</button>
-      </span>
+            <router-link 
+              v-if="isAdmin" 
+              to="/admin" 
+              class="nav-link text-indigo-600 font-medium">
+              Admin
+            </router-link>
+          </div>
+
+          <!-- Right Section -->
+          <div class="flex items-center space-x-4">
+
+            <!-- Panier -->
+            <router-link 
+              to="/panier" 
+              class="relative nav-link">
+
+              🛒
+              <span
+                v-if="cartItemCount > 0"
+                class="absolute -top-2 -right-3 bg-red-500 text-white 
+                       text-xs px-2 py-0.5 rounded-full">
+                {{ cartItemCount }}
+              </span>
+            </router-link>
+
+            <!-- Login -->
+            <router-link
+              v-if="!isAuthenticated"
+              to="/login"
+              class="btn-primary">
+              Login
+            </router-link>
+
+            <!-- User -->
+            <div 
+              v-if="isAuthenticated"
+              class="flex items-center space-x-3">
+
+              <span class="text-sm text-gray-600 font-medium">
+                {{ userEmail }}
+              </span>
+
+              <button
+                @click="logout"
+                class="btn-danger">
+                Logout
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
     </nav>
 
-    <!-- Debug info (optionnel) -->
-    <div class="p-4 text-sm text-gray-700">
+    <!-- Debug (optionnel, plus discret) -->
+    <div class="max-w-7xl mx-auto px-4 mt-4 text-xs text-gray-400">
       <p>User: {{ $store.state.user }}</p>
       <p>isAdmin: {{ $store.getters.isAdmin }}</p>
     </div>
 
-    <!-- Vue Router -->
-    <router-view />
+    <!-- Router View -->
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <router-view />
+    </div>
+
   </div>
 </template>
 
@@ -57,3 +110,24 @@ export default {
   }
 };
 </script>
+
+<style>
+/* Liens navbar */
+.nav-link {
+  @apply text-gray-600 hover:text-blue-600 transition duration-200 font-medium;
+}
+
+/* Bouton principal */
+.btn-primary {
+  @apply px-4 py-2 bg-blue-600 text-white rounded-lg 
+         hover:bg-blue-700 transition duration-200 
+         shadow-sm hover:shadow-md;
+}
+
+/* Bouton danger */
+.btn-danger {
+  @apply px-4 py-2 bg-red-500 text-white rounded-lg 
+         hover:bg-red-600 transition duration-200 
+         shadow-sm hover:shadow-md;
+}
+</style>
