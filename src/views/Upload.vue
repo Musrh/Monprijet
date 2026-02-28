@@ -25,7 +25,7 @@
     </button>
 
     <div v-if="responseData" class="mt-4 p-2 border bg-gray-100">
-      <h3 class="font-semibold mb-2">Réponse Cloudinary + Firestore</h3>
+      <h3 class="font-semibold mb-2">Réponse Cloudinary</h3>
       <pre>{{ responseData }}</pre>
     </div>
   </div>
@@ -33,8 +33,6 @@
 
 <script>
 import { ref } from "vue";
-import { db, auth } from "../firebase"; // ton fichier firebase.js
-import { collection, addDoc } from "firebase/firestore";
 
 export default {
   setup() {
@@ -49,22 +47,17 @@ export default {
 
     const uploadProduit = async () => {
       try {
-        // Vérifie utilisateur connecté
-        if (!auth.currentUser) {
-          alert("Vous devez être connecté pour ajouter un produit");
-          return;
-        }
-
         if (!nom.value || !prix.value || !file.value) {
           alert("Remplissez tous les champs et sélectionnez une image");
           return;
         }
 
-        // 🔹 Upload vers Cloudinary (unsigned)
+        // 🔹 Upload vers Cloudinary via preset unsigned
         const formData = new FormData();
         formData.append("file", file.value);
-        formData.append("upload_preset", "VueFirebase"); // preset unsigned
-        const cloudRes = await fetch(
+        formData.append("upload_preset", "VueFirebase"); // preset Cloudinary
+
+        const res = await fetch(
           "https://api.cloudinary.com/v1_1/dla18169k/image/upload",
           {
             method: "POST",
@@ -72,35 +65,24 @@ export default {
           }
         );
 
-        const cloudData = await cloudRes.json();
+        const data = await res.json();
 
-        if (!cloudData.secure_url) {
-          alert("Erreur lors de l'upload sur Cloudinary : " + cloudData.error?.message);
+        if (!data.secure_url) {
+          alert("Erreur lors de l'upload sur Cloudinary");
           return;
         }
 
-        // 🔹 Stockage dans Firestore
-        const docRef = await addDoc(collection(db, "products"), {
-          nom: nom.value,
-          prix: prix.value,
-          image: cloudData.secure_url,
-          createdBy: auth.currentUser.uid,
-          createdAt: new Date(),
-        });
-
-        responseData.value = {
-          cloudinary: cloudData,
-          firestoreId: docRef.id,
-        };
-
-        alert("Produit ajouté avec succès !");
+        console.log("Upload Cloudinary OK :", data.secure_url);
+        responseData.value = data;
 
         // Reset champs
         nom.value = "";
         prix.value = 0;
         file.value = null;
+
+        alert("Image uploadée avec succès !");
       } catch (err) {
-        console.error("Erreur upload :", err);
+        console.error("Erreur upload Cloudinary :", err);
         alert("Erreur lors de l'upload : " + err.message);
       }
     };
