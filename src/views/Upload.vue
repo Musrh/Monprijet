@@ -1,8 +1,6 @@
 <template>
-  <div class="p-4 max-w-2xl mx-auto">
-    <h2 class="text-2xl font-bold mb-4">
-      {{ editMode ? "Modifier le produit" : "Ajouter un produit" }}
-    </h2>
+  <div class="p-4 max-w-lg mx-auto">
+    <h2 class="text-xl font-bold mb-4">Uploader un produit</h2>
 
     <div class="mb-2">
       <label class="block font-medium">Nom du produit</label>
@@ -16,153 +14,101 @@
 
     <div class="mb-2">
       <label class="block font-medium">Description</label>
-      <textarea v-model="description" class="border p-2 w-full" rows="3"></textarea>
+      <textarea v-model="description" class="border p-2 w-full"></textarea>
     </div>
 
     <div class="mb-2">
-      <label class="block font-medium">Images</label>
-      <input type="file" @change="handleFiles" multiple />
-    </div>
-
-    <div class="flex gap-2 flex-wrap mb-4">
-      <div v-for="(img, i) in images" :key="i" class="w-32 h-32 relative">
-        <img :src="img" class="w-full h-full object-cover rounded" />
-      </div>
+      <label class="block font-medium">Image</label>
+      <input type="file" @change="handleFile" />
     </div>
 
     <button
-      @click="saveProduit"
-      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
+      @click="uploadProduit"
+      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2"
     >
-      {{ editMode ? "Enregistrer les modifications" : "Ajouter le produit" }}
+      Uploader
     </button>
 
-    <div v-if="loading" class="mt-4 text-gray-600">Traitement en cours...</div>
+    <div v-if="responseData" class="mt-4 p-2 border bg-gray-100">
+      <h3 class="font-semibold mb-2">Réponse Cloudinary + Firestore</h3>
+      <pre>{{ responseData }}</pre>
+    </div>
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRoute, useRouter } from "vue-router";
+<script>
+import { ref } from "vue";
 import { db, auth } from "../firebase";
-import { collection, addDoc, doc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 
-const route = useRoute();
-const router = useRouter();
+export default {
+  setup() {
+    const nom = ref("");
+    const prix = ref(0);
+    const description = ref("");
+    const file = ref(null);
+    const responseData = ref(null);
 
-const nom = ref("");
-const prix = ref(0);
-const description = ref("");
-const images = ref([]);
-const files = ref([]);
-const editMode = ref(false);
-const productId = ref(null);
-const loading = ref(false);
+    const handleFile = (e) => {
+      file.value = e.target.files[0];
+    };
 
-// -------------------
-// Gestion fichiers
-// -------------------
-const handleFiles = (e) => {
-  files.value = Array.from(e.target.files);
-};
+    const uploadProduit = async () => {
+      try {
+        if (!auth.currentUser) {
+          alert("Vous devez être connecté pour ajouter un produit");
+          return;
+        }
+        if (!nom.value || !prix.value || !file.value || !description.value) {
+          alert("Remplissez tous les champs et sélectionnez une image");
+          return;
+        }
 
-// -------------------
-// Charger produit en mode édition
-// -------------------
-onMounted(async () => {
-  if (route.params.id) {
-    editMode.value = true;
-    productId.value = route.params.id;
-    const snap = await getDoc(doc(db, "products", productId.value));
-    if (snap.exists()) {
-      const data = snap.data();
-      nom.value = data.nom;
-      prix.value = data.prix;
-      description.value = data.description;
-      images.value = data.images || [];
-    }
-  }
-});
+        // Upload Cloudinary
+        const formData = new FormData();
+        formData.append("file", file.value);
+        formData.append("upload_preset", "VueFirebase");
 
-// -------------------
-// Upload vers Cloudinary
-// -------------------
-const uploadToCloudinary = async (file) => {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("upload_preset", "VueFirebase"); // ton preset Cloudinary
+        const cloudRes = await fetch(
+          "https://api.cloudinary.com/v1_1/dla18169k/image/upload",
+          { method: "POST", body: formData }
+        );
+        const cloudData = await cloudRes.json();
 
-  const res = await fetch(
-    "https://api.cloudinary.com/v1_1/dla18l69k/image/upload",
-    { method: "POST", body: formData }
-  );
-  const data = await res.json();
-  if (!data.secure_url) throw new Error("Erreur Cloudinary");
-  return data.secure_url;
-};
+        if (!cloudData.secure_url) {
+          alert("Erreur lors de l'upload sur Cloudinary");
+          return;
+        }
 
-// -------------------
-// Ajouter ou modifier produit
-// -------------------
-const saveProduit = async () => {
-  if (!nom.value || !prix.value) {
-    alert("Nom et prix obligatoires");
-    return;
-  }
+        // Stockage Firestore
+        const docRef = await addDoc(collection(db, "products"), {
+          nom: nom.value,
+          prix: prix.value,
+          description: description.value,
+          images: [cloudData.secure_url], // tableau d'images
+          createdBy: auth.currentUser.uid,
+          createdAt: new Date(),
+        });
 
-  if (!auth.currentUser) {
-    alert("Vous devez être connecté pour effectuer cette action");
-    return;
-  }
+        responseData.value = {
+          cloudinary: cloudData,
+          firestoreId: docRef.id,
+        };
 
-  loading.value = true;
+        // Reset formulaire
+        nom.value = "";
+        prix.value = 0;
+        description.value = "";
+        file.value = null;
 
-  try {
-    // Upload des nouvelles images
-    const uploadedUrls = [];
-    for (const f of files.value) {
-      const url = await uploadToCloudinary(f);
-      uploadedUrls.push(url);
-    }
+        alert("Produit ajouté avec succès !");
+      } catch (err) {
+        console.error("Erreur :", err);
+        alert("Erreur lors de l'upload : " + err.message);
+      }
+    };
 
-    const allImages = [...images.value, ...uploadedUrls];
-
-    if (editMode.value) {
-      // Modification existante
-      await updateDoc(doc(db, "products", productId.value), {
-        nom: nom.value,
-        prix: prix.value,
-        description: description.value,
-        images: allImages,
-        updatedAt: new Date(),
-      });
-      alert("Produit modifié avec succès !");
-    } else {
-      // Nouveau produit
-      await addDoc(collection(db, "products"), {
-        nom: nom.value,
-        prix: prix.value,
-        description: description.value,
-        images: allImages,
-        createdBy: auth.currentUser.uid,
-        createdAt: new Date(),
-      });
-      alert("Produit ajouté avec succès !");
-    }
-
-    // Reset formulaire
-    nom.value = "";
-    prix.value = 0;
-    description.value = "";
-    images.value = [];
-    files.value = [];
-
-    router.push("/adminproduits");
-  } catch (err) {
-    console.error(err);
-    alert("Erreur : " + err.message);
-  } finally {
-    loading.value = false;
-  }
+    return { nom, prix, description, file, handleFile, uploadProduit, responseData };
+  },
 };
 </script>
