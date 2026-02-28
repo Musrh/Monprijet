@@ -1,61 +1,78 @@
 <template>
-  <div class="p-4 max-w-lg mx-auto">
-    <h2 class="text-2xl font-bold mb-4">Ajouter un produit</h2>
+  <div class="p-6 max-w-2xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">
+      {{ editMode ? "Modifier Produit" : "Ajouter Produit" }}
+    </h2>
 
-    <input v-model="nom" placeholder="Nom du produit" class="border p-2 mb-2 w-full"/>
+    <input v-model="nom" placeholder="Nom" class="border p-2 mb-2 w-full"/>
+    <input v-model.number="prix" type="number" placeholder="Prix"
+           class="border p-2 mb-2 w-full"/>
 
-    <input v-model.number="prix" type="number" placeholder="Prix (€)" class="border p-2 mb-2 w-full"/>
+    <textarea v-model="description"
+              placeholder="Description"
+              class="border p-2 mb-4 w-full"></textarea>
 
-    <textarea
-      v-model="description"
-      placeholder="Description du produit"
-      class="border p-2 mb-2 w-full"
-    ></textarea>
+    <input type="file" multiple @change="handleFiles" class="mb-4"/>
 
-    <input type="file" @change="handleFile" class="mb-2"/>
-
-    <button
-      @click="uploadProduit"
-      class="bg-green-500 text-white px-4 py-2 rounded"
-      :disabled="!file || !nom || !prix"
-    >
-      Ajouter produit
-    </button>
-
-    <div v-if="imageUrl" class="mt-4">
-      <img :src="imageUrl" class="w-48 rounded shadow"/>
+    <!-- Preview images -->
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div v-for="(img, index) in images" :key="index" class="relative">
+        <img :src="img" class="w-full h-24 object-cover rounded"/>
+        <button @click="removeImage(index)"
+                class="absolute top-1 right-1 bg-red-600 text-white px-2 text-xs rounded">
+          X
+        </button>
+      </div>
     </div>
+
+    <button @click="saveProduit"
+            class="bg-green-600 text-white px-4 py-2 rounded">
+      {{ editMode ? "Mettre à jour" : "Ajouter" }}
+    </button>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
 
-const auth = getAuth();
 const db = getFirestore();
+const auth = getAuth();
+const route = useRoute();
 
 const nom = ref("");
 const prix = ref(null);
 const description = ref("");
-const file = ref(null);
-const imageUrl = ref("");
+const files = ref([]);
+const images = ref([]);
+const editMode = ref(false);
+const productId = ref(null);
 
-const handleFile = (e) => {
-  file.value = e.target.files[0];
+onMounted(async () => {
+  if (route.params.id) {
+    editMode.value = true;
+    productId.value = route.params.id;
+
+    const snap = await getDoc(doc(db, "products", productId.value));
+    const data = snap.data();
+
+    nom.value = data.nom;
+    prix.value = data.prix;
+    description.value = data.description;
+    images.value = data.images || [];
+  }
+});
+
+const handleFiles = (e) => {
+  files.value = Array.from(e.target.files);
 };
 
-const uploadProduit = async () => {
-  if (!auth.currentUser) {
-    alert("Vous devez être connecté");
-    return;
-  }
-
-  try {
-    // 🔹 Upload Cloudinary
+const uploadImages = async () => {
+  for (let file of files.value) {
     const formData = new FormData();
-    formData.append("file", file.value);
+    formData.append("file", file);
     formData.append("upload_preset", "VueFirebase");
 
     const res = await fetch(
@@ -64,30 +81,41 @@ const uploadProduit = async () => {
     );
 
     const data = await res.json();
-    imageUrl.value = data.secure_url;
+    images.value.push(data.secure_url);
+  }
+};
 
-    // 🔹 Ajouter dans Firestore (collection products)
+const saveProduit = async () => {
+  if (!auth.currentUser) return alert("Connexion requise");
+
+  await uploadImages();
+
+  if (editMode.value) {
+    await updateDoc(doc(db, "products", productId.value), {
+      nom: nom.value,
+      prix: prix.value,
+      description: description.value,
+      images: images.value
+    });
+    alert("Produit mis à jour !");
+  } else {
     await addDoc(collection(db, "products"), {
       nom: nom.value,
       prix: prix.value,
       description: description.value,
-      image: imageUrl.value,
+      images: images.value,
       createdBy: auth.currentUser.uid,
       createdAt: new Date()
     });
-
-    alert("Produit ajouté avec succès !");
-
-    // Reset
-    nom.value = "";
-    prix.value = null;
-    description.value = "";
-    file.value = null;
-    imageUrl.value = "";
-
-  } catch (error) {
-    console.error(error);
-    alert("Erreur lors de l'ajout");
+    alert("Produit ajouté !");
   }
+
+  nom.value = "";
+  prix.value = null;
+  description.value = "";
+  images.value = [];
+};
+const removeImage = (index) => {
+  images.value.splice(index, 1);
 };
 </script>
