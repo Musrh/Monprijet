@@ -1,7 +1,12 @@
 <template>
   <div class="min-h-screen bg-gray-100 p-4">
 
-    <!-- Slider Produits -->
+    <!-- Si aucun produit -->
+    <div v-if="!produits.length" class="text-center text-gray-500">
+      Chargement des produits...
+    </div>
+
+    <!-- Slider -->
     <div v-if="produits.length"
          class="relative w-full max-w-4xl mx-auto overflow-hidden rounded-xl shadow-lg h-64 mb-6">
 
@@ -12,40 +17,36 @@
              :key="p.id"
              class="w-full flex-shrink-0 relative">
 
-          <!-- 🔹 IMAGE CORRIGÉE -->
+          <!-- IMAGE -->
           <img
+            v-if="p.images"
             :src="p.images"
             :alt="p.nom"
             class="w-full h-64 object-cover rounded-xl"
           />
 
-          <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-1 rounded">
+          <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-1 rounded">
             <h2 class="font-semibold">{{ p.nom }}</h2>
             <p>{{ p.prix }} MAD</p>
           </div>
 
         </div>
+
       </div>
 
-      <!-- Boutons navigation -->
+      <!-- Navigation -->
       <button
         @click="prev"
-        class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700 transition">
+        class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">
         ‹
       </button>
 
       <button
         @click="next"
-        class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700 transition">
+        class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">
         ›
       </button>
 
-    </div>
-
-    <!-- Partie texte Home -->
-    <div class="p-6 bg-white rounded-xl shadow max-w-4xl mx-auto">
-      <h1 class="text-2xl font-bold mb-2">Bienvenue sur notre boutique</h1>
-      <p>Découvrez nos meilleurs produits disponibles dès maintenant.</p>
     </div>
 
   </div>
@@ -53,7 +54,7 @@
 
 <script>
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase"; // adapte si nécessaire
+import { db } from "@/firebase";
 
 export default {
   data() {
@@ -64,11 +65,24 @@ export default {
   },
 
   async mounted() {
-    const snapshot = await getDocs(collection(db, "products"));
-    this.produits = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    try {
+      const snapshot = await getDocs(collection(db, "products"));
+
+      this.produits = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log("Produit Firestore:", data); // 🔍 DEBUG
+
+        return {
+          id: doc.id,
+          nom: data.nom,
+          prix: data.prix,
+          images: data.images
+        };
+      });
+
+    } catch (error) {
+      console.error("Erreur Firestore :", error);
+    }
   },
 
   methods: {
