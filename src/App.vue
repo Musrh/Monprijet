@@ -10,20 +10,33 @@
           <router-link to="/contact" class="nav-link">Contact</router-link>
           <router-link to="/produits" class="nav-link">Produits</router-link>
 
-          <router-link v-if="isAdmin" to="/admin" class="nav-link">Admin</router-link>
-          <router-link v-if="isAdmin" to="/admin-commandes" class="nav-link">Admin-Commandes</router-link>
-          <router-link v-if="isAdmin" to="/upload" class="nav-link">UploadProduit</router-link>
-          <router-link v-if="isAdmin" to="/adminproduits" class="nav-link">Admin-Produits</router-link>
+          <!-- Admin Dropdown -->
+          <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
+            <button class="nav-link flex items-center gap-1 font-medium">
+              Admin
+              <svg class="w-4 h-4 opacity-60 group-hover:rotate-180 transition-transform"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+
+            <div v-if="adminDropdown"
+                 class="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+              <router-link @click="adminDropdown=false" to="/adminproduits" class="dropdown-item">Admin-Produits</router-link>
+              <router-link @click="adminDropdown=false" to="/admin-commandes" class="dropdown-item">Admin-Commandes</router-link>
+              <router-link @click="adminDropdown=false" to="/upload" class="dropdown-item">UploadProduit</router-link>
+            </div>
+          </div>
+
         </div>
 
         <!-- Right: Utilisateur / Panier -->
         <div class="flex items-center space-x-4">
-
           <router-link to="/panier" class="relative nav-link">
             🛒
-            <span
-              v-if="cartItemCount > 0"
-              class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+            <span v-if="cartItemCount > 0"
+                  class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
               {{ cartItemCount }}
             </span>
           </router-link>
@@ -37,7 +50,6 @@
               <button @click="logout" class="dropdown-item text-red-500 w-full text-left">Logout</button>
             </div>
           </div>
-
         </div>
 
       </div>
@@ -60,20 +72,17 @@ import { mapGetters } from "vuex";
 export default {
   data() {
     return {
-      dropdown: false
+      dropdown: false,
+      adminDropdown: false
     };
   },
   computed: {
-    ...mapGetters([
-      "isAuthenticated",
-      "userEmail",
-      "isAdmin",
-      "cartItemCount"
-    ])
+    ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"])
   },
   methods: {
     logout() {
       this.dropdown = false;
+      this.adminDropdown = false;
       this.$store.dispatch("logout");
       this.$router.push("/");
     }
