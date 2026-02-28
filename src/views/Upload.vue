@@ -1,77 +1,113 @@
 <template>
-  <div class="p-4 max-w-md mx-auto">
-    <h1 class="text-xl font-bold mb-4">Uploader un produit</h1>
+  <div class="p-4 max-w-lg mx-auto">
+    <h2 class="text-xl font-bold mb-4">Uploader un produit</h2>
 
-    <input type="text" v-model="nom" placeholder="Nom du produit" class="border p-2 w-full mb-2"/>
-    <input type="number" v-model.number="prix" placeholder="Prix" class="border p-2 w-full mb-2"/>
-    <input type="file" @change="onFileChange" class="border p-2 w-full mb-2"/>
+    <div class="mb-2">
+      <label class="block font-medium">Nom du produit</label>
+      <input v-model="nom" type="text" class="border p-2 w-full" />
+    </div>
 
-    <button @click="uploadImage" class="bg-blue-500 text-white px-4 py-2 rounded">
-      Ajouter Produit
+    <div class="mb-2">
+      <label class="block font-medium">Prix (€)</label>
+      <input v-model.number="prix" type="number" class="border p-2 w-full" />
+    </div>
+
+    <div class="mb-2">
+      <label class="block font-medium">Image</label>
+      <input type="file" @change="handleFile" />
+    </div>
+
+    <button
+      @click="uploadProduit"
+      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2"
+    >
+      Uploader
     </button>
 
-    <div v-if="uploadResponse" class="mt-4 p-2 border rounded bg-gray-50">
-      <h2 class="font-semibold mb-2">Réponse Cloudinary :</h2>
-      <pre class="text-xs">{{ uploadResponse }}</pre>
-      <p class="mt-2"><strong>URL publique (secure_url) :</strong> {{ uploadResponse.secure_url }}</p>
-      <img v-if="uploadResponse.secure_url" :src="uploadResponse.secure_url" class="w-40 h-40 object-cover mt-2 rounded"/>
+    <div v-if="responseData" class="mt-4 p-2 border bg-gray-100">
+      <h3 class="font-semibold mb-2">Réponse Cloudinary + Firestore</h3>
+      <pre>{{ responseData }}</pre>
     </div>
   </div>
 </template>
 
-<script setup>
+<script>
 import { ref } from "vue";
-import { db } from "../firebase";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db, auth } from "@/firebase";
+import { collection, addDoc } from "firebase/firestore";
 
-const nom = ref("");
-const prix = ref(0);
-const file = ref(null);
-const uploadResponse = ref(null);
+export default {
+  setup() {
+    const nom = ref("");
+    const prix = ref(0);
+    const file = ref(null);
+    const responseData = ref(null);
 
-const onFileChange = (e) => {
-  file.value = e.target.files[0];
-};
+    const handleFile = (e) => {
+      file.value = e.target.files[0];
+    };
 
-const uploadImage = async () => {
-  if (!nom.value || !prix.value || !file.value) {
-    alert("Veuillez remplir tous les champs et sélectionner une image.");
-    return;
-  }
+    const uploadProduit = async () => {
+      try {
+        console.log("Utilisateur connecté :", auth.currentUser);
 
-  try {
-    const formData = new FormData();
-    formData.append("file", file.value);
-    formData.append("upload_preset", "VueFirebase"); // ton preset Cloudinary
+        if (!auth.currentUser) {
+          alert("Vous devez être connecté pour ajouter un produit");
+          return;
+        }
 
-    // 🔹 Upload vers Cloudinary
-    const res = await fetch(
-      "https://api.cloudinary.com/v1_1/dla18l69k/image/upload",
-      { method: "POST", body: formData }
-    );
+        if (!nom.value || !prix.value || !file.value) {
+          alert("Remplissez tous les champs et sélectionnez une image");
+          return;
+        }
 
-    const data = await res.json();
-    uploadResponse.value = data; // sauvegarde toute la réponse
+        // 🔹 Upload vers Cloudinary
+        const formData = new FormData();
+        formData.append("file", file.value);
+        formData.append("upload_preset", "VueFirebase"); // ton preset Cloudinary
 
-    console.log("Cloudinary response:", data);
-    alert("Upload réussi ! Vérifie console ou section ci-dessous.");
+        const cloudRes = await fetch(
+          "https://api.cloudinary.com/v1_1/dla18169k/image/upload",
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+        const cloudData = await cloudRes.json();
 
-    // 🔹 Stocker dans Firestore
-    await addDoc(collection(db, "produits"), {
-      nom: nom.value,
-      prix: prix.value,
-      image: data.secure_url,
-      createdAt: serverTimestamp(),
-    });
+        if (!cloudData.secure_url) {
+          alert("Erreur lors de l'upload sur Cloudinary");
+          return;
+        }
 
-    alert("Produit ajouté dans Firestore !");
-    // Reset
-    nom.value = "";
-    prix.value = 0;
-    file.value = null;
-  } catch (err) {
-    console.error("Erreur upload:", err);
-    alert("Erreur lors de l'upload : " + err.message);
-  }
+        // 🔹 Stockage dans Firestore
+        const docRef = await addDoc(collection(db, "products"), {
+          nom: nom.value,
+          prix: prix.value,
+          image: cloudData.secure_url,
+          createdBy: auth.currentUser.uid,
+          createdAt: new Date(),
+        });
+
+        console.log("Produit ajouté dans Firestore :", docRef.id);
+        responseData.value = {
+          cloudinary: cloudData,
+          firestoreId: docRef.id,
+        };
+
+        // Reset
+        nom.value = "";
+        prix.value = 0;
+        file.value = null;
+
+        alert("Produit ajouté avec succès !");
+      } catch (err) {
+        console.error("Erreur Firestore ou Cloudinary :", err);
+        alert("Erreur lors de l'upload : " + err.message);
+      }
+    };
+
+    return { nom, prix, file, handleFile, uploadProduit, responseData };
+  },
 };
 </script>
