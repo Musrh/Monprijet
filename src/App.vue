@@ -10,7 +10,7 @@
       <router-link v-if="!isAuthenticated" to="/login" class="hover:text-yellow-400">Login</router-link>
 
       <router-link to="/panier" class="hover:text-yellow-400">🛒 ({{ cartItemCount }})</router-link>
-      <router-link v-if="isAdmin" to="/admin-commandes" class="hover:text-yellow-400">Admin Commandes</router-link>
+      <router-link v-if="isAdmin" to="/admin-commandes" class="hover:text-yellow-400">Admin-Commandes</router-link>
 
       <router-link v-if="isAdmin" to="/upload" class="hover:text-yellow-400">
   UploadProduit
