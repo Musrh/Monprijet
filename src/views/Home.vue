@@ -53,7 +53,7 @@
 
 <script>
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase"; // adapte si nécessaire
+import { db } from "../firebase"; // adapte si nécessaire
 
 export default {
   data() {
