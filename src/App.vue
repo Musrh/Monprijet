@@ -22,9 +22,7 @@
 
           <div v-if="adminDropdown"
                class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-            <!-- Page principale Admin -->
             <router-link @click="adminDropdown=false" to="/admin" class="dropdown-item">Admin (Utilisateurs)</router-link>
-            <!-- Sous-pages -->
             <router-link @click="adminDropdown=false" to="/adminproduits" class="dropdown-item">Admin-Produits</router-link>
             <router-link @click="adminDropdown=false" to="/admin-commandes" class="dropdown-item">Admin-Commandes</router-link>
             <router-link @click="adminDropdown=false" to="/upload" class="dropdown-item">UploadProduit</router-link>
@@ -79,4 +77,49 @@ export default {
       this.dropdown = false;
       this.adminDropdown = false;
       this.$store.dispatch("logout");
-      this
+      this.$router.push("/");
+    }
+  }
+};
+</script>
+
+<style>
+.hover\:text-yellow-400 {
+  transition: color 0.2s;
+}
+.hover\:text-yellow-400:hover {
+  color: #facc15;
+}
+
+.bg-red-500 {
+  background-color: #ef4444;
+}
+.bg-red-500:hover {
+  background-color: #dc2626;
+}
+
+.rounded {
+  border-radius: 0.375rem;
+}
+.text-white {
+  color: white;
+}
+.px-2 {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.cta-btn {
+  @apply px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 
+         text-white rounded-lg font-medium shadow-md 
+         hover:shadow-lg hover:scale-105 transition-all duration-200;
+}
+
+.dropdown-item {
+  @apply block px-4 py-2 text-gray-800 hover:bg-gray-100 transition text-sm;
+}
+</style>
