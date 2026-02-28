@@ -1,116 +1,121 @@
 <template>
-  <div class="p-4 max-w-lg mx-auto">
-    <h2 class="text-xl font-bold mb-4">Uploader un produit</h2>
+  <div class="p-6 max-w-2xl mx-auto">
+    <h2 class="text-2xl font-bold mb-4">
+      {{ editMode ? "Modifier Produit" : "Ajouter Produit" }}
+    </h2>
 
-    <div class="mb-2">
-      <label class="block font-medium">Nom du produit</label>
-      <input v-model="nom" type="text" class="border p-2 w-full" />
+    <input v-model="nom" placeholder="Nom" class="border p-2 mb-2 w-full"/>
+    <input v-model.number="prix" type="number" placeholder="Prix"
+           class="border p-2 mb-2 w-full"/>
+
+    <textarea v-model="description"
+              placeholder="Description"
+              class="border p-2 mb-4 w-full"></textarea>
+
+    <input type="file" multiple @change="handleFiles" class="mb-4"/>
+
+    <!-- Preview images -->
+    <div class="grid grid-cols-3 gap-3 mb-4">
+      <div v-for="(img, index) in images" :key="index" class="relative">
+        <img :src="img" class="w-full h-24 object-cover rounded"/>
+        <button @click="removeImage(index)"
+                class="absolute top-1 right-1 bg-red-600 text-white px-2 text-xs rounded">
+          X
+        </button>
+      </div>
     </div>
 
-    <div class="mb-2">
-      <label class="block font-medium">Prix (€)</label>
-      <input v-model.number="prix" type="number" class="border p-2 w-full" />
-    </div>
-
-    <div class="mb-2">
-      <label class="block font-medium">Description</label>
-      <textarea v-model="description" class="border p-2 w-full"></textarea>
-    </div>
-
-    <div class="mb-2">
-      <label class="block font-medium">Image</label>
-      <input type="file" @change="handleFile" />
-    </div>
-
-    <button
-      @click="uploadProduit"
-      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2"
-    >
-      Uploader
+    <button @click="saveProduit"
+            class="bg-green-600 text-white px-4 py-2 rounded">
+      {{ editMode ? "Mettre à jour" : "Ajouter" }}
     </button>
-
-    <div v-if="responseData" class="mt-4 p-2 border bg-gray-100">
-      <h3 class="font-semibold mb-2">Réponse Cloudinary + Firestore</h3>
-      <pre>{{ responseData }}</pre>
-    </div>
   </div>
 </template>
 
-<script>
-import { ref } from "vue";
-import { db, auth } from "../firebase";
-import { collection, addDoc } from "firebase/firestore";
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRoute } from "vue-router";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
-export default {
-  setup() {
-    const nom = ref("");
-    const prix = ref(0);
-    const description = ref("");
-    const file = ref(null);
-    const responseData = ref(null);
+const db = getFirestore();
+const auth = getAuth();
+const route = useRoute();
 
-    const handleFile = (e) => {
-      file.value = e.target.files[0];
-    };
+const nom = ref("");
+const prix = ref(null);
+const description = ref("");
+const files = ref([]);
+const images = ref([]);
+const editMode = ref(false);
+const productId = ref(null);
 
-    const uploadProduit = async () => {
-      try {
-        if (!auth.currentUser) {
-          alert("Vous devez être connecté pour ajouter un produit");
-          return;
-        }
-        if (!nom.value || !prix.value || !file.value || !description.value) {
-          alert("Remplissez tous les champs et sélectionnez une image");
-          return;
-        }
+onMounted(async () => {
+  if (route.params.id) {
+    editMode.value = true;
+    productId.value = route.params.id;
 
-        // 🔹 Upload Cloudinary unsigned
-        const formData = new FormData();
-        formData.append("file", file.value);
-        formData.append("upload_preset", "VueFirebaseUnsigned"); // <-- preset unsigned
-        formData.append("folder", "produits"); // optionnel : dossier Cloudinary
+    const snap = await getDoc(doc(db, "products", productId.value));
+    const data = snap.data();
 
-        const cloudRes = await fetch(
-          "https://api.cloudinary.com/v1_1/dla18l69k/image/upload",
-          { method: "POST", body: formData }
-        );
+    nom.value = data.nom;
+    prix.value = data.prix;
+    description.value = data.description;
+    images.value = data.images || [];
+  }
+});
 
-        const cloudData = await cloudRes.json();
+const handleFiles = (e) => {
+  files.value = Array.from(e.target.files);
+};
 
-        if (!cloudData.secure_url) {
-          alert("Erreur lors de l'upload sur Cloudinary");
-          return;
-        }
+const uploadImages = async () => {
+  for (let file of files.value) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "VueFirebase");
 
-        // 🔹 Stockage Firestore
-        const docRef = await addDoc(collection(db, "products"), {
-          nom: nom.value,
-          prix: prix.value,
-          description: description.value,
-          images: [cloudData.secure_url],
-          createdBy: auth.currentUser.uid,
-          createdAt: new Date(),
-        });
+    const res = await fetch(
+      "https://api.cloudinary.com/v1_1/dla18l69k/image/upload",
+      { method: "POST", body: formData }
+    );
 
-        responseData.value = {
-          cloudinary: cloudData,
-          firestoreId: docRef.id,
-        };
+    const data = await res.json();
+    images.value.push(data.secure_url);
+  }
+};
 
-        // Reset
-        nom.value = "";
-        prix.value = 0;
-        description.value = "";
-        file.value = null;
+const saveProduit = async () => {
+  if (!auth.currentUser) return alert("Connexion requise");
 
-        alert("Produit ajouté avec succès !");
-      } catch (err) {
-        console.error("Erreur :", err);
-        alert("Erreur lors de l'upload : " + err.message);
-      }
-    };
+  await uploadImages();
 
-    return { nom, prix, description, file, handleFile, uploadProduit, responseData };
-  },
+  if (editMode.value) {
+    await updateDoc(doc(db, "products", productId.value), {
+      nom: nom.value,
+      prix: prix.value,
+      description: description.value,
+      images: images.value
+    });
+    alert("Produit mis à jour !");
+  } else {
+    await addDoc(collection(db, "products"), {
+      nom: nom.value,
+      prix: prix.value,
+      description: description.value,
+      images: images.value,
+      createdBy: auth.currentUser.uid,
+      createdAt: new Date()
+    });
+    alert("Produit ajouté !");
+  }
+
+  nom.value = "";
+  prix.value = null;
+  description.value = "";
+  images.value = [];
+};
+const removeImage = (index) => {
+  images.value.splice(index, 1);
 };
 </script>
