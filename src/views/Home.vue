@@ -20,8 +20,10 @@ export default {
         ...doc.data()
       }));
 
-      // 🔥 Démarrer autoplay après chargement
-      this.startAutoSlide();
+      // 🔥 Démarrer autoplay UNIQUEMENT si produits existent
+      if (this.produits.length > 0) {
+        this.startAutoSlide();
+      }
 
     } catch (error) {
       console.error("Erreur Firestore :", error);
@@ -34,24 +36,29 @@ export default {
 
   methods: {
     next() {
-      this.currentIndex =
-        (this.currentIndex + 1) % this.produits.length;
+      if (this.produits.length > 0) {
+        this.currentIndex =
+          (this.currentIndex + 1) % this.produits.length;
+      }
     },
 
     prev() {
-      this.currentIndex =
-        (this.currentIndex - 1 + this.produits.length) % this.produits.length;
+      if (this.produits.length > 0) {
+        this.currentIndex =
+          (this.currentIndex - 1 + this.produits.length) % this.produits.length;
+      }
     },
 
     startAutoSlide() {
       this.intervalId = setInterval(() => {
         this.next();
-      }, 3000); // ⏱ toutes les 3 secondes
+      }, 3000);
     },
 
     stopAutoSlide() {
       if (this.intervalId) {
         clearInterval(this.intervalId);
+        this.intervalId = null;
       }
     }
   }
