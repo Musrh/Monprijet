@@ -8,6 +8,7 @@
 
     <div v-else>
       <div v-for="item in cart" :key="item.id" class="flex items-center mb-4 border-b pb-2">
+        <!-- Champ image corrigé -->
         <img :src="item.image" class="w-20 h-20 object-cover rounded mr-4" />
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
@@ -75,7 +76,7 @@ export default {
           }
         );
         const data = await response.json();
-        window.location.href = data.url; // redirection vers Stripe Checkout
+        window.location.href = data.url;
       } catch (err) {
         console.error("Erreur paiement:", err);
         alert("Erreur lors du paiement : " + err.message);
