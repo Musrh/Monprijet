@@ -13,7 +13,7 @@
       <router-link v-if="isAdmin" to="/admin-commandes" class="hover:text-yellow-400">Admin Commandes</router-link>
 
       <router-link v-if="isAdmin" to="/upload" class="hover:text-yellow-400">
-  Upload Produit
+  UploadProduit
 </router-link>
 
       <router-link v-if="isAdmin" to="/adminproduits" class="hover:text-yellow-400">
