@@ -4,7 +4,7 @@
     <nav class="bg-gray-800 text-white p-4 flex flex-wrap items-center justify-between">
 
       <!-- Left: Liens principaux -->
-      <div class="flex flex-wrap items-center space-x-4">
+      <div class="flex flex-wrap items-center space-x-2">
         <router-link to="/" class="menu-item">Home</router-link>
         <router-link to="/contact" class="menu-item">Contact</router-link>
         <router-link to="/produits" class="menu-item">Produits</router-link>
@@ -31,7 +31,7 @@
       </div>
 
       <!-- Right: User info + Logout + Panier -->
-      <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2">
 
         <!-- Panier -->
         <router-link to="/panier" class="menu-item relative">
@@ -84,9 +84,9 @@ export default {
 </script>
 
 <style>
-/* Style uniforme pour tous les items du menu (Admin inclus) */
+/* Style uniforme pour tous les items du menu */
 .menu-item {
-  @apply text-gray-100 hover:text-yellow-400 font-medium px-3 py-1 rounded transition;
+  @apply text-white bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded font-medium transition;
 }
 
 /* Dropdown Admin */
@@ -98,6 +98,8 @@ export default {
 .bg-red-500 {
   background-color: #ef4444;
 }
+
+/* Text rouge pour Logout */
 .text-red-500 {
   color: #ef4444;
 }
@@ -105,8 +107,8 @@ export default {
   color: #dc2626;
 }
 
-/* Pour les transitions */
-.hover\:text-yellow-400:hover {
-  color: #facc15;
+/* Pour la rotation du SVG */
+.transition-transform {
+  transition: transform 0.2s;
 }
 </style>
