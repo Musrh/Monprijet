@@ -30,7 +30,7 @@ const routes = [
     meta: { requiresAdmin: true },
   },
   {
-  path: "/upload",
+  path: "/upload/:id?",
   component: Upload,
   meta: { requiresAdmin: true }
 },
