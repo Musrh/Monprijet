@@ -9,6 +9,7 @@ import Contact from "./views/Contact.vue";
 import Success from "./views/Success.vue";
 import AdminCommandes from "./views/AdminCommandes.vue";
 import Upload from "./views/Upload.vue";
+import AdminProduits from "./views/Adminproduits.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -32,7 +33,12 @@ const routes = [
   path: "/upload",
   component: Upload,
   meta: { requiresAdmin: true }
-}
+},
+  {
+  path: "/adminproduits",
+  component: AdminProduits,
+  meta: { requiresAdmin: true }
+  }
  
 ];
 
