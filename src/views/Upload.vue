@@ -33,7 +33,7 @@
 
 <script>
 import { ref } from "vue";
-import { db, auth } from "@/firebase";
+import { db, auth } from "../firebase";
 import { collection, addDoc } from "firebase/firestore";
 
 export default {
