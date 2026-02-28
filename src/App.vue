@@ -12,6 +12,11 @@
       <router-link to="/panier" class="hover:text-yellow-400">🛒 ({{ cartItemCount }})</router-link>
       <router-link v-if="isAdmin" to="/admin-commandes" class="hover:text-yellow-400">Admin Commandes</router-link>
 
+      <router-link v-if="isAdmin" to="/upload" class="hover:text-yellow-400">
+  Upload Produit
+</router-link>
+
+      
       <!-- Utilisateur connecté à droite -->
       <span v-if="isAuthenticated" class="ml-auto flex items-center space-x-2">
         <span>{{ userEmail }}</span>
