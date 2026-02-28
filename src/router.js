@@ -8,6 +8,7 @@ import Login from "./views/Login.vue";
 import Contact from "./views/Contact.vue";
 import Success from "./views/Success.vue";
 import AdminCommandes from "./views/AdminCommandes.vue";
+import Upload from "./views/Upload.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -27,8 +28,12 @@ const routes = [
     component: AdminCommandes,
     meta: { requiresAdmin: true },
   },
-
-  
+  {
+  path: "/upload",
+  component: Upload,
+  meta: { requiresAdmin: true }
+}
+ 
 ];
 
 const router = createRouter({
