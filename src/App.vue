@@ -1,183 +1,70 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-gray-50">
 
     <!-- NAVBAR -->
-    <nav class="bg-white shadow-md">
-      <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-between items-center h-16">
+    <nav class="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
 
-          <!-- Logo -->
-          <router-link 
-            to="/" 
-            class="text-xl font-bold text-gray-800 hover:text-blue-600 transition">
-            EasyShopping
+        <!-- Logo -->
+        <router-link to="/" class="text-xl font-bold tracking-tight text-gray-900">
+          EasyShopping
+        </router-link>
+
+        <!-- Desktop Menu -->
+        <div class="hidden md:flex items-center space-x-6">
+
+          <router-link to="/" class="nav-link">Home</router-link>
+          <router-link to="/contact" class="nav-link">Contact</router-link>
+          <router-link to="/produits" class="nav-link">Produits</router-link>
+
+          <router-link v-if="isAdmin" to="/admin" class="nav-link">Admin</router-link>
+          <router-link v-if="isAdmin" to="/admin-commandes" class="nav-link">Admin-Commandes</router-link>
+          <router-link v-if="isAdmin" to="/upload" class="nav-link">UploadProduit</router-link>
+          <router-link v-if="isAdmin" to="/adminproduits" class="nav-link">Admin-Produits</router-link>
+
+          <router-link to="/panier" class="relative nav-link">
+            🛒
+            <span v-if="cartItemCount > 0" 
+                  class="absolute -top-2 -right-3 bg-black text-white text-xs px-2 py-0.5 rounded-full">
+              {{ cartItemCount }}
+            </span>
           </router-link>
 
-          <!-- Desktop Menu -->
-          <div class="hidden md:flex items-center space-x-6">
+          <!-- Login / User -->
+          <router-link v-if="!isAuthenticated" to="/login" class="cta-btn">
+            Login
+          </router-link>
 
-            <router-link to="/produits" class="nav-link">Produits</router-link>
-            <router-link to="/contact" class="nav-link">Contact</router-link>
+          <div v-if="isAuthenticated" class="relative"
+               @mouseenter="dropdown=true" @mouseleave="dropdown=false">
+            <button class="nav-link font-medium">{{ userEmail }}</button>
 
-            <router-link v-if="isAdmin" to="/admin" class="nav-link">
-              Admin
-            </router-link>
-
-            <!-- Panier -->
-            <router-link to="/panier" class="relative nav-link">
-              🛒
-              <span
-                v-if="cartItemCount > 0"
-                class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                {{ cartItemCount }}
-              </span>
-            </router-link>
-
-            <!-- Login -->
-            <router-link
-              v-if="!isAuthenticated"
-              to="/login"
-              class="btn-primary">
-              Login
-            </router-link>
-
-            <!-- User -->
-            <div v-if="isAuthenticated" class="flex items-center space-x-3">
-              <span class="text-sm text-gray-600">
-                {{ userEmail }}
-              </span>
-              <button @click="logout" class="btn-danger">
+            <div v-if="dropdown" 
+                 class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2">
+              <button @click="logout" class="dropdown-item text-red-500 w-full text-left">
                 Logout
               </button>
             </div>
           </div>
 
-          <!-- Hamburger Button -->
-          <button
-            @click="mobileOpen = !mobileOpen"
-            class="md:hidden text-gray-700 focus:outline-none">
-
-            <svg
-              v-if="!mobileOpen"
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-
-            <svg
-              v-else
-              class="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M6 18L18 6M6 6l12 12" />
-            </svg>
-
-          </button>
-
         </div>
+
+        <!-- Mobile Hamburger -->
+        <button @click="mobileOpen=!mobileOpen" class="md:hidden">
+          <svg v-if="!mobileOpen" class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+          <svg v-else class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+
       </div>
 
       <!-- Mobile Menu -->
-      <div v-if="mobileOpen" class="md:hidden bg-white border-t">
+      <div v-if="mobileOpen" class="md:hidden bg-white border-t border-gray-200">
+        <div class="px-6 py-6 space-y-3">
 
-        <div class="px-4 py-4 space-y-3">
-
-          <router-link @click="mobileOpen=false" to="/produits" class="mobile-link">
-            Produits
-          </router-link>
-
-          <router-link @click="mobileOpen=false" to="/contact" class="mobile-link">
-            Contact
-          </router-link>
-
-          <router-link
-            v-if="isAdmin"
-            @click="mobileOpen=false"
-            to="/admin"
-            class="mobile-link">
-            Admin
-          </router-link>
-
-          <router-link
-            @click="mobileOpen=false"
-            to="/panier"
-            class="mobile-link">
-            Panier ({{ cartItemCount }})
-          </router-link>
-
-          <router-link
-            v-if="!isAuthenticated"
-            @click="mobileOpen=false"
-            to="/login"
-            class="btn-primary w-full text-center">
-            Login
-          </router-link>
-
-          <div v-if="isAuthenticated" class="space-y-2">
-            <p class="text-sm text-gray-500">
-              {{ userEmail }}
-            </p>
-            <button
-              @click="logout"
-              class="btn-danger w-full">
-              Logout
-            </button>
-          </div>
-
-        </div>
-      </div>
-    </nav>
-
-    <router-view />
-  </div>
-</template>
-
-<script>
-import { mapGetters } from "vuex";
-
-export default {
-  data() {
-    return {
-      mobileOpen: false
-    };
-  },
-  computed: {
-    ...mapGetters([
-      "isAuthenticated",
-      "userEmail",
-      "isAdmin",
-      "cartItemCount"
-    ])
-  },
-  methods: {
-    logout() {
-      this.mobileOpen = false;
-      this.$store.dispatch("logout");
-      this.$router.push("/");
-    }
-  }
-};
-</script>
-
-<style>
-.nav-link {
-  @apply text-gray-600 hover:text-blue-600 transition font-medium;
-}
-
-.mobile-link {
-  @apply block text-gray-700 font-medium hover:text-blue-600 transition;
-}
-
-.btn-primary {
-  @apply px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition;
-}
-
-.btn-danger {
-  @apply px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition;
-}
-</style>
+          <router-link @click="mobileOpen=false" to="/" class="mobile-link">Home</router-link>
+          <router-link @click="mobileOpen=false" to="/contact" class="mobile-link">Contact</router-link>
+          <router-link @click="mobileOpen=false" to="/produits" class="mobile-link">Produits</router
