@@ -1,59 +1,62 @@
 <template>
-  <div class="max-w-6xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-8 text-center">
-      🛍️ Nos Produits
-    </h1>
+  <div class="p-4 max-w-5xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6">Nos Produits</h1>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      <div
-        v-for="produit in produits"
-        :key="produit.id"
-        class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col"
-      >
-        <!-- Image -->
+    <div v-if="loading" class="text-gray-500">Chargement des produits...</div>
+    <div v-else-if="products.length === 0" class="text-gray-500">Aucun produit trouvé.</div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div v-for="prod in products" :key="prod.id" class="border rounded p-4 bg-white shadow">
         <img
-          :src="produit.image"
-          class="rounded-xl mb-4 object-cover h-48 w-full"
+          v-if="prod.image"
+          :src="prod.image"
+          :alt="prod.nom"
+          class="w-full h-48 object-cover rounded mb-2"
         />
-
-        <!-- Infos -->
-        <h2 class="text-xl font-semibold mb-2">
-          {{ produit.nom }}
-        </h2>
-
-        <p class="text-gray-600 mb-4 flex-grow">
-          {{ produit.description }}
-        </p>
-
-        <!-- Prix + bouton -->
-        <div class="flex justify-between items-center mt-4">
-          <span class="text-lg font-bold text-green-600">
-            {{ produit.prix }} €
-          </span>
-
-          <button
-            @click="addToCart(produit)"
-            class="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
-          >
-            Ajouter
-          </button>
-        </div>
+        <h2 class="text-lg font-semibold">{{ prod.nom }}</h2>
+        <p class="text-gray-700 mb-2">{{ prod.prix }} €</p>
+        <button
+          @click="addToCart(prod)"
+          class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded"
+        >
+          Ajouter au panier
+        </button>
       </div>
     </div>
   </div>
 </template>
 
-<script>
-import { mapState } from "vuex";
+<script setup>
+import { ref, onMounted } from "vue";
+import { db } from "../firebase";
+import { collection, getDocs } from "firebase/firestore";
+import { useStore } from "vuex";
 
-export default {
-  computed: {
-    ...mapState(["produits"]) // 🔹 utilise tes produits du store
-  },
-  methods: {
-    addToCart(produit) {
-      this.$store.dispatch("addToCart", produit);
-    }
+const products = ref([]);
+const loading = ref(true);
+const store = useStore();
+
+const fetchProducts = async () => {
+  loading.value = true;
+  try {
+    const snapshot = await getDocs(collection(db, "products")); // 🔹 Nom exact de ta collection
+    products.value = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+  } catch (err) {
+    console.error("Erreur fetch products:", err);
+  } finally {
+    loading.value = false;
   }
 };
+
+const addToCart = (prod) => {
+  store.dispatch("addItem", { ...prod, quantity: 1 });
+  alert(`Produit ajouté au panier : ${prod.nom}`);
+};
+
+onMounted(() => {
+  fetchProducts();
+});
 </script>
