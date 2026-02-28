@@ -2,33 +2,40 @@
   <div class="p-4 max-w-lg mx-auto">
     <h2 class="text-xl font-bold mb-4">Uploader un produit</h2>
 
+    <!-- Nom -->
     <div class="mb-2">
       <label class="block font-medium">Nom du produit</label>
       <input v-model="nom" type="text" class="border p-2 w-full" />
     </div>
 
+    <!-- Prix -->
     <div class="mb-2">
       <label class="block font-medium">Prix (€)</label>
       <input v-model.number="prix" type="number" class="border p-2 w-full" />
     </div>
 
+    <!-- Description -->
     <div class="mb-2">
       <label class="block font-medium">Description</label>
       <textarea v-model="description" class="border p-2 w-full"></textarea>
     </div>
 
+    <!-- Images -->
     <div class="mb-2">
-      <label class="block font-medium">Image</label>
-      <input type="file" @change="handleFile" />
+      <label class="block font-medium">Images</label>
+      <input type="file" @change="handleFiles" multiple />
     </div>
 
+    <!-- Bouton Upload -->
     <button
       @click="uploadProduit"
       class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2"
+      :disabled="!nom || !prix || !description || files.length === 0"
     >
       Uploader
     </button>
 
+    <!-- Affichage réponse -->
     <div v-if="responseData" class="mt-4 p-2 border bg-gray-100">
       <h3 class="font-semibold mb-2">Réponse Cloudinary + Firestore</h3>
       <pre>{{ responseData }}</pre>
@@ -46,11 +53,11 @@ export default {
     const nom = ref("");
     const prix = ref(0);
     const description = ref("");
-    const file = ref(null);
+    const files = ref([]);
     const responseData = ref(null);
 
-    const handleFile = (e) => {
-      file.value = e.target.files[0];
+    const handleFiles = (e) => {
+      files.value = Array.from(e.target.files);
     };
 
     const uploadProduit = async () => {
@@ -59,25 +66,31 @@ export default {
           alert("Vous devez être connecté pour ajouter un produit");
           return;
         }
-        if (!nom.value || !prix.value || !file.value || !description.value) {
-          alert("Remplissez tous les champs et sélectionnez une image");
+        if (!nom.value || !prix.value || !description.value || files.value.length === 0) {
+          alert("Remplissez tous les champs et sélectionnez au moins une image");
           return;
         }
 
-        // Upload Cloudinary
-        const formData = new FormData();
-        formData.append("file", file.value);
-        formData.append("upload_preset", "VueFirebase");
+        const uploadedImages = [];
 
-        const cloudRes = await fetch(
-          "https://api.cloudinary.com/v1_1/dla18169k/image/upload",
-          { method: "POST", body: formData }
-        );
-        const cloudData = await cloudRes.json();
+        for (let file of files.value) {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", "VueFirebase"); // preset unsigned
 
-        if (!cloudData.secure_url) {
-          alert("Erreur lors de l'upload sur Cloudinary");
-          return;
+          const cloudRes = await fetch(
+            "https://api.cloudinary.com/v1_1/dla18169k/image/upload",
+            { method: "POST", body: formData }
+          );
+          const cloudData = await cloudRes.json();
+
+          if (cloudData.error) {
+            console.error("Erreur Cloudinary :", cloudData.error);
+            alert("Erreur Cloudinary : " + cloudData.error.message);
+            return;
+          }
+
+          uploadedImages.push(cloudData.secure_url);
         }
 
         // Stockage Firestore
@@ -85,21 +98,21 @@ export default {
           nom: nom.value,
           prix: prix.value,
           description: description.value,
-          images: [cloudData.secure_url], // tableau d'images
+          images: uploadedImages,
           createdBy: auth.currentUser.uid,
           createdAt: new Date(),
         });
 
         responseData.value = {
-          cloudinary: cloudData,
           firestoreId: docRef.id,
+          images: uploadedImages
         };
 
-        // Reset formulaire
+        // Reset
         nom.value = "";
         prix.value = 0;
         description.value = "";
-        file.value = null;
+        files.value = [];
 
         alert("Produit ajouté avec succès !");
       } catch (err) {
@@ -108,7 +121,7 @@ export default {
       }
     };
 
-    return { nom, prix, description, file, handleFile, uploadProduit, responseData };
+    return { nom, prix, description, files, handleFiles, uploadProduit, responseData };
   },
 };
 </script>
