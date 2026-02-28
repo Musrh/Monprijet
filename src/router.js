@@ -9,7 +9,7 @@ import Contact from "./views/Contact.vue";
 import Success from "./views/Success.vue";
 import AdminCommandes from "./views/AdminCommandes.vue";
 import Upload from "./views/Upload.vue";
-import AdminProduits from "./views/Adminproduits.vue";
+import AdminProduits from "./views/AdminProduits.vue";
 
 const routes = [
   { path: "/", component: Home },
