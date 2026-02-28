@@ -1,32 +1,20 @@
 <template>
   <div class="p-4 max-w-lg mx-auto">
-    <h2 class="text-xl font-bold mb-4">Uploader un produit</h2>
+    <h2 class="text-xl font-bold mb-4">Test Upload Cloudinary</h2>
 
-    <div class="mb-2">
-      <label class="block font-medium">Nom du produit</label>
-      <input v-model="nom" type="text" class="border p-2 w-full" />
-    </div>
-
-    <div class="mb-2">
-      <label class="block font-medium">Prix (€)</label>
-      <input v-model.number="prix" type="number" class="border p-2 w-full" />
-    </div>
-
-    <div class="mb-2">
-      <label class="block font-medium">Image</label>
-      <input type="file" @change="handleFile" />
-    </div>
-
-    <button
-      @click="uploadProduit"
-      class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mt-2"
-    >
-      Uploader
+    <input type="file" @change="handleFile" class="mb-2" />
+    <button @click="upload" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">
+      Upload
     </button>
 
     <div v-if="responseData" class="mt-4 p-2 border bg-gray-100">
       <h3 class="font-semibold mb-2">Réponse Cloudinary</h3>
       <pre>{{ responseData }}</pre>
+
+      <div v-if="responseData.secure_url" class="mt-2">
+        <p>Image Preview :</p>
+        <img :src="responseData.secure_url" class="max-w-full mt-2" />
+      </div>
     </div>
   </div>
 </template>
@@ -36,55 +24,52 @@ import { ref } from "vue";
 
 export default {
   setup() {
-    const nom = ref("");
-    const prix = ref(0);
     const file = ref(null);
     const responseData = ref(null);
 
     const handleFile = (e) => {
       file.value = e.target.files[0];
+      console.log("Fichier sélectionné :", file.value);
     };
 
-    const uploadProduit = async () => {
-      try {
-        if (!nom.value || !prix.value || !file.value) {
-          alert("Remplissez tous les champs et sélectionnez une image");
-          return;
-        }
+    const upload = async () => {
+      if (!file.value) {
+        alert("Sélectionnez un fichier avant d’uploader");
+        return;
+      }
 
-        // 🔹 Upload vers Cloudinary
+      try {
         const formData = new FormData();
         formData.append("file", file.value);
-        formData.append("upload_preset", "VueFirebase"); // ton preset Cloudinary
+        formData.append("upload_preset", "VueFirebase"); // Ton preset Cloudinary
 
-        const cloudRes = await fetch(
+        console.log("Envoi vers Cloudinary…");
+
+        const res = await fetch(
           "https://api.cloudinary.com/v1_1/dla18169k/image/upload",
           {
             method: "POST",
             body: formData,
           }
         );
-        const cloudData = await cloudRes.json();
 
-        if (!cloudData.secure_url) {
-          alert("Erreur lors de l'upload sur Cloudinary");
-          return;
+        const data = await res.json();
+        console.log("Réponse Cloudinary :", data);
+
+        responseData.value = data;
+
+        if (data.secure_url) {
+          alert("Upload réussi !");
+        } else {
+          alert("Erreur Cloudinary : vérifier le preset et Cloud Name");
         }
-
-        responseData.value = cloudData;
-
-        alert("Image uploadée avec succès !");
-        // Reset
-        nom.value = "";
-        prix.value = 0;
-        file.value = null;
       } catch (err) {
-        console.error("Erreur Cloudinary :", err);
-        alert("Erreur lors de l'upload : " + err.message);
+        console.error("Erreur upload Cloudinary :", err);
+        alert("Erreur upload : " + err.message);
       }
     };
 
-    return { nom, prix, file, handleFile, uploadProduit, responseData };
+    return { file, responseData, handleFile, upload };
   },
 };
 </script>
