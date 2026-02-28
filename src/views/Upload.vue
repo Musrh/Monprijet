@@ -25,7 +25,7 @@
     </button>
 
     <div v-if="responseData" class="mt-4 p-2 border bg-gray-100">
-      <h3 class="font-semibold mb-2">Réponse Cloudinary + Firestore</h3>
+      <h3 class="font-semibold mb-2">Réponse Cloudinary</h3>
       <pre>{{ responseData }}</pre>
     </div>
   </div>
@@ -33,8 +33,6 @@
 
 <script>
 import { ref } from "vue";
-import { db, auth } from "../firebase";
-import { collection, addDoc } from "firebase/firestore";
 
 export default {
   setup() {
@@ -49,13 +47,6 @@ export default {
 
     const uploadProduit = async () => {
       try {
-        console.log("Utilisateur connecté :", auth.currentUser);
-
-        if (!auth.currentUser) {
-          alert("Vous devez être connecté pour ajouter un produit");
-          return;
-        }
-
         if (!nom.value || !prix.value || !file.value) {
           alert("Remplissez tous les champs et sélectionnez une image");
           return;
@@ -80,29 +71,15 @@ export default {
           return;
         }
 
-        // 🔹 Stockage dans Firestore
-        const docRef = await addDoc(collection(db, "products"), {
-          nom: nom.value,
-          prix: prix.value,
-          image: cloudData.secure_url,
-          createdBy: auth.currentUser.uid,
-          createdAt: new Date(),
-        });
+        responseData.value = cloudData;
 
-        console.log("Produit ajouté dans Firestore :", docRef.id);
-        responseData.value = {
-          cloudinary: cloudData,
-          firestoreId: docRef.id,
-        };
-
+        alert("Image uploadée avec succès !");
         // Reset
         nom.value = "";
         prix.value = 0;
         file.value = null;
-
-        alert("Produit ajouté avec succès !");
       } catch (err) {
-        console.error("Erreur Firestore ou Cloudinary :", err);
+        console.error("Erreur Cloudinary :", err);
         alert("Erreur lors de l'upload : " + err.message);
       }
     };
