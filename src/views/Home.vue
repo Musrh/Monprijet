@@ -1,3 +1,23 @@
+<template>
+  <div class="p-6">
+
+    <h1 class="text-2xl font-bold mb-4">TEST PRODUITS</h1>
+
+    <div v-if="loading">Chargement...</div>
+
+    <div v-if="error" class="text-red-500">
+      Erreur : {{ error }}
+    </div>
+
+    <div v-for="p in produits" :key="p.id" class="mb-6 border p-4 rounded">
+      <p><strong>{{ p.nom }}</strong></p>
+      <p>{{ p.prix }} MAD</p>
+      <img :src="p.images" class="w-64 mt-2" />
+    </div>
+
+  </div>
+</template>
+
 <script>
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
@@ -6,8 +26,8 @@ export default {
   data() {
     return {
       produits: [],
-      currentIndex: 0,
-      intervalId: null
+      loading: true,
+      error: null
     };
   },
 
@@ -15,51 +35,18 @@ export default {
     try {
       const snapshot = await getDocs(collection(db, "products"));
 
+      console.log("Documents Firestore:", snapshot.docs.length);
+
       this.produits = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
 
-      // 🔥 Démarrer autoplay UNIQUEMENT si produits existent
-      if (this.produits.length > 0) {
-        this.startAutoSlide();
-      }
-
-    } catch (error) {
-      console.error("Erreur Firestore :", error);
-    }
-  },
-
-  beforeUnmount() {
-    this.stopAutoSlide();
-  },
-
-  methods: {
-    next() {
-      if (this.produits.length > 0) {
-        this.currentIndex =
-          (this.currentIndex + 1) % this.produits.length;
-      }
-    },
-
-    prev() {
-      if (this.produits.length > 0) {
-        this.currentIndex =
-          (this.currentIndex - 1 + this.produits.length) % this.produits.length;
-      }
-    },
-
-    startAutoSlide() {
-      this.intervalId = setInterval(() => {
-        this.next();
-      }, 3000);
-    },
-
-    stopAutoSlide() {
-      if (this.intervalId) {
-        clearInterval(this.intervalId);
-        this.intervalId = null;
-      }
+    } catch (err) {
+      console.error(err);
+      this.error = err.message;
+    } finally {
+      this.loading = false;
     }
   }
 };
