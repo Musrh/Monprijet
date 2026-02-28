@@ -10,16 +10,15 @@
         :key="produit.id"
         class="border p-4 rounded shadow"
       >
+        <!-- Utilisation du champ 'image' -->
         <img
-          :src="produit.images?.[0]"
+          :src="produit.image"
           class="w-full h-40 object-cover rounded mb-2"
         />
 
         <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
 
-        <p class="text-sm text-gray-600 mb-2">
-          {{ produit.description }}
-        </p>
+        <p class="text-sm text-gray-600 mb-2">{{ produit.description }}</p>
 
         <p class="font-semibold mb-2">{{ produit.prix }} €</p>
 
@@ -46,16 +45,20 @@ const produits = ref([]);
 const loading = ref(true);
 
 const fetchProduits = async () => {
-  const snap = await getDocs(collection(db, "products"));
-  produits.value = snap.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  }));
+  const snap = await getDocs(collection(db, "products")); // ton nom de collection
+  produits.value = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   loading.value = false;
 };
 
 const ajouterAuPanier = (produit) => {
-  store.commit("ADD_TO_CART", produit);
+  const item = {
+    id: produit.id,
+    nom: produit.nom,
+    prix: produit.prix,
+    image: produit.image, // <-- important
+    quantity: 1
+  };
+  store.commit("ADD_TO_CART", item);
   alert("Produit ajouté au panier");
 };
 
