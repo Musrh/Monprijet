@@ -1,87 +1,42 @@
 <template>
-  <div class="p-4">
-    <h2 class="text-xl font-bold mb-4">Ventes par produit</h2>
+  <div style="padding:20px">
+    <h2>Test lecture collection commandes</h2>
 
-    <!-- Liste des commandes récupérées (debug) -->
-    <div v-if="commandes.length">
-      <h3 class="font-semibold mb-2">Commandes récupérées :</h3>
-      <pre class="bg-gray-100 p-2 rounded mb-4">{{ commandes }}</pre>
-    </div>
-    <div v-else>
-      <p class="text-red-600">Aucune commande récupérée depuis Firestore.</p>
-    </div>
+    <p><strong>Nombre de documents :</strong> {{ count }}</p>
 
-    <!-- Ventes par produit -->
-    <div v-if="Object.keys(ventes).length">
-      <h3 class="font-semibold mb-2">Ventes calculées :</h3>
-      <div v-for="(qty, id) in ventes" :key="id" class="mb-2">
-        Produit ID : <strong>{{ id }}</strong> → Quantité vendue : <strong>{{ qty }}</strong>
-      </div>
-    </div>
-    <div v-else>
-      <p class="text-red-600">Aucun produit vendu pour l'instant.</p>
+    <div v-for="doc in docs" :key="doc.id" style="margin-bottom:10px;">
+      <strong>ID :</strong> {{ doc.id }}
+      <pre>{{ doc.data }}</pre>
     </div>
   </div>
 </template>
 
 <script>
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase"; // Assure-toi que c'est ton fichier firebase.js
+import { db } from "../firebase";
 
 export default {
   data() {
     return {
-      commandes: [],
-      ventes: {}
+      count: 0,
+      docs: []
     };
   },
 
   async mounted() {
-    await this.calculerVentes();
-  },
+    try {
+      const snapshot = await getDocs(collection(db, "commandes"));
 
-  methods: {
-    async calculerVentes() {
-      try {
-        const cmdSnap = await getDocs(collection(db, "commandes"));
-        const commandesData = cmdSnap.docs.map(d => d.data());
-        this.commandes = commandesData;
+      this.count = snapshot.size;
 
-        const ventesParProduit = {};
+      this.docs = snapshot.docs.map(doc => ({
+        id: doc.id,
+        data: doc.data()
+      }));
 
-        commandesData.forEach((cmd, index) => {
-          console.log(`Commande #${index + 1}:`, cmd);
-
-          // On ne compte que les commandes payées
-          if (cmd.statut !== "payé") {
-            console.log(`Commande #${index + 1} ignorée, statut =`, cmd.statut);
-            return;
-          }
-
-          if (!cmd.items || !Array.isArray(cmd.items)) {
-            console.log(`Commande #${index + 1} ignorée, items manquants ou invalides`);
-            return;
-          }
-
-          cmd.items.forEach(item => {
-            // Cherche l'ID quel que soit le nom du champ
-            const itemId = item.id || item["Document id"] || item["IdProduit"];
-            const qty = Number(item.quantity || item["Quantity"]) || 0;
-
-            console.log("Item trouvé :", item, "→ id :", itemId, "qty :", qty);
-
-            if (!itemId || qty === 0) return;
-
-            ventesParProduit[itemId] = (ventesParProduit[itemId] || 0) + qty;
-          });
-        });
-
-        this.ventes = ventesParProduit;
-        console.log("Ventes par produit calculées :", ventesParProduit);
-
-      } catch (err) {
-        console.error("Erreur lors du calcul des ventes :", err);
-      }
+      console.log("Documents trouvés :", snapshot.size);
+    } catch (error) {
+      console.error("Erreur Firestore :", error);
     }
   }
 };
