@@ -8,7 +8,7 @@
     <section v-if="produitVedette" class="mb-8">
       <h2 class="text-xl font-bold mb-4">Produit en vedette</h2>
       <div class="product-card">
-        <img :src="produitVedette.image" :alt="produitVedette.nom" class="w-64 h-64 object-cover rounded" />
+        <img :src="produitVedette.images" :alt="produitVedette.nom" class="w-64 h-64 object-cover rounded" />
         <h3 class="font-semibold">{{ produitVedette.nom }}</h3>
         <p>{{ produitVedette.prix }} €</p>
         <p>Vendu : {{ ventes[produitVedette.id] }} fois</p>
@@ -20,7 +20,7 @@
       <h2 class="text-xl font-bold mb-4">Promotions</h2>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div v-for="p in produitsPromo" :key="p.id" class="product-card">
-          <img :src="p.image" :alt="p.nom" class="w-48 h-48 object-cover rounded" />
+          <img :src="p.images" :alt="p.nom" class="w-48 h-48 object-cover rounded" />
           <h3 class="font-semibold">{{ p.nom }}</h3>
           <p><s>{{ p.prix }} €</s> {{ Math.round(p.prix * 0.5) }} €</p>
           <span class="badge bg-red-500 text-white px-2 py-1 rounded">Promo 50%</span>
@@ -51,7 +51,9 @@ export default {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach(doc => {
         const p = doc.data();
-        p.id = doc.id; // 🔹 indispensable pour correspondre aux commandes
+        p.id = doc.id;         // ID Firestore
+        // Copier images dans image pour uniformité si nécessaire
+        p.image = p.images;     
         produits.value.push(p);
 
         if (p.promo) produitsPromo.value.push(p);
