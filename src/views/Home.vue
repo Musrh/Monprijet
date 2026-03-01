@@ -1,6 +1,23 @@
 <template>
   <div class="home">
 
+    <!-- Popup au démarrage -->
+    <div
+      v-if="showPopup"
+      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    >
+      <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm">
+        <h2 class="text-xl font-bold mb-2">Bienvenue !</h2>
+        <p class="mb-4">Découvrez nos promotions et produits vedettes !</p>
+        <button
+          @click="closePopup"
+          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+
     <!-- Slider principal -->
     <SliderProducts :produits="produits" />
 
@@ -79,6 +96,10 @@ export default {
     const currentPromoIndex = ref(0);
     let promoInterval = null;
 
+    // Popup
+    const showPopup = ref(false);
+    const closePopup = () => showPopup.value = false;
+
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach(doc => {
@@ -104,6 +125,7 @@ export default {
         }
       });
 
+      // Choisir le produit le plus vendu comme vedette
       let max = 0;
       let vedetteId = null;
       for (const id in ventes.value) {
@@ -125,6 +147,9 @@ export default {
     };
 
     onMounted(async () => {
+      // Popup au démarrage
+      setTimeout(() => showPopup.value = true, 1000);
+
       await fetchProduits();
       await fetchCommandes();
       calculVentes();
@@ -136,7 +161,17 @@ export default {
       if (promoInterval) clearInterval(promoInterval);
     });
 
-    return { produits, produitsPromo, produitVedette, ventes, currentPromoIndex, nextPromo, prevPromo };
+    return {
+      produits,
+      produitsPromo,
+      produitVedette,
+      ventes,
+      currentPromoIndex,
+      nextPromo,
+      prevPromo,
+      showPopup,
+      closePopup
+    };
   }
 };
 </script>
