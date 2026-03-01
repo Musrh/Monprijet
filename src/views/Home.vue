@@ -1,6 +1,6 @@
-<template>
+    <template>
   <div class="home">
-    <!-- Slider des produits -->
+    <!-- Slider -->
     <SliderProducts :produits="produitsSlider" />
 
     <!-- Section produits vedette et promos côte à côte -->
@@ -34,4 +34,101 @@
         <p>{{ popupProduit.prix }} €</p>
         <button @click="ajouterAuPanier(popupProduit)"
                 class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-          Ajouter
+          Ajouter au panier
+        </button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, onMounted } from "vue";
+import { collection, getDocs } from "firebase/firestore";
+import { useStore } from "vuex";
+import { db } from "../firebase";
+import SliderProducts from "./SliderProducts.vue";
+
+export default {
+  components: { SliderProducts },
+  setup() {
+    const store = useStore();
+
+    const produitsSlider = ref([]);
+    const produitVedette = ref(null);
+    const produitsPromo = ref([]);
+    const ventes = ref({});
+    const commandes = ref([]);
+
+    const showPopup = ref(true);
+    const popupProduit = ref(null);
+
+    const fetchProduits = async () => {
+      const snapshot = await getDocs(collection(db, "products"));
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        p.id = doc.id;
+        produitsSlider.value.push(p);
+        if (p.promo) produitsPromo.value.push(p);
+      });
+    };
+
+    const fetchCommandes = async () => {
+      const snapshot = await getDocs(collection(db, "commandes"));
+      snapshot.forEach(doc => {
+        const cmd = doc.data();
+        commandes.value.push(cmd);
+
+        if (cmd.items && cmd.items.length) {
+          cmd.items.forEach(item => {
+            if (!ventes.value[item.id]) ventes.value[item.id] = 0;
+            ventes.value[item.id] += item.quantity;
+          });
+        }
+      });
+
+      let maxVente = 0;
+      produitsSlider.value.forEach(p => {
+        const q = ventes.value[p.id] || 0;
+        if (q > maxVente) {
+          maxVente = q;
+          produitVedette.value = p;
+        }
+      });
+
+      if (produitsPromo.value.length) popupProduit.value = produitsPromo.value[0];
+    };
+
+    const ajouterAuPanier = (produit) => {
+      store.dispatch("addToCart", { ...produit, quantity: 1 });
+      alert(`${produit.nom} ajouté au panier !`);
+      showPopup.value = false;
+    };
+
+    const closePopup = () => { showPopup.value = false; };
+
+    onMounted(async () => {
+      await fetchProduits();
+      await fetchCommandes();
+    });
+
+    return {
+      produitsSlider,
+      produitVedette,
+      produitsPromo,
+      ventes,
+      showPopup,
+      popupProduit,
+      ajouterAuPanier,
+      closePopup
+    };
+  }
+};
+</script>
+
+<style scoped>
+.home img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
+</style>      Ajouter
