@@ -2,13 +2,13 @@
   <div class="min-h-screen bg-gray-100 p-4">
 
     <!-- 1️⃣ Slider en haut -->
-    <SliderProduits :produits="produits" />
+    <SliderProducts :produits="produits" />
 
     <!-- 2️⃣ Produits en vedette -->
     <section v-if="produitsVedettes.length" class="max-w-5xl mx-auto mb-8">
       <h2 class="text-xl font-bold mb-4">Produits en vedette</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <div v-for="p in produitsVedettes" :key="p.id" class="bg-white rounded shadow p-4 relative">
+        <div v-for="p in produitsVedettes" :key="p.id" class="bg-white p-4 rounded shadow relative">
           <img :src="p.images" :alt="p.nom" class="w-full h-40 object-cover rounded mb-2" />
           <h3 class="font-semibold">{{ p.nom }}</h3>
           <p class="text-green-600 font-bold">{{ p.prix }} MAD</p>
@@ -21,7 +21,7 @@
     <section v-if="produitsPromo.length" class="max-w-5xl mx-auto mb-8">
       <h2 class="text-xl font-bold mb-4">Promotions</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <div v-for="p in produitsPromo" :key="p.id" class="bg-white rounded shadow p-4 relative">
+        <div v-for="p in produitsPromo" :key="p.id" class="bg-white p-4 rounded shadow relative">
           <img :src="p.images" :alt="p.nom" class="w-full h-40 object-cover rounded mb-2" />
           <h3 class="font-semibold">{{ p.nom }}</h3>
           <p class="text-red-600 font-bold">{{ p.prix }} MAD</p>
@@ -35,27 +35,27 @@
 
 <script>
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
-import SliderProduits from "SliderProducts.vue";
+import { db } from "../firebase";          // <-- adapter selon l'emplacement de firebase.js
+import SliderProducts from "./SliderProducts.vue"; // <- même dossier
 
 export default {
-  components: { SliderProduits },
+  components: { SliderProducts },
   data() {
     return {
-      produits: [],          // Slider en haut
-      produitsVedettes: [],  // Calculées depuis commandes
-      produitsPromo: []      // Filtrées via promo
+      produits: [],          // Slider
+      produitsVedettes: [],  // Calculées via commandes
+      produitsPromo: []      // Filtrées via champ promo
     };
   },
   async mounted() {
     try {
-      // 1️⃣ Récupérer tous les produits
+      // 🔹 1. Récupérer tous les produits
       const prodSnap = await getDocs(collection(db, "products"));
       const produits = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      this.produits = produits;                    // Slider
+      this.produits = produits;                     // Slider
       this.produitsPromo = produits.filter(p => p.promo); // Promotions
 
-      // 2️⃣ Calcul des ventes pour produits vedettes
+      // 🔹 2. Calcul des ventes pour produits vedettes
       const cmdSnap = await getDocs(collection(db, "commandes"));
       const ventesParProduit = {};
       cmdSnap.docs.forEach(doc => {
@@ -65,7 +65,7 @@ export default {
         });
       });
 
-      // 3️⃣ Sélection des produits avec le plus de ventes
+      // 🔹 3. Sélection des produits avec le plus de ventes
       const maxVentes = Math.max(...produits.map(p => ventesParProduit[p.id] || 0));
       this.produitsVedettes = produits
         .map(p => ({ ...p, ventes: ventesParProduit[p.id] || 0 }))
