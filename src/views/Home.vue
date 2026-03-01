@@ -72,9 +72,7 @@ export default {
 
   methods: {
     async chargerProduits() {
-
       try {
-
         // 🔹 1️⃣ Récupérer tous les produits
         const prodSnap = await getDocs(collection(db, "products"));
         this.produits = prodSnap.docs.map(doc => ({
@@ -83,34 +81,40 @@ export default {
         }));
 
         // 🔹 2️⃣ Promotions
-        this.produitsPromo = this.produits.filter(
-          p => p.promo === true
-        );
+        this.produitsPromo = this.produits.filter(p => p.promo === true);
 
-        // 🔹 3️⃣ Calcul des ventes depuis commandes
+        // 🔹 3️⃣ Ventes produits
         const cmdSnap = await getDocs(collection(db, "commandes"));
 
         const ventesParProduit = {};
 
         cmdSnap.docs.forEach(doc => {
           const cmd = doc.data();
-
-          // On prend seulement les commandes payées
           if (cmd.statut !== "payé") return;
-
           if (!cmd.items || !Array.isArray(cmd.items)) return;
 
           cmd.items.forEach(item => {
             if (!item.id) return;
-
             const quantity = Number(item.quantity) || 0;
-
             ventesParProduit[item.id] =
               (ventesParProduit[item.id] || 0) + quantity;
           });
         });
 
-        console.log("Ventes calculées:", ventesParProduit);
-
         // 🔹 4️⃣ Top 3 produits vendus
-        this.pro
+        this.produitsVedettes = this.produits
+          .map(p => ({
+            ...p,
+            ventes: ventesParProduit[p.id] || 0
+          }))
+          .filter(p => p.ventes > 0)
+          .sort((a, b) => b.ventes - a.ventes)
+          .slice(0, 3);
+
+      } catch (error) {
+        console.error("Erreur chargement produits:", error);
+      }
+    }
+  }
+};
+</script>
