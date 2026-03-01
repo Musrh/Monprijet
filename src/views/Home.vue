@@ -36,7 +36,7 @@
 <script>
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import SliderProduits from "./views/SliderProduits.vue";
+import SliderProduits from "./views/SliderProducts.vue";
 
 export default {
   components: { SliderProduits },
