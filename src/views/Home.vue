@@ -14,9 +14,12 @@
           :key="p.id"
           class="border rounded-xl p-3 shadow hover:shadow-lg transition"
         >
-          <img :src="p.images" class="w-full h-40 object-cover rounded-lg" />
+          <img
+            :src="p.images"
+            class="w-full h-40 object-cover rounded-lg"
+          />
           <h3 class="mt-2 font-semibold">{{ p.nom }}</h3>
-          <p>{{ p.prix }} €</p>
+          <p class="text-gray-600">{{ p.prix }} MAD</p>
           <p class="text-green-600 text-sm">
             Ventes : {{ p.ventes }}
           </p>
@@ -34,9 +37,12 @@
           :key="p.id"
           class="border rounded-xl p-3 shadow hover:shadow-lg transition"
         >
-          <img :src="p.images" class="w-full h-40 object-cover rounded-lg" />
+          <img
+            :src="p.images"
+            class="w-full h-40 object-cover rounded-lg"
+          />
           <h3 class="mt-2 font-semibold">{{ p.nom }}</h3>
-          <p class="text-red-600 font-bold">{{ p.prix }} €</p>
+          <p class="text-red-600 font-bold">{{ p.prix }} MAD</p>
         </div>
       </div>
     </section>
@@ -47,7 +53,7 @@
 <script>
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import SliderProducts from "./SliderProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
 
 export default {
   components: { SliderProducts },
@@ -76,7 +82,7 @@ export default {
 
       this.produits = produits;
 
-      // 🔹 2️⃣ Promotions
+      // 🔹 2️⃣ Filtrer promotions
       this.produitsPromo = produits.filter(p => p.promo === true);
 
       // 🔹 3️⃣ Calcul des ventes depuis commandes
@@ -87,33 +93,28 @@ export default {
       cmdSnap.docs.forEach(doc => {
         const cmd = doc.data();
 
-        if (cmd.items && Array.isArray(cmd.items)) {
-          cmd.items.forEach(item => {
+        if (!cmd.items || !Array.isArray(cmd.items)) return;
 
-            const productId = item.id; // ← correspond bien à Document ID product
-            const qty = item.quantity || 0;
+        cmd.items.forEach(item => {
+          const productId = item.id; // Document ID du produit
+          const quantity = Number(item.quantity) || 0;
 
-            ventesParProduit[productId] =
-              (ventesParProduit[productId] || 0) + qty;
-          });
-        }
+          if (!productId) return;
+
+          ventesParProduit[productId] =
+            (ventesParProduit[productId] || 0) + quantity;
+        });
       });
 
-      const ventesValues = Object.values(ventesParProduit);
-
-      if (ventesValues.length > 0) {
-        const maxVentes = Math.max(...ventesValues);
-
-        this.produitsVedettes = produits
-          .map(p => ({
-            ...p,
-            ventes: ventesParProduit[p.id] || 0
-          }))
-          .filter(p => p.ventes === maxVentes && maxVentes > 0);
-
-      } else {
-        this.produitsVedettes = [];
-      }
+      // 🔹 4️⃣ Sélection Top 3 produits vendus
+      this.produitsVedettes = produits
+        .map(p => ({
+          ...p,
+          ventes: ventesParProduit[p.id] || 0
+        }))
+        .filter(p => p.ventes > 0)
+        .sort((a, b) => b.ventes - a.ventes)
+        .slice(0, 3);
     }
   }
 };
