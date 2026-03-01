@@ -1,17 +1,17 @@
 <template>
   <div class="p-4">
 
-    <!-- Slider automatique -->
+    <!-- 🔹 Slider automatique -->
     <SliderProducts :produits="produits" />
 
-    <!-- Produits en vedette -->
+    <!-- 🔥 Produits en vedette -->
     <section v-if="produitsVedettes.length" class="mt-10">
       <h2 class="text-2xl font-bold mb-4">🔥 Produits en vedette</h2>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
           v-for="p in produitsVedettes"
-          :key="p.id"
+          :key="p.nom"
           class="border rounded-xl p-3 shadow hover:shadow-lg transition relative"
         >
           <span class="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
@@ -26,14 +26,14 @@
       </div>
     </section>
 
-    <!-- Promotions -->
+    <!-- 💰 Produits en promotion -->
     <section v-if="produitsPromo.length" class="mt-10">
       <h2 class="text-2xl font-bold mb-4">💰 Promotions</h2>
 
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div
           v-for="p in produitsPromo"
-          :key="p.id"
+          :key="p.nom"
           class="border rounded-xl p-3 shadow hover:shadow-lg transition relative"
         >
           <span class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
@@ -73,14 +73,14 @@ export default {
   methods: {
     async chargerProduits() {
       try {
-        // 🔹 Récupérer tous les produits
+        // 🔹 1️⃣ Récupérer tous les produits
         const prodSnap = await getDocs(collection(db, "products"));
         this.produits = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-        // 🔹 Filtrer les promotions
+        // 🔹 2️⃣ Promotions
         this.produitsPromo = this.produits.filter(p => p.promo === true);
 
-        // 🔹 Calculer les ventes depuis commandes
+        // 🔹 3️⃣ Calcul ventes depuis commandes (correspondance par nom)
         const cmdSnap = await getDocs(collection(db, "commandes"));
         const ventesParProduit = {};
 
@@ -90,17 +90,17 @@ export default {
           if (!cmd.items || !Array.isArray(cmd.items)) return;
 
           cmd.items.forEach(item => {
-            if (!item.id || !item.quantity) return;
+            if (!item.nom || !item.quantity) return;
             const qty = Number(item.quantity) || 0;
-            ventesParProduit[item.id] = (ventesParProduit[item.id] || 0) + qty;
+            ventesParProduit[item.nom] = (ventesParProduit[item.nom] || 0) + qty;
           });
         });
 
-        console.log("Ventes calculées par produit:", ventesParProduit);
+        console.log("Ventes calculées par nom:", ventesParProduit);
 
-        // 🔹 Top 3 produits vendus (vedettes)
+        // 🔹 4️⃣ Top 3 produits vendus
         this.produitsVedettes = this.produits
-          .map(p => ({ ...p, ventes: ventesParProduit[p.id] || 0 }))
+          .map(p => ({ ...p, ventes: ventesParProduit[p.nom] || 0 }))
           .filter(p => p.ventes > 0)
           .sort((a, b) => b.ventes - a.ventes)
           .slice(0, 3);
@@ -114,3 +114,7 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+/* Optionnel : ajuster ombre et hover pour les cartes */
+</style>
