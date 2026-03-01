@@ -1,7 +1,8 @@
 <template>
   <div class="p-4">
-    <h2 class="text-xl font-bold mb-4">Calcul des ventes par produit (Debug)</h2>
+    <h2 class="text-xl font-bold mb-4">Ventes par produit</h2>
 
+    <!-- Liste des commandes récupérées (debug) -->
     <div v-if="commandes.length">
       <h3 class="font-semibold mb-2">Commandes récupérées :</h3>
       <pre class="bg-gray-100 p-2 rounded mb-4">{{ commandes }}</pre>
@@ -10,8 +11,9 @@
       <p class="text-red-600">Aucune commande récupérée depuis Firestore.</p>
     </div>
 
+    <!-- Ventes par produit -->
     <div v-if="Object.keys(ventes).length">
-      <h3 class="font-semibold mb-2">Ventes par produit :</h3>
+      <h3 class="font-semibold mb-2">Ventes calculées :</h3>
       <div v-for="(qty, id) in ventes" :key="id" class="mb-2">
         Produit ID : <strong>{{ id }}</strong> → Quantité vendue : <strong>{{ qty }}</strong>
       </div>
@@ -24,7 +26,7 @@
 
 <script>
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase"; // Assure-toi que c'est correct
+import { db } from "../firebase"; // Assure-toi que c'est ton fichier firebase.js
 
 export default {
   data() {
@@ -41,13 +43,8 @@ export default {
   methods: {
     async calculerVentes() {
       try {
-        // 🔹 1️⃣ Récupérer toutes les commandes
         const cmdSnap = await getDocs(collection(db, "commandes"));
-        console.log("cmdSnap :", cmdSnap);
-
-        // 🔹 2️⃣ Vérifier si des commandes existent
         const commandesData = cmdSnap.docs.map(d => d.data());
-        console.log("Commandes récupérées :", commandesData);
         this.commandes = commandesData;
 
         const ventesParProduit = {};
@@ -67,9 +64,9 @@ export default {
           }
 
           cmd.items.forEach(item => {
-            // 🔹 Cherche l'ID quel que soit le nom du champ
+            // Cherche l'ID quel que soit le nom du champ
             const itemId = item.id || item["Document id"] || item["IdProduit"];
-            const qty = Number(item.quantity || item["quantity"]) || 0;
+            const qty = Number(item.quantity || item["Quantity"]) || 0;
 
             console.log("Item trouvé :", item, "→ id :", itemId, "qty :", qty);
 
