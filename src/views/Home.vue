@@ -19,9 +19,9 @@
             class="w-full h-40 object-cover rounded-lg"
           />
           <h3 class="mt-2 font-semibold">{{ p.nom }}</h3>
-          <p class="text-gray-600">{{ p.prix }} MAD</p>
-          <p class="text-green-600 text-sm">
-            Ventes : {{ p.ventes }}
+          <p class="text-gray-600">{{ p.prix }} €</p>
+          <p class="text-green-600 text-sm font-semibold">
+            {{ p.ventes }} vendus
           </p>
         </div>
       </div>
@@ -42,7 +42,7 @@
             class="w-full h-40 object-cover rounded-lg"
           />
           <h3 class="mt-2 font-semibold">{{ p.nom }}</h3>
-          <p class="text-red-600 font-bold">{{ p.prix }} MAD</p>
+          <p class="text-red-600 font-bold">{{ p.prix }} €</p>
         </div>
       </div>
     </section>
@@ -73,49 +73,44 @@ export default {
   methods: {
     async chargerProduits() {
 
-      // 🔹 1️⃣ Récupérer tous les produits
-      const prodSnap = await getDocs(collection(db, "products"));
-      const produits = prodSnap.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      try {
 
-      this.produits = produits;
+        // 🔹 1️⃣ Récupérer tous les produits
+        const prodSnap = await getDocs(collection(db, "products"));
+        this.produits = prodSnap.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
 
-      // 🔹 2️⃣ Filtrer promotions
-      this.produitsPromo = produits.filter(p => p.promo === true);
+        // 🔹 2️⃣ Promotions
+        this.produitsPromo = this.produits.filter(
+          p => p.promo === true
+        );
 
-      // 🔹 3️⃣ Calcul des ventes depuis commandes
-      const cmdSnap = await getDocs(collection(db, "commandes"));
+        // 🔹 3️⃣ Calcul des ventes depuis commandes
+        const cmdSnap = await getDocs(collection(db, "commandes"));
 
-      const ventesParProduit = {};
+        const ventesParProduit = {};
 
-      cmdSnap.docs.forEach(doc => {
-        const cmd = doc.data();
+        cmdSnap.docs.forEach(doc => {
+          const cmd = doc.data();
 
-        if (!cmd.items || !Array.isArray(cmd.items)) return;
+          // On prend seulement les commandes payées
+          if (cmd.statut !== "payé") return;
 
-        cmd.items.forEach(item => {
-          const productId = item.id; // Document ID du produit
-          const quantity = Number(item.quantity) || 0;
+          if (!cmd.items || !Array.isArray(cmd.items)) return;
 
-          if (!productId) return;
+          cmd.items.forEach(item => {
+            if (!item.id) return;
 
-          ventesParProduit[productId] =
-            (ventesParProduit[productId] || 0) + quantity;
+            const quantity = Number(item.quantity) || 0;
+
+            ventesParProduit[item.id] =
+              (ventesParProduit[item.id] || 0) + quantity;
+          });
         });
-      });
 
-      // 🔹 4️⃣ Sélection Top 3 produits vendus
-      this.produitsVedettes = produits
-        .map(p => ({
-          ...p,
-          ventes: ventesParProduit[p.id] || 0
-        }))
-        .filter(p => p.ventes > 0)
-        .sort((a, b) => b.ventes - a.ventes)
-        .slice(0, 3);
-    }
-  }
-};
-</script>
+        console.log("Ventes calculées:", ventesParProduit);
+
+        // 🔹 4️⃣ Top 3 produits vendus
+        this.pro
