@@ -1,10 +1,10 @@
 <template>
   <div class="p-4">
 
-    <!-- 🔹 Slider -->
+    <!-- Slider produits -->
     <SliderProducts :produits="produits" />
 
-    <!-- 🔥 Produits en vedette -->
+    <!-- Produits en vedette -->
     <section v-if="produitsVedettes.length" class="mt-10">
       <h2 class="text-2xl font-bold mb-4">🔥 Produits en vedette</h2>
 
@@ -27,7 +27,7 @@
       </div>
     </section>
 
-    <!-- 💰 Promotions -->
+    <!-- Promotions -->
     <section v-if="produitsPromo.length" class="mt-10">
       <h2 class="text-2xl font-bold mb-4">💰 Promotions</h2>
 
@@ -80,10 +80,10 @@ export default {
           ...doc.data()
         }));
 
-        // 🔹 2️⃣ Promotions
+        // 🔹 2️⃣ Filtrer promotions
         this.produitsPromo = this.produits.filter(p => p.promo === true);
 
-        // 🔹 3️⃣ Ventes produits
+        // 🔹 3️⃣ Calcul ventes depuis commandes
         const cmdSnap = await getDocs(collection(db, "commandes"));
 
         const ventesParProduit = {};
@@ -101,6 +101,8 @@ export default {
           });
         });
 
+        console.log("Ventes calculées:", ventesParProduit);
+
         // 🔹 4️⃣ Top 3 produits vendus
         this.produitsVedettes = this.produits
           .map(p => ({
@@ -110,6 +112,8 @@ export default {
           .filter(p => p.ventes > 0)
           .sort((a, b) => b.ventes - a.ventes)
           .slice(0, 3);
+
+        console.log("Produits vedettes:", this.produitsVedettes);
 
       } catch (error) {
         console.error("Erreur chargement produits:", error);
