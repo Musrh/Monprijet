@@ -28,44 +28,4 @@
             :style="{ transform: `translateX(-${currentPromoIndex * 100}%)` }"
           >
             <div v-for="p in produitsPromo" :key="p.id" class="w-full flex-shrink-0 p-2 text-center">
-              <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded" />
-              <h3 class="font-semibold mt-2">{{ p.nom }}</h3>
-              <p><s>{{ p.prix }} €</s> {{ Math.round(p.prix * 0.5) }} €</p>
-              <span class="badge bg-red-500 text-white px-2 py-1 rounded">Promo 50%</span>
-            </div>
-          </div>
-          <!-- flèches navigation -->
-          <button
-            @click="prevPromo"
-            class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700 transition"
-          >‹</button>
-          <button
-            @click="nextPromo"
-            class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700 transition"
-          >›</button>
-        </div>
-        <div v-else class="text-gray-500">Aucune promotion pour l'instant.</div>
-      </div>
-
-    </section>
-
-    <!-- Grande image en bas -->
-    <section class="mt-8">
-      <img 
-        src="https://via.placeholder.com/1200x400/ffffff/cccccc?text=Grande+Image" 
-        alt="Grande Image" 
-        class="w-full object-cover rounded shadow-lg" 
-      />
-    </section>
-
-  </div>
-</template>
-
-<script>
-import { ref, onMounted } from "vue";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
-import SliderProducts from "./SliderProducts.vue";
-
-export default {
-  components:
+              <img :src="p.images" :alt="p.nom" class="w-full h-
