@@ -34,44 +34,4 @@
         <p>{{ popupProduit.prix }} €</p>
         <button @click="ajouterAuPanier(popupProduit)"
                 class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-          Ajouter au panier
-        </button>
-      </div>
-    </div>
-  </div>
-</template>
-
-<script>
-import { ref, onMounted } from "vue";
-import { collection, getDocs } from "firebase/firestore";
-import { useStore } from "vuex";
-import { db } from "../firebase";
-import SliderProducts from "./SliderProducts.vue";
-
-export default {
-  components: { SliderProducts },
-  setup() {
-    const store = useStore();
-
-    const produitsSlider = ref([]);
-    const produitVedette = ref(null);
-    const produitsPromo = ref([]);
-    const ventes = ref({});
-    const commandes = ref([]);
-
-    const showPopup = ref(true);
-    const popupProduit = ref(null);
-
-    // 🔹 Récupérer tous les produits
-    const fetchProduits = async () => {
-      const snapshot = await getDocs(collection(db, "products"));
-      snapshot.forEach(doc => {
-        const p = doc.data();
-        p.id = doc.id;
-        produitsSlider.value.push(p);
-        if (p.promo) produitsPromo.value.push(p);
-      });
-    };
-
-    // 🔹 Récupérer toutes les commandes et calculer ventes
-    const fetchCommand
+          Ajouter
