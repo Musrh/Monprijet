@@ -2,7 +2,7 @@
   <div class="p-4">
     <h2 class="text-xl font-bold mb-4">Calcul des ventes par produit</h2>
 
-    <div v-if="ventes && Object.keys(ventes).length">
+    <div v-if="Object.keys(ventes).length">
       <div v-for="(qty, id) in ventes" :key="id" class="mb-2">
         Produit ID : <strong>{{ id }}</strong> → Quantité vendue : <strong>{{ qty }}</strong>
       </div>
@@ -38,13 +38,18 @@ export default {
         cmdSnap.docs.forEach(doc => {
           const cmd = doc.data();
 
+          // On ne compte que les commandes payées
           if (cmd.statut !== "payé") return;
           if (!cmd.items || !Array.isArray(cmd.items)) return;
 
           cmd.items.forEach(item => {
-            if (!item.id || !item.quantity) return;
-            const qty = Number(item.quantity) || 0;
-            ventesParProduit[item.id] = (ventesParProduit[item.id] || 0) + qty;
+            // 🔹 Cherche l'ID quel que soit le nom du champ
+            const itemId = item.id || item["Document id"] || item["IdProduit"];
+            const qty = Number(item.quantity || item["quantity"]) || 0;
+
+            if (!itemId || qty === 0) return;
+
+            ventesParProduit[itemId] = (ventesParProduit[itemId] || 0) + qty;
           });
         });
 
