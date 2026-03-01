@@ -4,7 +4,7 @@
     <!-- 🔹 Slider -->
     <SliderProducts :produits="produits" />
 
-    <!-- 🔥 Produits Vedettes -->
+    <!-- 🔥 Produits en vedette -->
     <section v-if="produitsVedettes.length" class="mt-10">
       <h2 class="text-2xl font-bold mb-4">🔥 Produits en vedette</h2>
 
@@ -14,13 +14,10 @@
           :key="p.id"
           class="border rounded-xl p-3 shadow hover:shadow-lg transition"
         >
-          <img
-            :src="p.images"
-            class="w-full h-40 object-cover rounded-lg"
-          />
+          <img :src="p.images" class="w-full h-40 object-cover rounded-lg" />
           <h3 class="mt-2 font-semibold">{{ p.nom }}</h3>
-          <p class="text-gray-600">{{ p.prix }} €</p>
-          <p class="text-sm text-green-600">
+          <p>{{ p.prix }} €</p>
+          <p class="text-green-600 text-sm">
             Ventes : {{ p.ventes }}
           </p>
         </div>
@@ -37,10 +34,7 @@
           :key="p.id"
           class="border rounded-xl p-3 shadow hover:shadow-lg transition"
         >
-          <img
-            :src="p.images"
-            class="w-full h-40 object-cover rounded-lg"
-          />
+          <img :src="p.images" class="w-full h-40 object-cover rounded-lg" />
           <h3 class="mt-2 font-semibold">{{ p.nom }}</h3>
           <p class="text-red-600 font-bold">{{ p.prix }} €</p>
         </div>
@@ -56,9 +50,7 @@ import { db } from "../firebase";
 import SliderProducts from "./SliderProducts.vue";
 
 export default {
-  components: {
-    SliderProducts
-  },
+  components: { SliderProducts },
 
   data() {
     return {
@@ -84,10 +76,10 @@ export default {
 
       this.produits = produits;
 
-      // 🔹 2️⃣ Filtrer promotions
+      // 🔹 2️⃣ Promotions
       this.produitsPromo = produits.filter(p => p.promo === true);
 
-      // 🔹 3️⃣ Calculer produits vedettes via commandes
+      // 🔹 3️⃣ Calcul des ventes depuis commandes
       const cmdSnap = await getDocs(collection(db, "commandes"));
 
       const ventesParProduit = {};
@@ -97,16 +89,16 @@ export default {
 
         if (cmd.items && Array.isArray(cmd.items)) {
           cmd.items.forEach(item => {
-            const productId = item.id;
-            if (productId && item.quantity) {
-              ventesParProduit[productId] =
-                (ventesParProduit[productId] || 0) + item.quantity;
-            }
+
+            const productId = item.id; // ← correspond bien à Document ID product
+            const qty = item.quantity || 0;
+
+            ventesParProduit[productId] =
+              (ventesParProduit[productId] || 0) + qty;
           });
         }
       });
 
-      // 🔹 4️⃣ Déterminer le max des ventes
       const ventesValues = Object.values(ventesParProduit);
 
       if (ventesValues.length > 0) {
@@ -118,8 +110,8 @@ export default {
             ventes: ventesParProduit[p.id] || 0
           }))
           .filter(p => p.ventes === maxVentes && maxVentes > 0);
+
       } else {
-        // Si aucune commande → pas de vedettes
         this.produitsVedettes = [];
       }
     }
