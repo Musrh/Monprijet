@@ -1,22 +1,32 @@
 <template>
   <div class="min-h-screen bg-gray-100 p-4">
 
-    <!-- Slider en haut -->
+    <!-- 1️⃣ Slider en haut -->
     <SliderProduits :produits="produits" />
 
-    <!-- Produits en vedette -->
+    <!-- 2️⃣ Produits en vedette -->
     <section v-if="produitsVedettes.length" class="max-w-5xl mx-auto mb-8">
       <h2 class="text-xl font-bold mb-4">Produits en vedette</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <ProduitCard v-for="p in produitsVedettes" :key="p.id" :produit="p" badge="Meilleure vente" />
+        <div v-for="p in produitsVedettes" :key="p.id" class="bg-white rounded shadow p-4 relative">
+          <img :src="p.images" :alt="p.nom" class="w-full h-40 object-cover rounded mb-2" />
+          <h3 class="font-semibold">{{ p.nom }}</h3>
+          <p class="text-green-600 font-bold">{{ p.prix }} MAD</p>
+          <span class="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 text-xs rounded">Meilleure vente</span>
+        </div>
       </div>
     </section>
 
-    <!-- Promos -->
+    <!-- 3️⃣ Promotions -->
     <section v-if="produitsPromo.length" class="max-w-5xl mx-auto mb-8">
       <h2 class="text-xl font-bold mb-4">Promotions</h2>
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        <ProduitCard v-for="p in produitsPromo" :key="p.id" :produit="p" badge="Promo" />
+        <div v-for="p in produitsPromo" :key="p.id" class="bg-white rounded shadow p-4 relative">
+          <img :src="p.images" :alt="p.nom" class="w-full h-40 object-cover rounded mb-2" />
+          <h3 class="font-semibold">{{ p.nom }}</h3>
+          <p class="text-red-600 font-bold">{{ p.prix }} MAD</p>
+          <span class="absolute top-2 left-2 bg-red-600 text-white px-2 py-1 text-xs rounded">Promo</span>
+        </div>
       </div>
     </section>
 
@@ -26,16 +36,15 @@
 <script>
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import SliderProduits from "@/components/SliderProduits.vue";
-import ProduitCard from "@/components/ProduitCard.vue";
+import SliderProduits from "../components/SliderProduits.vue";
 
 export default {
-  components: { SliderProduits, ProduitCard },
+  components: { SliderProduits },
   data() {
     return {
-      produits: [],          // Pour le slider
-      produitsVedettes: [],  // Calculées via commandes
-      produitsPromo: []
+      produits: [],          // Slider en haut
+      produitsVedettes: [],  // Calculées depuis commandes
+      produitsPromo: []      // Filtrées via promo
     };
   },
   async mounted() {
@@ -43,8 +52,8 @@ export default {
       // 1️⃣ Récupérer tous les produits
       const prodSnap = await getDocs(collection(db, "products"));
       const produits = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      this.produits = produits;        // Slider en haut
-      this.produitsPromo = produits.filter(p => p.promo); // Promos
+      this.produits = produits;                    // Slider
+      this.produitsPromo = produits.filter(p => p.promo); // Promotions
 
       // 2️⃣ Calcul des ventes pour produits vedettes
       const cmdSnap = await getDocs(collection(db, "commandes"));
@@ -56,13 +65,14 @@ export default {
         });
       });
 
+      // 3️⃣ Sélection des produits avec le plus de ventes
       const maxVentes = Math.max(...produits.map(p => ventesParProduit[p.id] || 0));
       this.produitsVedettes = produits
         .map(p => ({ ...p, ventes: ventesParProduit[p.id] || 0 }))
         .filter(p => (ventesParProduit[p.id] || 0) === maxVentes);
 
     } catch (err) {
-      console.error(err);
+      console.error("Erreur Firestore :", err);
     }
   }
 };
