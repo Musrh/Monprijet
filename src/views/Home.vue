@@ -53,7 +53,7 @@
 
 <script>
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "@/firebase";
 
 export default {
   data() {
@@ -70,11 +70,11 @@ export default {
       const produits = prodSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       // 2️⃣ Récupérer toutes les commandes
-      const ordersSnap = await getDocs(collection(db, "orders"));
+      const commandesSnap = await getDocs(collection(db, "commandes"));
       const ventesParProduit = {};
-      ordersSnap.docs.forEach(orderDoc => {
-        const order = orderDoc.data();
-        order.produits.forEach(p => {
+      commandesSnap.docs.forEach(cmdDoc => {
+        const cmd = cmdDoc.data();
+        cmd.produits.forEach(p => {
           if (!ventesParProduit[p.id]) ventesParProduit[p.id] = 0;
           ventesParProduit[p.id] += p.quantité;
         });
