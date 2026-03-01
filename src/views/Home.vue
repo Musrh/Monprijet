@@ -1,19 +1,30 @@
 <template>
   <div class="home">
 
-    <!-- Popup au démarrage -->
+    <!-- Popup au démarrage avec produit promo -->
     <div
-      v-if="showPopup"
+      v-if="showPopup && promoPourPopup"
       class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     >
-      <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm">
-        <h2 class="text-xl font-bold mb-2">Bienvenue !</h2>
-        <p class="mb-4">Découvrez nos promotions et produits vedettes !</p>
+      <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm relative">
         <button
           @click="closePopup"
-          class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          class="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        >✕</button>
+
+        <h2 class="text-xl font-bold mb-2">Promotion spéciale !</h2>
+        <img
+          :src="promoPourPopup.images"
+          :alt="promoPourPopup.nom"
+          class="w-full h-48 object-cover rounded mb-4"
+        />
+        <h3 class="font-semibold">{{ promoPourPopup.nom }}</h3>
+        <p><s>{{ promoPourPopup.prix }} €</s> {{ Math.round(promoPourPopup.prix * 0.5) }} €</p>
+        <button
+          @click="ajouterAuPanier(promoPourPopup)"
+          class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
         >
-          Fermer
+          Ajouter au panier
         </button>
       </div>
     </div>
@@ -98,7 +109,16 @@ export default {
 
     // Popup
     const showPopup = ref(false);
+    const promoPourPopup = ref(null);
     const closePopup = () => showPopup.value = false;
+
+    // Simuler panier (à remplacer par store/vuex si existant)
+    const panier = ref([]);
+    const ajouterAuPanier = (produit) => {
+      panier.value.push({ ...produit, quantity: 1 });
+      alert(`${produit.nom} ajouté au panier !`);
+      closePopup();
+    };
 
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
@@ -108,6 +128,11 @@ export default {
         produits.value.push(p);
         if (p.promo) produitsPromo.value.push(p);
       });
+
+      // Choisir un produit promo pour le popup
+      if (produitsPromo.value.length > 0) {
+        promoPourPopup.value = produitsPromo.value[0]; // ou Math.floor(Math.random()*produitsPromo.value.length)
+      }
     };
 
     const fetchCommandes = async () => {
@@ -125,7 +150,7 @@ export default {
         }
       });
 
-      // Choisir le produit le plus vendu comme vedette
+      // Produit vedette = le plus vendu
       let max = 0;
       let vedetteId = null;
       for (const id in ventes.value) {
@@ -170,7 +195,10 @@ export default {
       nextPromo,
       prevPromo,
       showPopup,
-      closePopup
+      promoPourPopup,
+      closePopup,
+      ajouterAuPanier,
+      panier
     };
   }
 };
