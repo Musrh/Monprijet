@@ -1,45 +1,59 @@
+<template>
+  <div class="p-4">
+    <h2 class="text-xl font-bold mb-4">Calcul des ventes par produit</h2>
+
+    <div v-if="ventes && Object.keys(ventes).length">
+      <div v-for="(qty, id) in ventes" :key="id" class="mb-2">
+        Produit ID : <strong>{{ id }}</strong> → Quantité vendue : <strong>{{ qty }}</strong>
+      </div>
+    </div>
+
+    <div v-else>
+      Aucun produit vendu pour l'instant.
+    </div>
+  </div>
+</template>
+
+<script>
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase"; // ton fichier firebase.js
 
-async function calculerVentesParProduit() {
-  try {
-    const cmdSnap = await getDocs(collection(db, "commandes"));
-    const ventesParProduit = {};
+export default {
+  data() {
+    return {
+      ventes: {}
+    };
+  },
 
-    cmdSnap.docs.forEach(doc => {
-      const cmd = doc.data();
+  async mounted() {
+    await this.calculerVentes();
+  },
 
-      // On ne compte que les commandes payées
-      if (cmd.statut !== "payé") return;
+  methods: {
+    async calculerVentes() {
+      try {
+        const cmdSnap = await getDocs(collection(db, "commandes"));
+        const ventesParProduit = {};
 
-      if (!cmd.items || !Array.isArray(cmd.items)) return;
+        cmdSnap.docs.forEach(doc => {
+          const cmd = doc.data();
 
-      cmd.items.forEach(item => {
-        if (!item.id || !item.quantity) return;
+          if (cmd.statut !== "payé") return;
+          if (!cmd.items || !Array.isArray(cmd.items)) return;
 
-        const qty = Number(item.quantity) || 0;
-        ventesParProduit[item.id] = (ventesParProduit[item.id] || 0) + qty;
-      });
-    });
+          cmd.items.forEach(item => {
+            if (!item.id || !item.quantity) return;
+            const qty = Number(item.quantity) || 0;
+            ventesParProduit[item.id] = (ventesParProduit[item.id] || 0) + qty;
+          });
+        });
 
-    console.log("Ventes par produit :", ventesParProduit);
-
-    return ventesParProduit;
-  } catch (err) {
-    console.error("Erreur lors du calcul des ventes :", err);
-    return {};
-  }
-}
-
-// Exemple d'utilisation
-calculerVentesParProduit().then(result => {
-  /*
-    Résultat attendu pour tes données :
-
-    {
-      "CSKwfA88jG84Grrqt7Ko": 7,
-      "11Mo4739dKeGJuDgmnMs": 10,
-      "Ot1y2v5KeDrql1cUkfH9": 3
+        this.ventes = ventesParProduit;
+        console.log("Ventes par produit :", ventesParProduit);
+      } catch (err) {
+        console.error("Erreur calcul ventes :", err);
+      }
     }
-  */
-});
+  }
+};
+</script>
