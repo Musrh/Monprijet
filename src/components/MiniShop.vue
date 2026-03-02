@@ -1,13 +1,16 @@
 <template>
-  <div class="mini-shop p-4">
+  <div class="minishop p-4">
     <h2 class="text-2xl font-bold mb-4">Mini Shop - Produits Externes</h2>
 
-    <div v-if="produitsExternes.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      <div v-for="p in produitsExternes" :key="p.id" class="border rounded shadow p-4 flex flex-col items-center">
-        <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded" />
+    <div v-if="produitsExternes.length" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div v-for="p in produitsExternes" :key="p.id" class="border rounded shadow p-2 text-center">
+        <img
+          :src="p.images ? p.images[0] : p.image"
+          :alt="p.nom"
+          class="w-full h-48 object-cover rounded"
+        />
         <h3 class="font-semibold mt-2">{{ p.nom }}</h3>
-        <p class="mt-1 text-lg font-bold">{{ p.prix }} €</p>
-        <a :href="p.url" target="_blank" class="mt-1 text-sm text-blue-600 underline">Voir sur AliExpress</a>
+        <p class="text-lg font-bold">{{ p.prix }} €</p>
         <button
           @click="ajouterAuPanier(p)"
           class="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
@@ -23,8 +26,8 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { useStore } from "vuex";
 import { collection, getDocs } from "firebase/firestore";
+import { useStore } from "vuex";
 import { db } from "../firebase";
 
 export default {
@@ -35,33 +38,45 @@ export default {
 
     // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
+      console.log("Ajout au panier:", produit);
       store.dispatch("addToCart", {
-        ...produit,
-        image: produit.images,
-        quantity: 1
+        id: produit.id,
+        nom: produit.nom,
+        prix: produit.prix,
+        image: produit.images ? produit.images[0] : produit.image,
+        quantity: 1,
       });
     };
 
-    // 🔹 Charger produits externes depuis Firestore
+    // 🔹 Récupérer les produits externes depuis Firestore
     const fetchProduitsExternes = async () => {
-      const snapshot = await getDocs(collection(db, "ProductsExternes"));
-      produitsExternes.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      try {
+        const snapshot = await getDocs(collection(db, "ProductsExternes"));
+        produitsExternes.value = [];
+        snapshot.forEach((doc) => {
+          produitsExternes.value.push({ id: doc.id, ...doc.data() });
+        });
+      } catch (error) {
+        console.error("Erreur récupération produits externes:", error);
+      }
     };
 
-    onMounted(async () => {
-      await fetchProduitsExternes();
+    onMounted(() => {
+      fetchProduitsExternes();
     });
 
     return {
       produitsExternes,
-      ajouterAuPanier
+      ajouterAuPanier,
     };
-  }
+  },
 };
 </script>
 
 <style scoped>
-.mini-shop img {
+.minishop img {
   display: block;
+  width: 100%;
+  object-fit: cover;
 }
 </style>
