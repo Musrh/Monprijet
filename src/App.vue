@@ -1,8 +1,7 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen">
     <!-- Menu -->
     <nav class="bg-gray-800 p-4 flex flex-wrap items-center justify-between">
-
       <!-- Left: Liens principaux -->
       <div class="flex flex-wrap items-center space-x-2">
         <router-link to="/" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition">
@@ -33,9 +32,8 @@
         </div>
       </div>
 
-      <!-- Right: Panier + Login / Logout + User -->
+      <!-- Right: Panier + Login / Logout + User + ThemeSwitcher -->
       <div class="flex items-center space-x-2">
-
         <!-- Panier -->
         <router-link to="/panier" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition relative">
           🛒
@@ -49,10 +47,8 @@
           Login
         </router-link>
 
-<!-- ThemeSwitcher -->
-      <ThemeSwitcher />
-    
-        
+        <!-- ThemeSwitcher -->
+        <ThemeSwitcher />
 
         <!-- Logout + User visible -->
         <template v-if="isAuthenticated">
@@ -69,17 +65,12 @@
 
 <script>
 import { mapGetters } from "vuex";
-
 import ThemeSwitcher from './components/ThemeSwitcher.vue';
 
 export default {
-  
   components: { ThemeSwitcher },
-
   data() {
-    return {
-      adminDropdown: false
-    };
+    return { adminDropdown: false };
   },
   computed: {
     ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"])
