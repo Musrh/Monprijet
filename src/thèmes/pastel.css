@@ -1,0 +1,27 @@
+/* src/themes/pastel.css */
+[data-theme="pastel"] {
+  --bg-color: #fef9f9;      /* fond très clair */
+  --text-color: #4b5563;    /* texte gris foncé */
+  --primary-color: #a3bffa; /* bleu pastel */
+  --secondary-color: #fbcfe8; /* rose pastel */
+  --accent-color: #fcd34d;  /* jaune doux */
+}
+
+/* Appliquer les variables CSS */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+button {
+  background-color: var(--primary-color);
+  color: var(--text-color);
+}
+
+header, footer {
+  background-color: var(--secondary-color);
+}
+
+a {
+  color: var(--accent-color);
+}
