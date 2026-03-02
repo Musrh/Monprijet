@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="home">b
 
     <!-- Slider principal -->
     <SliderProducts :produits="produits" />
