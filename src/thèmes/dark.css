@@ -1,6 +1,16 @@
-/* dark.css */
+/* src/themes/dark.css */
 [data-theme="dark"] {
   --bg-color: #1f2937;
   --text-color: #f3f4f6;
   --primary-color: #22c55e;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+button {
+  background-color: var(--primary-color);
+  color: var(--text-color);
 }
