@@ -1,6 +1,6 @@
 <template>
-  <div class="relative" ref="dropdownRef">
-    <!-- Bouton pour ouvrir la liste -->
+  <div class="relative inline-block text-left" ref="dropdownRef">
+    <!-- Bouton pour ouvrir le menu -->
     <button
       @click="toggleDropdown"
       class="bg-gray-700 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-gray-600 transition"
@@ -13,8 +13,7 @@
         viewBox="0 0 24 24"
       >
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M19 9l-7 7-7-7">
-        </path>
+          d="M19 9l-7 7-7-7" />
       </svg>
     </button>
 
@@ -40,8 +39,8 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 
 export default {
   setup() {
-    const themes = ["dark", "pastel"]; 
-    const currentTheme = ref("dark"); 
+    const themes = ["dark", "pastel"];
+    const currentTheme = ref("dark");
     const isOpen = ref(false);
     const dropdownRef = ref(null);
 
