@@ -1,5 +1,76 @@
-:root[data-theme="dark"] {
-  --bg-color: #1a1a1a;
-  --text-color: #ffffff;
-  --primary-color: #4ade80; /* vert Tailwind similaire */
+/* 🌙 Thème Dark Moderne */
+[data-theme="dark"] {
+  --bg-color: #121212;
+  --card-bg: #1e1e1e;
+  --nav-bg: #1a1a1a;
+  --text-color: #f1f1f1;
+  --muted-text: #b0b0b0;
+  --primary-color: #4ade80;
+  --primary-hover: #22c55e;
+  --danger-color: #ef4444;
+}
+
+/* 🌙 Fond général */
+[data-theme="dark"] body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* 🌙 Navigation */
+[data-theme="dark"] nav {
+  background-color: var(--nav-bg) !important;
+}
+
+/* 🌙 Cartes / Sections */
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] .card {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* 🌙 Boutons principaux */
+[data-theme="dark"] button,
+[data-theme="dark"] .btn {
+  background-color: var(--primary-color);
+  color: black;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: 0.3s;
+  border: none;
+}
+
+[data-theme="dark"] button:hover,
+[data-theme="dark"] .btn:hover {
+  background-color: var(--primary-hover);
+}
+
+/* 🌙 Bouton danger (Logout etc.) */
+[data-theme="dark"] .bg-red-500,
+[data-theme="dark"] .btn-danger {
+  background-color: var(--danger-color) !important;
+  color: white;
+}
+
+/* 🌙 Liens */
+[data-theme="dark"] a {
+  color: var(--primary-color);
+}
+
+/* 🌙 Texte secondaire */
+[data-theme="dark"] .text-gray-600,
+[data-theme="dark"] .text-gray-700 {
+  color: var(--muted-text) !important;
+}
+
+/* 🌙 Inputs */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: #2a2a2a;
+  color: white;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 6px 10px;
 }
