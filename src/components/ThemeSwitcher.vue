@@ -1,58 +1,64 @@
 <template>
-  <div class="relative inline-block" ref="dropdownRef">
-    <button @click="toggleDropdown" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition flex items-center gap-1">
-      Thème
-      <svg class="w-4 h-4 opacity-60 transition-transform" :class="{'rotate-180': dropdownOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+  <div class="relative" @click.outside="isOpen = false">
+    <!-- Bouton pour ouvrir la liste -->
+    <button
+      @click="toggleDropdown"
+      class="bg-gray-700 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-gray-600 transition"
+    >
+      Thème : {{ currentTheme }}
+      <svg
+        class="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M19 9l-7 7-7-7">
+        </path>
       </svg>
     </button>
 
-    <div v-if="dropdownOpen" class="absolute right-0 mt-2 w-36 bg-white text-gray-800 rounded shadow-lg border border-gray-200 z-50">
-      <button @click="setTheme('pastel')" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Pastel</button>
-      <button @click="setTheme('dark')" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Dark</button>
-    </div>
+    <!-- Liste déroulante -->
+    <ul
+      v-if="isOpen"
+      class="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-50"
+    >
+      <li
+        v-for="theme in themes"
+        :key="theme"
+        @click="setTheme(theme)"
+        class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+      >
+        {{ theme }}
+      </li>
+    </ul>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref } from "vue";
 
 export default {
   setup() {
-    const dropdownOpen = ref(false);
-    const dropdownRef = ref(null);
+    const themes = ["dark", "pastel"]; // Noms correspondant à /themes/dark.css etc.
+    const currentTheme = ref("dark");  // Thème par défaut
+    const isOpen = ref(false);
 
     const toggleDropdown = () => {
-      dropdownOpen.value = !dropdownOpen.value;
+      isOpen.value = !isOpen.value;
     };
 
     const setTheme = (theme) => {
-      document.documentElement.setAttribute('data-theme', theme);
-      dropdownOpen.value = false; // fermer après choix
+      currentTheme.value = theme;
+      document.documentElement.setAttribute("data-theme", theme);
+      isOpen.value = false; // fermer le menu après sélection
     };
 
-    const handleClickOutside = (event) => {
-      if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
-        dropdownOpen.value = false;
-      }
-    };
-
-    onMounted(() => {
-      document.addEventListener('click', handleClickOutside);
-    });
-
-    onBeforeUnmount(() => {
-      document.removeEventListener('click', handleClickOutside);
-    });
-
-    return { dropdownOpen, toggleDropdown, setTheme, dropdownRef };
+    return { themes, currentTheme, isOpen, toggleDropdown, setTheme };
   }
 };
 </script>
 
 <style scoped>
-/* Optionnel : petite transition */
-div[ref="dropdownRef"] div {
-  transition: all 0.2s ease-in-out;
-}
+/* click.outside nécessite une directive ou plugin */
 </style>
