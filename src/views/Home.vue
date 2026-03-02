@@ -69,15 +69,6 @@
 
     </section>
 
-    <!-- Grande image en bas -->
-    <section class="mt-8">
-      <img
-        src="https://via.placeholder.com/1200x400/ffffff/cccccc?text=Grande+Image"
-        alt="Grande Image"
-        class="w-full object-cover rounded shadow-lg"
-      />
-    </section>
-
   </div>
 </template>
 
@@ -100,18 +91,17 @@ export default {
     const currentPromoIndex = ref(0);
     let promoInterval = null;
 
-    // 🔹 Récupération produits
+    // 🔹 Récupérer les produits
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach((doc) => {
-        const data = doc.data();
-        const produit = { id: doc.id, ...data };
-        produitsSlider.value.push(produit);
-        if (produit.promo) produitsPromo.value.push(produit);
+        const p = { id: doc.id, ...doc.data() };
+        produitsSlider.value.push(p);
+        if (p.promo) produitsPromo.value.push(p);
       });
     };
 
-    // 🔹 Récupération commandes pour calcul ventes
+    // 🔹 Récupérer les commandes pour calculer ventes et produit vedette
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach((doc) => {
@@ -122,7 +112,7 @@ export default {
         });
       });
 
-      // Déterminer produit vedette = le plus vendu
+      // Produit vedette = plus vendu
       let max = 0;
       produitsSlider.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
@@ -133,12 +123,12 @@ export default {
       });
     };
 
-    // 🔹 Ajouter au panier
+    // 🔹 Ajouter au panier (image correcte)
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
         ...produit,
         image: produit.images,
-        quantity: 1
+        quantity: 1,
       });
       alert(`${produit.nom} ajouté au panier !`);
     };
@@ -146,7 +136,8 @@ export default {
     // 🔹 Slider promos automatique
     const nextPromo = () => {
       if (produitsPromo.value.length)
-        currentPromoIndex.value = (currentPromoIndex.value + 1) % produitsPromo.value.length;
+        currentPromoIndex.value =
+          (currentPromoIndex.value + 1) % produitsPromo.value.length;
     };
     const prevPromo = () => {
       if (produitsPromo.value.length)
@@ -158,6 +149,7 @@ export default {
       await fetchProduits();
       await fetchCommandes();
 
+      // ✅ slider automatique toutes les 3 secondes
       if (produitsPromo.value.length > 1) {
         promoInterval = setInterval(nextPromo, 3000);
       }
@@ -175,9 +167,9 @@ export default {
       currentPromoIndex,
       nextPromo,
       prevPromo,
-      ajouterAuPanier
+      ajouterAuPanier,
     };
-  }
+  },
 };
 </script>
 
