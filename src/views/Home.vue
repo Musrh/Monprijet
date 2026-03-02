@@ -4,7 +4,7 @@
     <!-- Slider principal -->
     <SliderProducts :produits="produits" />
 
-    <!-- Section produit promos -->
+    <!-- Section produits en promotion -->
     <section class="mt-8">
       <h2 class="text-xl font-bold mb-4">Promotions</h2>
       <div v-if="produitsPromo.length" class="grid grid-cols-1 md:grid-cols-3 gap-4">
