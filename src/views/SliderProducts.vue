@@ -1,53 +1,114 @@
 <template>
-  <div v-if="produits.length" class="relative w-full max-w-5xl mx-auto overflow-hidden rounded-xl shadow-lg h-64 mb-8">
-    <div class="flex transition-transform duration-500" :style="{ transform: `translateX(-${currentIndex * 100}%)` }">
-      <div v-for="p in produits" :key="p.id" class="w-full flex-shrink-0 relative">
-        <img :src="p.images" :alt="p.nom" class="w-full h-64 object-cover rounded-xl" />
-        <div class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black bg-opacity-50 text-white px-4 py-1 rounded">
-          <h2 class="font-semibold">{{ p.nom }}</h2>
-          <p>{{ p.prix }} MAD</p>
-        </div>
+  <div class="slider-container relative w-full overflow-hidden">
+    <div
+      class="slider-track flex transition-transform duration-500"
+      :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
+    >
+      <div
+        v-for="produit in produits"
+        :key="produit.id"
+        class="slider-item w-full flex-shrink-0 p-2 text-center"
+      >
+        <img
+          :src="produit.images"
+          :alt="produit.nom"
+          class="w-full h-48 object-cover rounded"
+        />
+        <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
+        <p>{{ produit.prix }} €</p>
       </div>
     </div>
-    <button @click="prev" class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700 transition">‹</button>
-    <button @click="next" class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700 transition">›</button>
+
+    <!-- Flèches manuelles -->
+    <button
+      @click="prev"
+      class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
+    >
+      ‹
+    </button>
+    <button
+      @click="next"
+      class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
+    >
+      ›
+    </button>
   </div>
 </template>
 
 <script>
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+
 export default {
-  name: "SliderProduits",
+  name: "SliderProducts",
   props: {
     produits: {
       type: Array,
-      required: true
-    }
-  },
-  data() {
-    return {
-      currentIndex: 0,
-      intervalId: null
-    };
-  },
-  mounted() {
-    if (this.produits.length > 1) {
-      this.intervalId = setInterval(() => {
-        this.currentIndex = (this.currentIndex + 1) % this.produits.length;
-      }, 3000);
-    }
-  },
-  beforeUnmount() {
-    if (this.intervalId) clearInterval(this.intervalId);
-  },
-  methods: {
-    next() {
-      if (this.produits.length > 0)
-        this.currentIndex = (this.currentIndex + 1) % this.produits.length;
+      required: true,
+      default: () => [],
     },
-    prev() {
-      if (this.produits.length > 0)
-        this.currentIndex = (this.currentIndex - 1 + this.produits.length) % this.produits.length;
-    }
-  }
+    auto: {
+      type: Boolean,
+      default: true,
+    },
+    interval: {
+      type: Number,
+      default: 3000, // 3 secondes par défaut
+    },
+  },
+  setup(props) {
+    const currentIndex = ref(0);
+    let timer = null;
+
+    const next = () => {
+      if (props.produits.length === 0) return;
+      currentIndex.value = (currentIndex.value + 1) % props.produits.length;
+    };
+
+    const prev = () => {
+      if (props.produits.length === 0) return;
+      currentIndex.value =
+        (currentIndex.value - 1 + props.produits.length) % props.produits.length;
+    };
+
+    onMounted(() => {
+      if (props.auto) {
+        timer = setInterval(next, props.interval);
+      }
+    });
+
+    onBeforeUnmount(() => {
+      if (timer) clearInterval(timer);
+    });
+
+    // Redémarrer le timer si l'utilisateur change le tableau de produits
+    watch(
+      () => props.produits,
+      () => {
+        currentIndex.value = 0;
+      }
+    );
+
+    return { currentIndex, next, prev };
+  },
 };
 </script>
+
+<style scoped>
+.slider-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.slider-track {
+  display: flex;
+  width: 100%;
+}
+
+.slider-item img {
+  transition: transform 0.3s;
+}
+
+.slider-item img:hover {
+  transform: scale(1.05);
+}
+</style>
