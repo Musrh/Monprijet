@@ -1,5 +1,50 @@
-:root[data-theme="pastel"] {
-  --bg-color: #fef6e4;
-  --text-color: #333333;
-  --primary-color: #f472b6; /* rose pastel */
+/* 🎨 Thème Pastel */
+[data-theme="pastel"] {
+  --bg-color: #fdf6f9;
+  --card-bg: #ffffff;
+  --text-color: #5c5470;
+  --primary-color: #a3c4f3;
+  --primary-hover: #90b8ec;
+  --danger-color: #ffadad;
+}
+
+/* 🌸 Arrière-plan général */
+[data-theme="pastel"] body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+/* 🌸 Cartes / sections */
+[data-theme="pastel"] .card,
+[data-theme="pastel"] .bg-white {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+/* 🌸 Boutons principaux */
+[data-theme="pastel"] button,
+[data-theme="pastel"] .btn {
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  transition: 0.3s;
+}
+
+/* Hover bouton */
+[data-theme="pastel"] button:hover,
+[data-theme="pastel"] .btn:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Bouton danger */
+[data-theme="pastel"] .btn-danger {
+  background-color: var(--danger-color);
+}
+
+/* Liens */
+[data-theme="pastel"] a {
+  color: var(--primary-color);
 }
