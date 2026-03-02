@@ -5,6 +5,10 @@ import store from "./store";
 // CSS global thème
 import "./style.css";
 
+// Import du thème
+import './themes/dark.css';
+import './themes/pastel.css';
+
 const app = createApp(App);
 
 // 🔥 Important : initialise Vuex et le router
