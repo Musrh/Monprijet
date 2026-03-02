@@ -1,0 +1,5 @@
+:root[data-theme="dark"] {
+  --bg-color: #1a1a1a;
+  --text-color: #ffffff;
+  --primary-color: #4ade80; /* vert Tailwind similaire */
+}
