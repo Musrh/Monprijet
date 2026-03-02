@@ -1,11 +1,10 @@
-
 <template>
   <div class="home">
 
     <!-- 🔹 Slider principal -->
     <SliderProducts :produits="produitsSlider" />
 
-    <!-- 🔹 Section produit vedette + promotions -->
+    <!-- 🔹 Section produit vedette + promos -->
     <section class="flex flex-col md:flex-row gap-8 mt-8">
 
       <!-- Produit vedette -->
@@ -44,15 +43,12 @@
               <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded mb-2" />
               <h3 class="font-semibold">{{ p.nom }}</h3>
               <p><s>{{ p.prix }} €</s> {{ Math.round(p.prix * 0.5) }} €</p>
-
-              <!-- Bouton Ajouter identique à vedette -->
               <button
                 @click="ajouterAuPanier(p)"
                 class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
               >
                 Ajouter au panier
               </button>
-
               <span class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded">-50%</span>
             </div>
           </div>
@@ -141,7 +137,7 @@ export default {
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
         ...produit,
-        image: produit.images, // assure l'image pour Panier.vue
+        image: produit.images,
         quantity: 1
       });
       alert(`${produit.nom} ajouté au panier !`);
@@ -162,7 +158,6 @@ export default {
       await fetchProduits();
       await fetchCommandes();
 
-      // Défilement automatique du slider promos
       if (produitsPromo.value.length > 1) {
         promoInterval = setInterval(nextPromo, 3000);
       }
