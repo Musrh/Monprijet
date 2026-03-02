@@ -1,7 +1,7 @@
 <template>
   <div class="home">
 
-    <!-- Popup au démarrage avec produit promo -->
+    <!-- Popup promo -->
     <div
       v-if="showPopup && promoPourPopup"
       class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -29,13 +29,11 @@
       </div>
     </div>
 
-    <!-- Slider principal -->
+    <!-- Slider -->
     <SliderProducts :produits="produits" />
 
-    <!-- Section produit vedette + promos -->
+    <!-- Vedette + Promos -->
     <section class="flex flex-col md:flex-row gap-8 mt-8">
-
-      <!-- Produit vedette -->
       <div class="featured w-full md:w-1/2">
         <h2 class="text-xl font-bold mb-4">Produit en vedette</h2>
         <div v-if="produitVedette" class="border p-4 rounded shadow text-center">
@@ -43,11 +41,16 @@
           <h3 class="font-semibold mt-2">{{ produitVedette.nom }}</h3>
           <p>{{ produitVedette.prix }} €</p>
           <p>Vendu : {{ ventes[produitVedette.id] }} fois</p>
+          <button
+            @click="ajouterAuPanier(produitVedette)"
+            class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          >
+            Ajouter au panier
+          </button>
         </div>
         <div v-else class="text-gray-500">Aucun produit vendu pour l'instant.</div>
       </div>
 
-      <!-- Promos -->
       <div class="promos w-full md:w-1/2">
         <h2 class="text-xl font-bold mb-4">Promotions</h2>
         <div v-if="produitsPromo.length" class="relative w-full h-64 rounded shadow-lg overflow-hidden">
@@ -60,10 +63,15 @@
               <h3 class="font-semibold mt-2">{{ p.nom }}</h3>
               <p><s>{{ p.prix }} €</s> {{ Math.round(p.prix * 0.5) }} €</p>
               <span class="badge bg-red-500 text-white px-2 py-1 rounded">Promo 50%</span>
+              <button
+                @click="ajouterAuPanier(p)"
+                class="mt-1 bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition"
+              >
+                Ajouter au panier
+              </button>
             </div>
           </div>
 
-          <!-- flèches navigation -->
           <button
             @click="prevPromo"
             class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700"
@@ -75,10 +83,9 @@
         </div>
         <div v-else class="text-gray-500">Aucune promotion pour l'instant.</div>
       </div>
-
     </section>
 
-    <!-- Grande image en bas -->
+    <!-- Grande image -->
     <section class="mt-8">
       <img
         src="https://via.placeholder.com/1200x400/ffffff/cccccc?text=Grande+Image"
@@ -95,10 +102,13 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "./SliderProducts.vue";
+import { useStore } from "vuex"; // <-- utiliser le store Vuex
 
 export default {
   components: { SliderProducts },
   setup() {
+    const store = useStore();
+
     const produits = ref([]);
     const produitsPromo = ref([]);
     const commandes = ref([]);
@@ -107,15 +117,13 @@ export default {
     const currentPromoIndex = ref(0);
     let promoInterval = null;
 
-    // Popup
     const showPopup = ref(false);
     const promoPourPopup = ref(null);
+
     const closePopup = () => showPopup.value = false;
 
-    // Simuler panier (à remplacer par store/vuex si existant)
-    const panier = ref([]);
     const ajouterAuPanier = (produit) => {
-      panier.value.push({ ...produit, quantity: 1 });
+      store.dispatch("addToCart", { ...produit, quantity: 1 }); // <-- ajouter au store
       alert(`${produit.nom} ajouté au panier !`);
       closePopup();
     };
@@ -129,9 +137,8 @@ export default {
         if (p.promo) produitsPromo.value.push(p);
       });
 
-      // Choisir un produit promo pour le popup
       if (produitsPromo.value.length > 0) {
-        promoPourPopup.value = produitsPromo.value[0]; // ou Math.floor(Math.random()*produitsPromo.value.length)
+        promoPourPopup.value = produitsPromo.value[0];
       }
     };
 
@@ -150,7 +157,6 @@ export default {
         }
       });
 
-      // Produit vedette = le plus vendu
       let max = 0;
       let vedetteId = null;
       for (const id in ventes.value) {
@@ -172,13 +178,10 @@ export default {
     };
 
     onMounted(async () => {
-      // Popup au démarrage
       setTimeout(() => showPopup.value = true, 1000);
-
       await fetchProduits();
       await fetchCommandes();
       calculVentes();
-
       if (produitsPromo.value.length > 1) promoInterval = setInterval(nextPromo, 3000);
     });
 
@@ -197,14 +200,8 @@ export default {
       showPopup,
       promoPourPopup,
       closePopup,
-      ajouterAuPanier,
-      panier
+      ajouterAuPanier
     };
   }
 };
 </script>
-
-<style scoped>
-.product-card { text-align: center; }
-.badge { display: inline-block; margin-top: 4px; }
-</style>
