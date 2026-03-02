@@ -3,14 +3,10 @@
 
     <!-- 🔹 Slider principal -->
     <section class="relative w-full overflow-hidden">
-      <div class="flex transition-transform duration-500" :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
-        <div
-          v-for="p in produitsSlider"
-          :key="p.id"
-          class="w-full flex-shrink-0 relative h-64"
-        >
+      <div class="flex transition-transform duration-500"
+           :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
+        <div v-for="p in produitsSlider" :key="p.id" class="w-full flex-shrink-0 relative h-64">
           <img :src="p.images" :alt="p.nom" class="w-full h-full object-cover" />
-
           <!-- Overlay texte -->
           <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
             <h3 class="font-semibold">{{ p.nom }}</h3>
@@ -28,21 +24,26 @@
         <h3 class="font-semibold mt-2">{{ produitVedette.nom }}</h3>
         <p>{{ produitVedette.prix }} €</p>
         <p>Vendu : {{ ventes[produitVedette.id] || 0 }} fois</p>
-        <button
-          @click="ajouterAuPanier(produitVedette)"
-          class="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-        >
+        <button @click="ajouterAuPanier(produitVedette)"
+                class="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
           Ajouter au panier
         </button>
       </div>
       <div v-else class="text-gray-500">Aucun produit vendu pour l'instant.</div>
     </section>
 
-    <!-- 🔹 Grande image en bas -->
+    <!-- 🔹 Vitrine -->
     <section class="mt-8">
-      <img src="https://via.placeholder.com/1200x400/ffffff/cccccc?text=Grande+Image" alt="Grande Image" class="w-full object-cover rounded shadow-lg" />
+      <Vitrine />
     </section>
 
+    <!-- 🔹 Grande image en bas -->
+    <section class="mt-8">
+      <img src="https://via.placeholder.com/1200x400/ffffff/cccccc?text=Grande+Image"
+           alt="Grande Image"
+           class="w-full object-cover rounded shadow-lg" />
+    </section>
+    
   </div>
 </template>
 
@@ -52,7 +53,10 @@ import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
+import Vitrine from "../components/Vitrine.vue";
+
 export default {
+  components: { Vitrine },
   setup() {
     const store = useStore();
 
@@ -62,7 +66,6 @@ export default {
     const currentSlide = ref(0);
     let sliderInterval = null;
 
-    // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
         ...produit,
@@ -71,7 +74,6 @@ export default {
       });
     };
 
-    // 🔹 Récupération produits
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach((doc) => {
@@ -80,7 +82,6 @@ export default {
       });
     };
 
-    // 🔹 Récupération commandes pour produit vedette
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach((doc) => {
@@ -90,7 +91,7 @@ export default {
         });
       });
 
-      // Produit vedette = le plus vendu
+      // Produit vedette = plus vendu
       let max = 0;
       produitsSlider.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
@@ -101,7 +102,6 @@ export default {
       });
     };
 
-    // 🔹 Slider automatique
     const nextSlide = () => {
       if (produitsSlider.value.length > 0) {
         currentSlide.value = (currentSlide.value + 1) % produitsSlider.value.length;
@@ -111,7 +111,8 @@ export default {
     onMounted(async () => {
       await fetchProduits();
       await fetchCommandes();
-      sliderInterval = setInterval(nextSlide, 3000); // toutes les 3s
+
+      sliderInterval = setInterval(nextSlide, 3000); // slider automatique
     });
 
     onBeforeUnmount(() => {
@@ -130,9 +131,5 @@ export default {
 </script>
 
 <style scoped>
-.home img {
-  display: block;
-  width: 100%;
-  object-fit: cover;
-}
+.home img { display: block; width: 100%; object-fit: cover; }
 </style>
