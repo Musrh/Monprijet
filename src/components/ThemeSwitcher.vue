@@ -1,5 +1,5 @@
 <template>
-  <div class="relative" @click.outside="isOpen = false">
+  <div class="relative" ref="dropdownRef">
     <!-- Bouton pour ouvrir la liste -->
     <button
       @click="toggleDropdown"
@@ -20,7 +20,7 @@
 
     <!-- Liste déroulante -->
     <ul
-      v-if="isOpen"
+      v-show="isOpen"
       class="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-50"
     >
       <li
@@ -36,13 +36,14 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 
 export default {
   setup() {
-    const themes = ["dark", "pastel"]; // Noms correspondant à /themes/dark.css etc.
-    const currentTheme = ref("dark");  // Thème par défaut
+    const themes = ["dark", "pastel"]; 
+    const currentTheme = ref("dark"); 
     const isOpen = ref(false);
+    const dropdownRef = ref(null);
 
     const toggleDropdown = () => {
       isOpen.value = !isOpen.value;
@@ -51,14 +52,24 @@ export default {
     const setTheme = (theme) => {
       currentTheme.value = theme;
       document.documentElement.setAttribute("data-theme", theme);
-      isOpen.value = false; // fermer le menu après sélection
+      isOpen.value = false;
     };
 
-    return { themes, currentTheme, isOpen, toggleDropdown, setTheme };
+    const handleClickOutside = (event) => {
+      if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+        isOpen.value = false;
+      }
+    };
+
+    onMounted(() => {
+      document.addEventListener("click", handleClickOutside);
+    });
+
+    onBeforeUnmount(() => {
+      document.removeEventListener("click", handleClickOutside);
+    });
+
+    return { themes, currentTheme, isOpen, toggleDropdown, setTheme, dropdownRef };
   }
 };
 </script>
-
-<style scoped>
-/* click.outside nécessite une directive ou plugin */
-</style>
