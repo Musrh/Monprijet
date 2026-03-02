@@ -38,22 +38,25 @@
             <div
               v-for="p in produitsPromo"
               :key="p.id"
-              class="w-full flex-shrink-0 p-2 text-center"
+              class="w-full flex-shrink-0 p-2 text-center relative"
             >
               <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded mb-2" />
               <h3 class="font-semibold">{{ p.nom }}</h3>
               <p><s>{{ p.prix }} €</s> {{ Math.round(p.prix * 0.5) }} €</p>
+
+              <!-- Bouton Ajouter identique à vedette -->
               <button
                 @click="ajouterAuPanier(p)"
-                class="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 w-full"
+                class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full"
               >
                 Ajouter au panier
               </button>
+
               <span class="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded">-50%</span>
             </div>
           </div>
 
-          <!-- Navigation slider -->
+          <!-- Navigation manuelle -->
           <button
             @click="prevPromo"
             class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700"
@@ -111,7 +114,7 @@ export default {
       });
     };
 
-    // 🔹 Récupération commandes et calcul des ventes pour produit vedette
+    // 🔹 Récupération commandes pour calcul ventes
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach((doc) => {
@@ -122,7 +125,7 @@ export default {
         });
       });
 
-      // Produit vedette = le plus vendu
+      // Déterminer produit vedette = le plus vendu
       let max = 0;
       produitsSlider.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
@@ -137,13 +140,13 @@ export default {
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
         ...produit,
-        image: produit.images,
+        image: produit.images, // assure l'image pour Panier.vue
         quantity: 1
       });
       alert(`${produit.nom} ajouté au panier !`);
     };
 
-    // 🔹 Slider promotions
+    // 🔹 Slider promos automatique
     const nextPromo = () => {
       if (produitsPromo.value.length)
         currentPromoIndex.value = (currentPromoIndex.value + 1) % produitsPromo.value.length;
@@ -158,6 +161,7 @@ export default {
       await fetchProduits();
       await fetchCommandes();
 
+      // Défilement automatique du slider promos
       if (produitsPromo.value.length > 1) {
         promoInterval = setInterval(nextPromo, 3000);
       }
