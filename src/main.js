@@ -6,8 +6,8 @@ import store from "./store";
 import "./style.css";
 
 // Import du thème
-import './themes/dark.css';
-import './themes/pastel.css';
+import './thèmes/dark.css';
+import './thémes/pastel.css';
 
 const app = createApp(App);
 
