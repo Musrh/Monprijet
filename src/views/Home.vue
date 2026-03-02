@@ -1,18 +1,27 @@
 <template>
   <div class="home">
 
-    <!-- 🔹 Slider principal -->
-    <SliderProducts :produits="produitsSlider" :auto-slide="true" />
+    <!-- 🔹 Slider principal automatique -->
+    <div class="slider relative w-full h-64 overflow-hidden rounded shadow-lg mb-8">
+      <div
+        class="flex transition-transform duration-500"
+        :style="{ transform: `translateX(-${currentSlide * 100}%)`, width: produitsSlider.length * 100 + '%' }"
+      >
+        <div v-for="p in produitsSlider" :key="p.id" class="w-full flex-shrink-0">
+          <img :src="p.images" :alt="p.nom" class="w-full h-64 object-cover" />
+        </div>
+      </div>
+    </div>
 
     <!-- 🔹 Section produits en vedette et promos -->
-    <section class="flex flex-col md:flex-row gap-8 mt-8">
+    <section class="flex flex-col md:flex-row gap-8">
 
-      <!-- Produit en vedette -->
-      <div class="featured w-full md:w-1/2">
+      <!-- Produit vedette -->
+      <div class="featured w-full md:w-1/2 mb-8">
         <h2 class="text-xl font-bold mb-4">Produit en vedette</h2>
         <div v-if="produitVedette" class="border p-4 rounded shadow text-center">
-          <img :src="produitVedette.images" :alt="produitVedette.nom" class="w-full h-64 object-cover rounded mb-2" />
-          <h3 class="font-semibold mt-2">{{ produitVedette.nom }}</h3>
+          <img :src="produitVedette.images" :alt="produitVedette.nom" class="w-full h-48 object-cover rounded mb-2" />
+          <h3 class="font-semibold">{{ produitVedette.nom }}</h3>
           <p>{{ produitVedette.prix }} €</p>
           <p>Vendu : {{ ventes[produitVedette.id] || 0 }} fois</p>
           <button
@@ -22,10 +31,9 @@
             Ajouter au panier
           </button>
         </div>
-        <div v-else class="text-gray-500">Aucun produit vendu pour l'instant.</div>
       </div>
 
-      <!-- Produits en promotion -->
+      <!-- Produits promos -->
       <div class="promos w-full md:w-1/2">
         <h2 class="text-xl font-bold mb-4">Promotions</h2>
         <div v-if="produitsPromo.length" class="relative w-full h-64 overflow-hidden rounded shadow-lg">
@@ -34,7 +42,7 @@
             class="flex transition-transform duration-500"
             :style="{ transform: `translateX(-${currentPromoIndex * 100}%)`, width: produitsPromo.length * 100 + '%' }"
           >
-            <div v-for="p in produitsPromo" :key="p.id" class="w-full flex-shrink-0 p-2 text-center relative">
+            <div v-for="p in produitsPromo" :key="p.id" class="w-full flex-shrink-0 text-center relative p-2">
               <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded mb-2" />
               <h3 class="font-semibold">{{ p.nom }}</h3>
               <p><s>{{ p.prix }} €</s> {{ Math.round(p.prix * 0.5) }} €</p>
@@ -48,14 +56,7 @@
             </div>
           </div>
 
-          <!-- Flèches navigation manuelle -->
-          <button @click="prevPromo"
-                  class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">‹</button>
-          <button @click="nextPromo"
-                  class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">›</button>
-
         </div>
-        <div v-else class="text-gray-500">Aucune promotion pour l'instant.</div>
       </div>
 
     </section>
@@ -68,10 +69,8 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
-import SliderProducts from "./SliderProducts.vue";
 
 export default {
-  components: { SliderProducts },
   setup() {
     const store = useStore();
 
@@ -79,10 +78,12 @@ export default {
     const produitsPromo = ref([]);
     const produitVedette = ref(null);
     const ventes = ref({});
+    const currentSlide = ref(0);
     const currentPromoIndex = ref(0);
+
+    let sliderInterval = null;
     let promoInterval = null;
 
-    // 🔹 Récupération produits
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach(doc => {
@@ -92,7 +93,6 @@ export default {
       });
     };
 
-    // 🔹 Récupération commandes pour vedette
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach(doc => {
@@ -114,29 +114,31 @@ export default {
       });
     };
 
-    // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", { ...produit, image: produit.images, quantity: 1 });
       alert(`${produit.nom} ajouté au panier !`);
     };
 
-    // 🔹 Slider promos automatique
+    const nextSlide = () => {
+      if (produitsSlider.value.length)
+        currentSlide.value = (currentSlide.value + 1) % produitsSlider.value.length;
+    };
+
     const nextPromo = () => {
       if (produitsPromo.value.length)
         currentPromoIndex.value = (currentPromoIndex.value + 1) % produitsPromo.value.length;
-    };
-    const prevPromo = () => {
-      if (produitsPromo.value.length)
-        currentPromoIndex.value = (currentPromoIndex.value - 1 + produitsPromo.value.length) % produitsPromo.value.length;
     };
 
     onMounted(async () => {
       await fetchProduits();
       await fetchCommandes();
+
+      if (produitsSlider.value.length > 1) sliderInterval = setInterval(nextSlide, 4000);
       if (produitsPromo.value.length > 1) promoInterval = setInterval(nextPromo, 3000);
     });
 
     onBeforeUnmount(() => {
+      if (sliderInterval) clearInterval(sliderInterval);
       if (promoInterval) clearInterval(promoInterval);
     });
 
@@ -145,9 +147,8 @@ export default {
       produitsPromo,
       produitVedette,
       ventes,
+      currentSlide,
       currentPromoIndex,
-      nextPromo,
-      prevPromo,
       ajouterAuPanier
     };
   }
