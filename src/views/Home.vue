@@ -45,14 +45,4 @@
           <p>Vendu : {{ ventes[produitVedette.id] || 0 }} fois</p>
           <button
             @click="ajouterAuPanier(produitVedette)"
-            class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          >
-            Ajouter au panier
-          </button>
-        </div>
-        <div v-else class="text-gray-500">Aucun produit vendu pour l'instant.</div>
-      </div>
-
-      <!-- Promos -->
-      <div class="promos w-full md:w-1/2">
-        <h2 class="text-xl
+            class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg
