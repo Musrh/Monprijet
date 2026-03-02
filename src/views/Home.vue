@@ -83,7 +83,7 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 
-import Vitrine from "./components/Vitrine.vue"
+import Vitrine from "../components/Vitrine.vue"
   
 import { useStore } from "vuex";
 import { db } from "../firebase";
