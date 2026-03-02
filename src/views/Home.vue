@@ -1,7 +1,7 @@
 <template>
   <div class="home">
 
-    <!-- Popup promo -->
+    <!-- Popup promo, s'affiche une seule fois au chargement -->
     <div
       v-if="showPopup && promoPourPopup"
       class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
@@ -26,6 +26,12 @@
         >
           Ajouter au panier
         </button>
+        <button
+          @click="voirPanier"
+          class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+        >
+          Voir panier
+        </button>
       </div>
     </div>
 
@@ -48,7 +54,6 @@
             Ajouter au panier
           </button>
         </div>
-        <div v-else class="text-gray-500">Aucun produit vendu pour l'instant.</div>
       </div>
 
       <div class="promos w-full md:w-1/2">
@@ -81,7 +86,6 @@
             class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700"
           >›</button>
         </div>
-        <div v-else class="text-gray-500">Aucune promotion pour l'instant.</div>
       </div>
     </section>
 
@@ -102,7 +106,7 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "./SliderProducts.vue";
-import { useStore } from "vuex"; // <-- utiliser le store Vuex
+import { useStore } from "vuex";
 
 export default {
   components: { SliderProducts },
@@ -117,15 +121,23 @@ export default {
     const currentPromoIndex = ref(0);
     let promoInterval = null;
 
+    // Popup
     const showPopup = ref(false);
     const promoPourPopup = ref(null);
+    const popupDejaOuvert = ref(false); // <-- n’ouvrir qu’une fois
 
     const closePopup = () => showPopup.value = false;
 
     const ajouterAuPanier = (produit) => {
-      store.dispatch("addToCart", { ...produit, quantity: 1 }); // <-- ajouter au store
+      store.dispatch("addToCart", { ...produit, quantity: 1 });
       alert(`${produit.nom} ajouté au panier !`);
       closePopup();
+    };
+
+    const voirPanier = () => {
+      // Redirection vers page panier
+      closePopup();
+      window.location.href = "#/panier"; // ou this.$router.push("/panier") si setup
     };
 
     const fetchProduits = async () => {
@@ -137,8 +149,10 @@ export default {
         if (p.promo) produitsPromo.value.push(p);
       });
 
-      if (produitsPromo.value.length > 0) {
+      if (produitsPromo.value.length > 0 && !popupDejaOuvert.value) {
         promoPourPopup.value = produitsPromo.value[0];
+        showPopup.value = true;
+        popupDejaOuvert.value = true;
       }
     };
 
@@ -178,7 +192,6 @@ export default {
     };
 
     onMounted(async () => {
-      setTimeout(() => showPopup.value = true, 1000);
       await fetchProduits();
       await fetchCommandes();
       calculVentes();
@@ -200,7 +213,8 @@ export default {
       showPopup,
       promoPourPopup,
       closePopup,
-      ajouterAuPanier
+      ajouterAuPanier,
+      voirPanier
     };
   }
 };
