@@ -1,5 +1,5 @@
 <template>
-  <div class="relative inline-block">
+  <div class="relative inline-block" ref="dropdownRef">
     <!-- Bouton thème actuel -->
     <button
       @click="toggleDropdown"
@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 
 export default {
   setup() {
@@ -40,6 +40,7 @@ export default {
 
     const dropdownOpen = ref(false);
     const currentTheme = ref("pastel");
+    const dropdownRef = ref(null);
 
     const toggleDropdown = () => {
       dropdownOpen.value = !dropdownOpen.value;
@@ -56,20 +57,31 @@ export default {
       return theme ? theme.label : "Thème";
     });
 
-    // Initialisation du thème au chargement
-    document.documentElement.setAttribute("data-theme", currentTheme.value);
+    // Fermer le dropdown si click en dehors
+    const handleClickOutside = (event) => {
+      if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
+        dropdownOpen.value = false;
+      }
+    };
+
+    onMounted(() => {
+      document.addEventListener("click", handleClickOutside);
+      // Appliquer le thème initial
+      document.documentElement.setAttribute("data-theme", currentTheme.value);
+    });
+
+    onBeforeUnmount(() => {
+      document.removeEventListener("click", handleClickOutside);
+    });
 
     return {
       themes,
       dropdownOpen,
       toggleDropdown,
       setTheme,
-      currentThemeLabel
+      currentThemeLabel,
+      dropdownRef
     };
   }
 };
 </script>
-
-<style scoped>
-/* Optionnel : fermer le dropdown si click à l'extérieur */
-</style>
