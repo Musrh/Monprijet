@@ -1,11 +1,16 @@
 <template>
-  <div class="minishop p-4">
+  <div class="minishop p-4 relative">
     <h2 class="text-2xl font-bold mb-4">Mini Shop - Produits Externes</h2>
 
-    <!-- Notification -->
-    <div v-if="message" class="fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow z-50">
-      {{ message }}
-    </div>
+    <!-- Notification toast -->
+    <transition name="fade">
+      <div
+        v-if="message"
+        class="toast fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded shadow-lg z-50"
+      >
+        {{ message }}
+      </div>
+    </transition>
 
     <div v-if="produitsExternes.length" class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div v-for="p in produitsExternes" :key="p.id" class="border rounded shadow p-2 text-center">
@@ -51,34 +56,26 @@ export default {
         quantity: 1,
       });
 
-      // 🔹 Afficher le message de confirmation
+      // Afficher le message
       message.value = `"${produit.nom}" ajouté au panier !`;
       setTimeout(() => {
         message.value = "";
-      }, 2500); // le message disparaît après 2.5 secondes
+      }, 2500);
     };
 
     const fetchProduitsExternes = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "ProductsExternes"));
-        produitsExternes.value = [];
-        snapshot.forEach((doc) => {
-          produitsExternes.value.push({ id: doc.id, ...doc.data() });
-        });
-      } catch (error) {
-        console.error("Erreur récupération produits externes:", error);
-      }
+      const snapshot = await getDocs(collection(db, "ProductsExternes"));
+      produitsExternes.value = [];
+      snapshot.forEach((doc) => {
+        produitsExternes.value.push({ id: doc.id, ...doc.data() });
+      });
     };
 
     onMounted(() => {
       fetchProduitsExternes();
     });
 
-    return {
-      produitsExternes,
-      ajouterAuPanier,
-      message,
-    };
+    return { produitsExternes, ajouterAuPanier, message };
   },
 };
 </script>
@@ -88,5 +85,17 @@ export default {
   display: block;
   width: 100%;
   object-fit: cover;
+}
+
+/* Animation du toast */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.4s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+.toast {
+  min-width: 200px;
+  text-align: center;
 }
 </style>
