@@ -2,78 +2,58 @@
   <div class="mini-shop p-4">
     <h2 class="text-2xl font-bold mb-4">Mini Shop - Produits Externes</h2>
 
-    <div v-if="produits.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      <div v-for="produit in produits" :key="produit.id" class="border rounded shadow p-4 text-center relative">
-        <img :src="produit.image" :alt="produit.nom" class="w-full h-48 object-cover rounded mb-2" />
-        <h3 class="font-semibold">{{ produit.nom }}</h3>
-        <p class="text-lg font-bold">{{ produit.prix }} €</p>
+    <div v-if="produitsExternes.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div v-for="p in produitsExternes" :key="p.id" class="border rounded shadow p-4 flex flex-col items-center">
+        <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded" />
+        <h3 class="font-semibold mt-2">{{ p.nom }}</h3>
+        <p class="mt-1 text-lg font-bold">{{ p.prix }} €</p>
+        <a :href="p.url" target="_blank" class="mt-1 text-sm text-blue-600 underline">Voir sur AliExpress</a>
         <button
-          @click="ajouterAuPanier(produit)"
+          @click="ajouterAuPanier(p)"
           class="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
         >
           Ajouter au panier
         </button>
-        <span v-if="produit.source === 'external'" class="absolute top-2 left-2 bg-yellow-400 text-black px-2 py-1 rounded text-xs">Externe</span>
       </div>
     </div>
 
-    <div v-else class="text-gray-500">Aucun produit externe disponible pour l'instant.</div>
+    <div v-else class="text-gray-500">Aucun produit externe pour l'instant.</div>
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from "vue";
 import { useStore } from "vuex";
-
-// Exemple JSON de produits externes (à remplacer par une API réelle si besoin)
-const PRODUITS_EXTERNES = [
-  {
-    id: "ex1",
-    nom: "Montre AliExpress",
-    prix: 25,
-    image: "https://via.placeholder.com/300x200?text=Montre",
-    source: "external"
-  },
-  {
-    id: "ex2",
-    nom: "Casque Audio",
-    prix: 40,
-    image: "https://via.placeholder.com/300x200?text=Casque",
-    source: "external"
-  },
-  {
-    id: "ex3",
-    nom: "Sac à dos",
-    prix: 30,
-    image: "https://via.placeholder.com/300x200?text=Sac",
-    source: "external"
-  }
-];
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 
 export default {
+  name: "MiniShop",
   setup() {
     const store = useStore();
-    const produits = ref([]);
+    const produitsExternes = ref([]);
 
+    // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
-        id: produit.id,
-        nom: produit.nom,
-        prix: produit.prix,
-        image: produit.image,
-        source: produit.source, // externe
+        ...produit,
+        image: produit.images,
         quantity: 1
       });
-      alert(`${produit.nom} ajouté au panier !`);
     };
 
-    // On "importe" les produits externes (ici JSON local, sinon fetch API)
-    onMounted(() => {
-      produits.value = PRODUITS_EXTERNES;
+    // 🔹 Charger produits externes depuis Firestore
+    const fetchProduitsExternes = async () => {
+      const snapshot = await getDocs(collection(db, "ProductsExternes"));
+      produitsExternes.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    };
+
+    onMounted(async () => {
+      await fetchProduitsExternes();
     });
 
     return {
-      produits,
+      produitsExternes,
       ajouterAuPanier
     };
   }
@@ -82,9 +62,6 @@ export default {
 
 <style scoped>
 .mini-shop img {
-  transition: transform 0.2s;
-}
-.mini-shop img:hover {
-  transform: scale(1.05);
+  display: block;
 }
 </style>
