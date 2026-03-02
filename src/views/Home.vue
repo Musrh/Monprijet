@@ -31,8 +31,10 @@
         <div v-if="produitsPromo.length" class="relative w-full h-64 overflow-hidden rounded shadow-lg">
 
           <!-- Slider promo -->
-          <div class="flex transition-transform duration-500"
-               :style="{ transform: `translateX(-${currentPromoIndex * 100}%)` }">
+          <div
+            class="flex transition-transform duration-500"
+            :style="{ transform: `translateX(-${currentPromoIndex * 100}%)` }"
+          >
             <div v-for="p in produitsPromo" :key="p.id" class="w-full flex-shrink-0 p-2 text-center relative">
               <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded mb-2" />
               <h3 class="font-semibold">{{ p.nom }}</h3>
@@ -52,6 +54,7 @@
                   class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">‹</button>
           <button @click="nextPromo"
                   class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">›</button>
+
         </div>
         <div v-else class="text-gray-500">Aucune promotion pour l'instant.</div>
       </div>
@@ -80,18 +83,20 @@ export default {
     const currentPromoIndex = ref(0);
     let promoInterval = null;
 
+    // 🔹 Récupération produits
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         const p = { id: doc.id, ...doc.data() };
         produitsSlider.value.push(p);
         if (p.promo) produitsPromo.value.push(p);
       });
     };
 
+    // 🔹 Calcul vedette à partir des commandes
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         const cmd = doc.data();
         cmd.items?.forEach(item => {
           if (!ventes.value[item.id]) ventes.value[item.id] = 0;
@@ -99,7 +104,6 @@ export default {
         });
       });
 
-      // Produit vedette = plus vendu
       let max = 0;
       produitsSlider.value.forEach(p => {
         const q = ventes.value[p.id] || 0;
@@ -110,6 +114,7 @@ export default {
       });
     };
 
+    // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", { ...produit, image: produit.images, quantity: 1 });
       alert(`${produit.nom} ajouté au panier !`);
@@ -128,7 +133,6 @@ export default {
       await fetchProduits();
       await fetchCommandes();
 
-      // slider automatique
       if (produitsPromo.value.length > 1) promoInterval = setInterval(nextPromo, 3000);
     });
 
@@ -151,9 +155,5 @@ export default {
 </script>
 
 <style scoped>
-.home img {
-  display: block;
-  width: 100%;
-  object-fit: cover;
-}
+.home img { display: block; width: 100%; object-fit: cover; }
 </style>
