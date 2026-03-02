@@ -44,13 +44,15 @@
           </span>
         </router-link>
 
-        <!-- ThemeSwitcher Dropdown -->
-        <ThemeSwitcher />
+        
 
         <!-- Login / Logout -->
         <router-link v-if="!isAuthenticated" to="/login" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition">
           Login
         </router-link>
+
+        <!-- ThemeSwitcher Dropdown -->
+        <ThemeSwitcher />
 
         <template v-if="isAuthenticated">
           <span class="bg-green-600 text-white px-4 py-2 rounded font-medium transition">{{ userEmail }}</span>
