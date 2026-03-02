@@ -44,7 +44,7 @@
         <h3>{{ popupProduit.nom }}</h3>
         <p>{{ popupProduit.prix }} €</p>
         <button
-          @click="ajouterAuPanier(popupProduit)"
+          @click="ajouterEtVoirPanier(popupProduit)"
           class="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
         >
           Ajouter au panier
@@ -59,6 +59,7 @@
 import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
+import { useRouter } from "vue-router";
 import { db } from "../firebase";
 import SliderProducts from "./SliderProducts.vue";
 
@@ -66,8 +67,8 @@ export default {
   components: { SliderProducts },
   setup() {
     const store = useStore();
+    const router = useRouter();
 
-    // Données
     const commandes = ref([]);
     const produits = ref([]);
     const produitsPromo = ref([]);
@@ -82,7 +83,6 @@ export default {
       image: ""
     });
 
-    // Fetch produits
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach(doc => {
@@ -90,25 +90,16 @@ export default {
         if (p.image) produits.value.push({ ...p, id: doc.id });
       });
 
-      // Définir produits promos (50% arbitrarily)
       produitsPromo.value = produits.value.filter(p => p.promo);
-
-      // Produit vedette : premier produit de la liste
       produitVedette.value = produits.value[0] || null;
-
-      // Popup produit : premier promo
-      if (produitsPromo.value.length) {
-        popupProduit.value = produitsPromo.value[0];
-      }
+      if (produitsPromo.value.length) popupProduit.value = produitsPromo.value[0];
     };
 
-    // Fetch commandes pour calcul ventes
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach(doc => {
         commandes.value.push(doc.data());
       });
-
       commandes.value.forEach(cmd => {
         if (cmd.items && cmd.items.length) {
           cmd.items.forEach(item => {
@@ -124,18 +115,23 @@ export default {
       await fetchCommandes();
     });
 
-    // Ajouter au panier
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", { ...produit, quantity: 1 });
       alert(`${produit.nom} ajouté au panier !`);
       showPopup.value = false;
     };
 
+    // ✅ Ajout au panier + redirection automatique vers page panier
+    const ajouterEtVoirPanier = (produit) => {
+      store.dispatch("addToCart", { ...produit, quantity: 1 });
+      showPopup.value = false;
+      router.push("/panier");
+    };
+
     const closePopup = () => {
       showPopup.value = false;
     };
 
-    // Slider
     const produitsSlider = produits;
 
     return {
@@ -146,12 +142,9 @@ export default {
       showPopup,
       popupProduit,
       ajouterAuPanier,
+      ajouterEtVoirPanier,
       closePopup
     };
   }
 };
 </script>
-
-<style scoped>
-/* Ajouter éventuellement tes styles ici */
-</style>
