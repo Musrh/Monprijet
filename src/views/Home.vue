@@ -1,13 +1,13 @@
 <template>
   <div class="home">
 
-    <!-- Slider principal -->
-    <SliderProducts :produits="produitsSlider" />
+    <!-- 🔹 Slider principal -->
+    <SliderProducts :produits="produitsSlider" :auto-slide="true" />
 
-    <!-- Section produit vedette + promos -->
+    <!-- 🔹 Section produits en vedette et promos -->
     <section class="flex flex-col md:flex-row gap-8 mt-8">
 
-      <!-- Produit vedette -->
+      <!-- Produit en vedette -->
       <div class="featured w-full md:w-1/2">
         <h2 class="text-xl font-bold mb-4">Produit en vedette</h2>
         <div v-if="produitVedette" class="border p-4 rounded shadow text-center">
@@ -30,10 +30,9 @@
         <h2 class="text-xl font-bold mb-4">Promotions</h2>
         <div v-if="produitsPromo.length" class="relative w-full h-64 overflow-hidden rounded shadow-lg">
 
-          <!-- Slider promo -->
           <div
             class="flex transition-transform duration-500"
-            :style="{ transform: `translateX(-${currentPromoIndex * 100}%)` }"
+            :style="{ transform: `translateX(-${currentPromoIndex * 100}%)`, width: produitsPromo.length * 100 + '%' }"
           >
             <div v-for="p in produitsPromo" :key="p.id" class="w-full flex-shrink-0 p-2 text-center relative">
               <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded mb-2" />
@@ -49,7 +48,7 @@
             </div>
           </div>
 
-          <!-- Flèches navigation -->
+          <!-- Flèches navigation manuelle -->
           <button @click="prevPromo"
                   class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">‹</button>
           <button @click="nextPromo"
@@ -93,7 +92,7 @@ export default {
       });
     };
 
-    // 🔹 Calcul vedette à partir des commandes
+    // 🔹 Récupération commandes pour vedette
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach(doc => {
@@ -104,6 +103,7 @@ export default {
         });
       });
 
+      // Déterminer produit vedette
       let max = 0;
       produitsSlider.value.forEach(p => {
         const q = ventes.value[p.id] || 0;
@@ -120,6 +120,7 @@ export default {
       alert(`${produit.nom} ajouté au panier !`);
     };
 
+    // 🔹 Slider promos automatique
     const nextPromo = () => {
       if (produitsPromo.value.length)
         currentPromoIndex.value = (currentPromoIndex.value + 1) % produitsPromo.value.length;
@@ -132,7 +133,6 @@ export default {
     onMounted(async () => {
       await fetchProduits();
       await fetchCommandes();
-
       if (produitsPromo.value.length > 1) promoInterval = setInterval(nextPromo, 3000);
     });
 
@@ -155,5 +155,9 @@ export default {
 </script>
 
 <style scoped>
-.home img { display: block; width: 100%; object-fit: cover; }
+.home img {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+}
 </style>
