@@ -37,6 +37,12 @@
       <Vitrine />
     </section>
 
+    <!-- Mini Shop produits externes -->
+    <section class="mt-8">
+    <MiniShop />
+    </section>
+    
+
     <!-- 🔹 Grande image en bas -->
     <section class="mt-8">
       <img src="https://via.placeholder.com/1200x400/ffffff/cccccc?text=Grande+Image"
@@ -54,9 +60,11 @@ import { useStore } from "vuex";
 import { db } from "../firebase";
 
 import Vitrine from "../components/Vitrine.vue";
-
+import MiniShop from "../components/MiniShop.vue";
+  
 export default {
   components: { Vitrine },
+  components: { MiniShop },
   setup() {
     const store = useStore();
 
