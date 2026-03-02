@@ -1,74 +1,34 @@
 <template>
-  <div class="home">
-
-    <!-- Slider -->
+  <div>
     <SliderProducts :produits="produits" />
 
-    <!-- Section Vedette + Promos -->
-    <section class="container">
-
-      <!-- PRODUIT EN VEDETTE -->
-      <div class="vedette">
+    <section>
+      <div>
         <h2>Produit en vedette</h2>
 
-        <div v-if="produitVedette" class="card">
-          <img
-            :src="produitVedette.images"
-            :alt="produitVedette.nom"
-            class="image"
-          />
+        <div v-if="produitVedette">
+          <img :src="produitVedette.images" />
           <h3>{{ produitVedette.nom }}</h3>
           <p>{{ produitVedette.prix }} €</p>
-          <p>Vendu : {{ ventes[produitVedette.id] || 0 }} fois</p>
-
           <button @click="ajouterAuPanier(produitVedette)">
             Ajouter au panier
           </button>
         </div>
-
-        <div v-else>
-          Aucun produit vendu.
-        </div>
       </div>
 
-      <!-- PRODUITS PROMOS -->
-      <div class="promos">
+      <div>
         <h2>Promotions</h2>
 
-        <div v-if="produitsPromo.length">
-
-          <div
-            v-for="p in produitsPromo"
-            :key="p.id"
-            class="card"
-          >
-            <img
-              :src="p.images"
-              :alt="p.nom"
-              class="image"
-            />
-
-            <h3>{{ p.nom }}</h3>
-
-            <p>
-              <s>{{ p.prix }} €</s>
-              {{ Math.round(p.prix * 0.5) }} €
-            </p>
-
-            <button @click="ajouterAuPanier(p)">
-              Ajouter au panier
-            </button>
-          </div>
-
-        </div>
-
-        <div v-else>
-          Aucune promotion.
+        <div v-for="p in produitsPromo" :key="p.id">
+          <img :src="p.images" />
+          <h3>{{ p.nom }}</h3>
+          <p>{{ p.prix }} €</p>
+          <button @click="ajouterAuPanier(p)">
+            Ajouter au panier
+          </button>
         </div>
       </div>
-
     </section>
-
   </div>
 </template>
 
@@ -81,41 +41,36 @@ import SliderProducts from "./SliderProducts.vue";
 
 export default {
   components: { SliderProducts },
-
   setup() {
     const store = useStore();
-
     const produits = ref([]);
     const produitsPromo = ref([]);
-    const commandes = ref([]);
-    const ventes = ref({});
     const produitVedette = ref(null);
 
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", { ...produit, quantity: 1 });
     };
 
-    const fetchProduits = async () => {
+    onMounted(async () => {
       const snapshot = await getDocs(collection(db, "products"));
 
       snapshot.forEach((doc) => {
-        const data = doc.data();
-        const produit = { id: doc.id, ...data };
-
-        produits.value.push(produit);
-
-        if (produit.promo) {
-          produitsPromo.value.push(produit);
-        }
+        const data = { id: doc.id, ...doc.data() };
+        produits.value.push(data);
+        if (data.promo) produitsPromo.value.push(data);
       });
-    };
 
-    const fetchCommandes = async () => {
-      const snapshot = await getDocs(collection(db, "commandes"));
-      snapshot.forEach((doc) => {
-        commandes.value.push(doc.data());
-      });
-    };
+      if (produits.value.length > 0) {
+        produitVedette.value = produits.value[0];
+      }
+    });
 
-    const calculVentes = () => {
-      commandes.value
+    return {
+      produits,
+      produitsPromo,
+      produitVedette,
+      ajouterAuPanier,
+    };
+  },
+};
+</script>
