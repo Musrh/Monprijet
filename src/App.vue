@@ -1,7 +1,8 @@
 <template>
-  <div class="min-h-screen">
-    <!-- Menu -->
+  <div class="min-h-screen bg-gray-100">
+    <!-- Menu principal -->
     <nav class="bg-gray-800 p-4 flex flex-wrap items-center justify-between">
+
       <!-- Left: Liens principaux -->
       <div class="flex flex-wrap items-center space-x-2">
         <router-link to="/" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition">
@@ -32,8 +33,9 @@
         </div>
       </div>
 
-      <!-- Right: Panier + Login / Logout + User + ThemeSwitcher -->
+      <!-- Right: Panier + Login/Logout + ThemeSwitcher -->
       <div class="flex items-center space-x-2">
+
         <!-- Panier -->
         <router-link to="/panier" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition relative">
           🛒
@@ -42,15 +44,14 @@
           </span>
         </router-link>
 
-        <!-- Login -->
+        <!-- ThemeSwitcher Dropdown -->
+        <ThemeSwitcher />
+
+        <!-- Login / Logout -->
         <router-link v-if="!isAuthenticated" to="/login" class="bg-green-600 text-white px-4 py-2 rounded font-medium hover:bg-green-700 transition">
           Login
         </router-link>
 
-        <!-- ThemeSwitcher -->
-        <ThemeSwitcher />
-
-        <!-- Logout + User visible -->
         <template v-if="isAuthenticated">
           <span class="bg-green-600 text-white px-4 py-2 rounded font-medium transition">{{ userEmail }}</span>
           <button @click="logout" class="bg-red-500 text-white px-4 py-2 rounded font-medium hover:bg-red-600 transition">Logout</button>
@@ -70,7 +71,9 @@ import ThemeSwitcher from './components/ThemeSwitcher.vue';
 export default {
   components: { ThemeSwitcher },
   data() {
-    return { adminDropdown: false };
+    return {
+      adminDropdown: false
+    };
   },
   computed: {
     ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"])
@@ -84,3 +87,7 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+/* Tu peux ajouter du style spécifique au nav si nécessaire */
+</style>
