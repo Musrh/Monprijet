@@ -1,10 +1,10 @@
 <template>
   <div class="home">
 
-    <!-- 🔹 Slider principal -->
+    <!-- Slider principal -->
     <SliderProducts :produits="produitsSlider" />
 
-    <!-- 🔹 Section produit vedette + promos -->
+    <!-- Section produit vedette + promos -->
     <section class="flex flex-col md:flex-row gap-8 mt-8">
 
       <!-- Produit vedette -->
@@ -30,16 +30,10 @@
         <h2 class="text-xl font-bold mb-4">Promotions</h2>
         <div v-if="produitsPromo.length" class="relative w-full h-64 overflow-hidden rounded shadow-lg">
 
-          <!-- Slider des promos -->
-          <div
-            class="flex transition-transform duration-500"
-            :style="{ transform: `translateX(-${currentPromoIndex * 100}%)` }"
-          >
-            <div
-              v-for="p in produitsPromo"
-              :key="p.id"
-              class="w-full flex-shrink-0 p-2 text-center relative"
-            >
+          <!-- Slider promo -->
+          <div class="flex transition-transform duration-500"
+               :style="{ transform: `translateX(-${currentPromoIndex * 100}%)` }">
+            <div v-for="p in produitsPromo" :key="p.id" class="w-full flex-shrink-0 p-2 text-center relative">
               <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded mb-2" />
               <h3 class="font-semibold">{{ p.nom }}</h3>
               <p><s>{{ p.prix }} €</s> {{ Math.round(p.prix * 0.5) }} €</p>
@@ -53,16 +47,11 @@
             </div>
           </div>
 
-          <!-- Navigation manuelle -->
-          <button
-            @click="prevPromo"
-            class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700"
-          >‹</button>
-          <button
-            @click="nextPromo"
-            class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700"
-          >›</button>
-
+          <!-- Flèches navigation -->
+          <button @click="prevPromo"
+                  class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">‹</button>
+          <button @click="nextPromo"
+                  class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">›</button>
         </div>
         <div v-else class="text-gray-500">Aucune promotion pour l'instant.</div>
       </div>
@@ -91,7 +80,6 @@ export default {
     const currentPromoIndex = ref(0);
     let promoInterval = null;
 
-    // 🔹 Récupérer les produits
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach((doc) => {
@@ -101,12 +89,11 @@ export default {
       });
     };
 
-    // 🔹 Récupérer les commandes pour calculer ventes et produit vedette
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach((doc) => {
         const cmd = doc.data();
-        cmd.items?.forEach((item) => {
+        cmd.items?.forEach(item => {
           if (!ventes.value[item.id]) ventes.value[item.id] = 0;
           ventes.value[item.id] += item.quantity;
         });
@@ -114,7 +101,7 @@ export default {
 
       // Produit vedette = plus vendu
       let max = 0;
-      produitsSlider.value.forEach((p) => {
+      produitsSlider.value.forEach(p => {
         const q = ventes.value[p.id] || 0;
         if (q > max) {
           max = q;
@@ -123,36 +110,26 @@ export default {
       });
     };
 
-    // 🔹 Ajouter au panier (image correcte)
     const ajouterAuPanier = (produit) => {
-      store.dispatch("addToCart", {
-        ...produit,
-        image: produit.images,
-        quantity: 1,
-      });
+      store.dispatch("addToCart", { ...produit, image: produit.images, quantity: 1 });
       alert(`${produit.nom} ajouté au panier !`);
     };
 
-    // 🔹 Slider promos automatique
     const nextPromo = () => {
       if (produitsPromo.value.length)
-        currentPromoIndex.value =
-          (currentPromoIndex.value + 1) % produitsPromo.value.length;
+        currentPromoIndex.value = (currentPromoIndex.value + 1) % produitsPromo.value.length;
     };
     const prevPromo = () => {
       if (produitsPromo.value.length)
-        currentPromoIndex.value =
-          (currentPromoIndex.value - 1 + produitsPromo.value.length) % produitsPromo.value.length;
+        currentPromoIndex.value = (currentPromoIndex.value - 1 + produitsPromo.value.length) % produitsPromo.value.length;
     };
 
     onMounted(async () => {
       await fetchProduits();
       await fetchCommandes();
 
-      // ✅ slider automatique toutes les 3 secondes
-      if (produitsPromo.value.length > 1) {
-        promoInterval = setInterval(nextPromo, 3000);
-      }
+      // slider automatique
+      if (produitsPromo.value.length > 1) promoInterval = setInterval(nextPromo, 3000);
     });
 
     onBeforeUnmount(() => {
@@ -167,9 +144,9 @@ export default {
       currentPromoIndex,
       nextPromo,
       prevPromo,
-      ajouterAuPanier,
+      ajouterAuPanier
     };
-  },
+  }
 };
 </script>
 
