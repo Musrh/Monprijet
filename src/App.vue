@@ -49,6 +49,11 @@
           Login
         </router-link>
 
+<!-- ThemeSwitcher -->
+      <ThemeSwitcher />
+    
+        
+
         <!-- Logout + User visible -->
         <template v-if="isAuthenticated">
           <span class="bg-green-600 text-white px-4 py-2 rounded font-medium transition">{{ userEmail }}</span>
