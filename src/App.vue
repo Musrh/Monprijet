@@ -70,7 +70,12 @@
 <script>
 import { mapGetters } from "vuex";
 
+import ThemeSwitcher from './components/ThemeSwitcher.vue';
+
 export default {
+  
+  components: { ThemeSwitcher },
+
   data() {
     return {
       adminDropdown: false
