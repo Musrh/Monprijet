@@ -80,4 +80,18 @@
               <span class="badge bg-red-500 text-white px-2 py-1 rounded">Promo 50%</span>
               <button
                 @click="ajouterAuPanier(p)"
-                class
+                class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+              >
+                Ajouter au panier
+              </button>
+            </div>
+          </div>
+
+          <!-- flèches navigation -->
+          <button
+            @click="prevPromo"
+            class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700"
+          >‹</button>
+          <button
+            @click="nextPromo"
+            class="absolute top-1/2 right-
