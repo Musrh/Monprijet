@@ -1,7 +1,7 @@
 <template>
   <div class="home">
 
-    <!-- POPUP AU DEMARRAGE -->
+    <!-- POPUP au démarrage -->
     <div v-if="showPopup && promoPourPopup" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div class="bg-white p-6 rounded-lg shadow-lg text-center max-w-sm relative">
         <button @click="closePopup" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700">✕</button>
@@ -22,13 +22,13 @@
       </div>
     </div>
 
-    <!-- SLIDER PRINCIPAL -->
+    <!-- SLIDER -->
     <SliderProducts :produits="produits" />
 
-    <!-- SECTION PRODUIT VEDette + PROMOS -->
+    <!-- Vedette + Promos -->
     <section class="flex flex-col md:flex-row gap-8 mt-8">
 
-      <!-- PRODUIT VEDette -->
+      <!-- Vedette -->
       <div class="featured w-full md:w-1/2">
         <h2 class="text-xl font-bold mb-4">Produit en vedette</h2>
         <div v-if="produitVedette" class="border p-4 rounded shadow text-center">
@@ -43,7 +43,7 @@
         <div v-else class="text-gray-500">Aucun produit vendu pour l'instant.</div>
       </div>
 
-      <!-- PRODUITS EN PROMO -->
+      <!-- Promos -->
       <div class="promos w-full md:w-1/2">
         <h2 class="text-xl font-bold mb-4">Promotions</h2>
         <div v-if="produitsPromo.length" class="relative w-full h-64 rounded shadow-lg overflow-hidden">
@@ -55,3 +55,17 @@
               <span class="badge bg-red-500 text-white px-2 py-1 rounded">Promo 50%</span>
               <button @click="ajouterAuPanier(p)" class="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
                 Ajouter au panier
+              </button>
+            </div>
+          </div>
+
+          <button @click="prevPromo" class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">‹</button>
+          <button @click="nextPromo" class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white rounded-full p-2 hover:bg-green-700">›</button>
+        </div>
+        <div v-else class="text-gray-500">Aucune promotion pour l'instant.</div>
+      </div>
+
+    </section>
+
+    <!-- Grande image en bas -->
+    <section class
