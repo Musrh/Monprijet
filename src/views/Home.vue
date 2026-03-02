@@ -1,68 +1,70 @@
 <template>
   <div class="home">
 
-    <!-- Slider principal -->
+    <!-- Slider -->
     <SliderProducts :produits="produits" />
 
-    <!-- Section produit vedette + promos -->
-    <section class="flex flex-col md:flex-row gap-8 mt-8">
+    <!-- Section Vedette + Promos -->
+    <section class="container">
 
-      <!-- Produit vedette -->
-      <div class="w-full md:w-1/2">
-        <h2 class="text-xl font-bold mb-4">Produit en vedette</h2>
+      <!-- PRODUIT EN VEDETTE -->
+      <div class="vedette">
+        <h2>Produit en vedette</h2>
 
-        <div v-if="produitVedette" class="border p-4 rounded shadow text-center">
+        <div v-if="produitVedette" class="card">
           <img
             :src="produitVedette.images"
             :alt="produitVedette.nom"
-            class="w-full h-64 object-cover rounded"
+            class="image"
           />
-          <h3 class="mt-2 font-semibold">{{ produitVedette.nom }}</h3>
+          <h3>{{ produitVedette.nom }}</h3>
           <p>{{ produitVedette.prix }} €</p>
-          <p>Vendu : {{ ventes[produitVedette.id] }} fois</p>
+          <p>Vendu : {{ ventes[produitVedette.id] || 0 }} fois</p>
 
-          <button
-            @click="ajouterAuPanier(produitVedette)"
-            class="mt-2 bg-blue-600 text-white px-4 py-2 rounded"
-          >
+          <button @click="ajouterAuPanier(produitVedette)">
             Ajouter au panier
           </button>
         </div>
 
-        <div v-else>Aucun produit vendu.</div>
+        <div v-else>
+          Aucun produit vendu.
+        </div>
       </div>
 
-      <!-- Promotions -->
-      <div class="w-full md:w-1/2">
-        <h2 class="text-xl font-bold mb-4">Promotions</h2>
+      <!-- PRODUITS PROMOS -->
+      <div class="promos">
+        <h2>Promotions</h2>
 
         <div v-if="produitsPromo.length">
+
           <div
             v-for="p in produitsPromo"
             :key="p.id"
-            class="border p-4 rounded shadow text-center mb-4"
+            class="card"
           >
             <img
               :src="p.images"
               :alt="p.nom"
-              class="w-full h-48 object-cover rounded"
+              class="image"
             />
-            <h3 class="mt-2 font-semibold">{{ p.nom }}</h3>
+
+            <h3>{{ p.nom }}</h3>
+
             <p>
               <s>{{ p.prix }} €</s>
               {{ Math.round(p.prix * 0.5) }} €
             </p>
 
-            <button
-              @click="ajouterAuPanier(p)"
-              class="mt-2 bg-blue-600 text-white px-4 py-2 rounded"
-            >
+            <button @click="ajouterAuPanier(p)">
               Ajouter au panier
             </button>
           </div>
+
         </div>
 
-        <div v-else>Aucune promotion.</div>
+        <div v-else>
+          Aucune promotion.
+        </div>
       </div>
 
     </section>
@@ -74,78 +76,46 @@
 import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import SliderProducts from "./SliderProducts.vue";
 import { useStore } from "vuex";
+import SliderProducts from "./SliderProducts.vue";
 
 export default {
   components: { SliderProducts },
+
   setup() {
     const store = useStore();
 
     const produits = ref([]);
     const produitsPromo = ref([]);
     const commandes = ref([]);
-    const produitVedette = ref(null);
     const ventes = ref({});
+    const produitVedette = ref(null);
 
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", { ...produit, quantity: 1 });
-      alert("Produit ajouté au panier");
     };
 
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
+
       snapshot.forEach((doc) => {
-        const p = doc.data();
-        p.id = doc.id;
-        produits.value.push(p);
-        if (p.promo) produitsPromo.value.push(p);
+        const data = doc.data();
+        const produit = { id: doc.id, ...data };
+
+        produits.value.push(produit);
+
+        if (produit.promo) {
+          produitsPromo.value.push(produit);
+        }
       });
     };
 
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
-      snapshot.forEach((doc) => commandes.value.push(doc.data()));
+      snapshot.forEach((doc) => {
+        commandes.value.push(doc.data());
+      });
     };
 
     const calculVentes = () => {
-      commandes.value.forEach((cmd) => {
-        if (cmd.statut === "payé" && cmd.items) {
-          cmd.items.forEach((item) => {
-            if (!ventes.value[item.id]) ventes.value[item.id] = 0;
-            ventes.value[item.id] += item.quantity;
-          });
-        }
-      });
-
-      let max = 0;
-      let vedetteId = null;
-
-      for (const id in ventes.value) {
-        if (ventes.value[id] > max) {
-          max = ventes.value[id];
-          vedetteId = id;
-        }
-      }
-
-      if (vedetteId) {
-        produitVedette.value =
-          produits.value.find((p) => p.id === vedetteId) || null;
-      }
-    };
-
-    onMounted(async () => {
-      await fetchProduits();
-      await fetchCommandes();
-      calculVentes();
-    });
-
-    return {
-      produits,
-      produitsPromo,
-      produitVedette,
-      ventes,
-      ajouterAuPanier,
-    };
-  },
-};
+      commandes.value
