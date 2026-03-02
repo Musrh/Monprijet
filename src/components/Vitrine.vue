@@ -5,44 +5,38 @@
     </h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      
-      <div 
-        v-for="item in produits" 
+      <div
+        v-for="item in produits"
         :key="item.id"
         class="vitrine-card"
       >
         <img :src="item.image" class="vitrine-img" />
         <h3 class="vitrine-title">{{ item.nom }}</h3>
       </div>
-
     </div>
   </section>
 </template>
 
 <script>
-import iphone from "@/assets/iphone.png"
-import macbook from "@/assets/macbook.png"
-import ipad from "@/assets/ipad.png"
-import watch from "@/assets/watch.png"
-
 export default {
+  name: "Vitrine",
   data() {
     return {
       produits: [
-        { id: 1, nom: "Bons Plans", image: iphone },
-        { id: 2, nom: "iPhone", image: iphone },
-        { id: 3, nom: "MacBook", image: macbook },
-        { id: 4, nom: "iPad", image: ipad },
-        { id: 5, nom: "Apple Watch", image: watch }
+        { id: 1, nom: "Bons Plans", image: "https://via.placeholder.com/300x300" },
+        { id: 2, nom: "iPhone", image: "https://via.placeholder.com/300x300" },
+        { id: 3, nom: "MacBook", image: "https://via.placeholder.com/300x300" },
+        { id: 4, nom: "iPad", image: "https://via.placeholder.com/300x300" },
+        { id: 5, nom: "Apple Watch", image: "https://via.placeholder.com/300x300" }
       ]
-    }
+    };
   }
-}
+};
 </script>
 
 <style scoped>
 .vitrine-card {
-  background: #cde870; /* vert pastel */
+  background: #cde870;
   border-radius: 28px;
   padding: 40px 20px;
   text-align: center;
@@ -58,4 +52,18 @@ export default {
 
 .vitrine-img {
   width: 70%;
-  margin
+  margin: auto;
+  margin-bottom: 30px;
+  transition: 0.4s;
+}
+
+.vitrine-card:hover .vitrine-img {
+  transform: scale(1.05);
+}
+
+.vitrine-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+}
+</style>
