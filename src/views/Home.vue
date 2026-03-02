@@ -50,4 +50,4 @@
             Ajouter au panier
           </button>
         </div>
-        <div v-else class="text-gray-500">Aucun produit
+        <div v
