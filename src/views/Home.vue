@@ -6,7 +6,7 @@
       <div class="slider flex transition-transform duration-500"
            :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
         <div v-for="(p, index) in produitsSlider" :key="p.id" class="slide flex-shrink-0 w-full text-center">
-          <img :src="p.images || p.image || p.imageUrl" 
+          <img :src="p.images?.[0] || p.image || '/placeholder.png'" 
                alt="Image produit" 
                class="w-full h-64 object-cover mb-2 rounded"/>
           <p class="text-lg font-semibold">{{ p.nom }}</p>
@@ -24,7 +24,7 @@
     <!-- Produit en vedette -->
     <div v-if="produitVedette" class="featured-product my-8 text-center">
       <h2 class="text-2xl font-bold mb-4">Produit en vedette</h2>
-      <img :src="produitVedette.images || produitVedette.image || produitVedette.imageUrl" 
+      <img :src="produitVedette.images?.[0] || produitVedette.image || '/placeholder.png'" 
            alt="Produit vedette" class="w-64 h-64 object-cover mx-auto mb-2 rounded"/>
       <p class="text-lg font-semibold">{{ produitVedette.nom }}</p>
       <p class="text-green-600 font-bold">{{ produitVedette.prix }} €</p>
@@ -39,7 +39,7 @@
     <div v-if="produitsPromo.length" class="promo-slider flex items-center justify-center space-x-4 my-6">
       <button @click="prevPromo" class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400">‹</button>
       <div v-for="(p, index) in produitsPromo" :key="p.id" v-show="currentPromoIndex === index" class="text-center">
-        <img :src="p.images || p.image || p.imageUrl" 
+        <img :src="p.images?.[0] || p.image || '/placeholder.png'" 
              alt="Produit promo" class="w-40 h-40 object-cover mb-2 rounded"/>
         <p class="font-semibold">{{ p.nom }}</p>
         <p class="text-green-600 font-bold">{{ p.prix }} €</p>
@@ -81,16 +81,16 @@ export default {
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
         ...produit,
-        image: produit.images || produit.image || produit.imageUrl,
+        image: produit.images?.[0] || produit.image || '/placeholder.png',
         quantity: 1,
       });
     };
 
-    // 🔹 Récupérer tous les produits internes + externes
     const fetchProduits = async () => {
       produitsSlider.value = [];
       produitsPromo.value = [];
 
+      // Produits internes
       const snapshotInt = await getDocs(collection(db, "products"));
       snapshotInt.forEach((doc) => {
         const p = { id: doc.id, ...doc.data(), type: "interne" };
@@ -98,6 +98,7 @@ export default {
         if (p.promo) produitsPromo.value.push(p);
       });
 
+      // Produits externes
       const snapshotExt = await getDocs(collection(db, "ProductsExternes"));
       snapshotExt.forEach((doc) => {
         const p = { id: doc.id, ...doc.data(), type: "externe" };
@@ -106,7 +107,6 @@ export default {
       });
     };
 
-    // 🔹 Récupérer les commandes payées et calculer les ventes
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach((doc) => {
@@ -117,7 +117,7 @@ export default {
         ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
       });
 
-      // Déterminer le produit vedette
+      // Produit vedette
       let max = 0;
       produitsSlider.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
@@ -128,14 +128,12 @@ export default {
       });
     };
 
-    // 🔹 Slider automatique
     const nextSlide = () => {
       if (produitsSlider.value.length > 0) {
         currentSlide.value = (currentSlide.value + 1) % produitsSlider.value.length;
       }
     };
 
-    // 🔹 Slider promo automatique
     const nextPromo = () => {
       if (produitsPromo.value.length > 0) {
         currentPromoIndex.value =
@@ -179,34 +177,8 @@ export default {
 </script>
 
 <style scoped>
-.slider-container {
-  width: 100%;
-  overflow: hidden;
-}
-
-.slide {
-  min-width: 100%;
-  text-align: center;
-}
-
-.featured-product {
-  margin: 2rem 0;
-}
-
-.promo-slider {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-}
-
-.badge {
-  display: inline-block;
-  margin-left: 0.5rem;
-  padding: 0.1rem 0.3rem;
-  font-size: 0.7rem;
-  background-color: #4ade80;
-  color: white;
-  border-radius: 0.25rem;
-}
+/* Slider & featured product styles */
+.slider-container { max-height: 400px; }
+.slide img { object-fit: cover; }
+.featured-product img { object-fit: cover; }
 </style>
