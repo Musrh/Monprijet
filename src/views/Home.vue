@@ -5,7 +5,7 @@
     <div v-if="produitsSlider.length" class="slider-container w-full overflow-hidden relative">
       <div class="slider flex transition-transform duration-500"
            :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
-        <div v-for="(p, index) in produitsSlider" :key="p.id" class="slide flex-shrink-0 w-full text-center">
+        <div v-for="p in produitsSlider" :key="p.id" class="slide flex-shrink-0 w-full text-center">
           <img :src="p.images?.[0] || p.image || '/placeholder.png'" 
                alt="Image produit" 
                class="w-full h-64 object-cover mb-2 rounded"/>
@@ -113,13 +113,13 @@ export default {
         const cmd = doc.data();
         if (cmd.statut !== "payé") return;
 
-        // cmd.items est un tableau des produits dans la commande
-        cmd.items?.forEach(item => {
-          ventes.value[item.id] = (ventes.value[item.id] || 0) + (item.quantity || 0);
-        });
+        // Corrigé : quantity direct dans la commande
+        const prodId = cmd.id;
+        const qty = cmd.quantity || 0;
+        ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
       });
 
-      // Produit vedette
+      // Produit vedette = max ventes
       let max = 0;
       produitsSlider.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
