@@ -6,13 +6,13 @@
       
       <!-- Left: liens principaux -->
       <div class="flex items-center space-x-2">
-        <router-link to="/" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Home</router-link>
-        <router-link to="/contact" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Contact</router-link>
-        <router-link to="/produits" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Produits</router-link>
+        <router-link to="/" class="menu-btn">Home</router-link>
+        <router-link to="/contact" class="menu-btn">Contact</router-link>
+        <router-link to="/produits" class="menu-btn">Produits</router-link>
 
         <!-- Admin Dropdown -->
         <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
-          <button class="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-green-700 transition">
+          <button class="menu-btn flex items-center gap-1">
             Admin
             <svg class="w-4 h-4 opacity-60 transition-transform" :class="{'rotate-180': adminDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -28,13 +28,11 @@
         </div>
       </div>
 
-      <!-- Right: ThemeSwitcher + Panier + Login/Logout -->
+      <!-- Right: Panier + Login/Logout -->
       <div class="flex items-center space-x-2">
-        <!-- ThemeSwitcher Dropdown -->
-        <ThemeSwitcher />
 
         <!-- Panier -->
-        <router-link to="/panier" class="bg-green-600 text-white px-4 py-2 rounded relative hover:bg-green-700 transition">
+        <router-link to="/panier" class="menu-btn relative">
           🛒
           <span v-if="cartItemCount > 0" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
             {{ cartItemCount }}
@@ -42,22 +40,24 @@
         </router-link>
 
         <!-- Login / Logout -->
-        <router-link v-if="!isAuthenticated" to="/login" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-          Login
-        </router-link>
+        <router-link v-if="!isAuthenticated" to="/login" class="menu-btn">Login</router-link>
 
         <template v-if="isAuthenticated">
-          <span class="bg-green-600 text-white px-4 py-2 rounded transition">{{ userEmail }}</span>
-          <button @click="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Logout</button>
+          <span class="user-badge">{{ userEmail }}</span>
+          <button @click="logout" class="logout-btn">Logout</button>
         </template>
+
+        <!-- ✅ THEMESWITCHER TOUJOURS EN DERNIER -->
+        <ThemeSwitcher />
+
       </div>
     </nav>
 
     <!-- Contenu principal -->
     <router-view />
 
-    <!-- Optionnel : Vitrine sans image -->
-    <!-- <Vitrine /> --> 
+    <!-- Vitrine commentée -->
+    <!-- <Vitrine /> -->
 
   </div>
 </template>
@@ -65,14 +65,11 @@
 <script>
 import { mapGetters } from "vuex";
 import ThemeSwitcher from './components/ThemeSwitcher.vue';
-// import Vitrine from './components/Vitrine.vue'; // Plus besoin si pas d'image
 
 export default {
   components: { ThemeSwitcher },
   data() {
-    return {
-      adminDropdown: false
-    };
+    return { adminDropdown: false };
   },
   computed: {
     ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"])
@@ -88,5 +85,16 @@ export default {
 </script>
 
 <style scoped>
-/* Ajuster les styles si nécessaire */
-</style>
+.menu-btn {
+  background: #16a34a;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+.menu-btn:hover { background: #15803d; transform: translateY(-1px); }
+
+.user-badge { background: #22c55e; color: white; padding: 6px 12px; border-radius: 8px; font-size: 13px; }
+
+.logout-btn { background: #ef4444; color: white; padding: 6px 14px; border-radius: 8px
