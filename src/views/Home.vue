@@ -1,55 +1,48 @@
 <template>
-  <div class="home">
+  <div class="home-page">
 
-    <!-- 🔹 Slider principal -->
-    <section class="relative w-full overflow-hidden">
-      <div class="flex transition-transform duration-500"
-           :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
-        <div v-for="p in produitsSlider" :key="p.id" class="w-full flex-shrink-0 relative h-64">
-          <img :src="p.images" :alt="p.nom" class="w-full h-full object-cover" />
-          <!-- Overlay texte -->
-          <div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white p-2 rounded">
-            <h3 class="font-semibold">{{ p.nom }}</h3>
-            <p>{{ p.prix }} €</p>
-          </div>
+    <!-- Slider principal -->
+    <div v-if="produitsSlider.length" class="slider-container">
+      <div class="slider">
+        <div v-for="(p, index) in produitsSlider" :key="p.id" 
+             v-show="currentSlide === index" 
+             class="slide">
+          <p>{{ p.nom }}</p>
+          <p>{{ p.prix }} €</p>
+          <p>Vendus : {{ ventes[p.id] || 0 }}</p>
+          <button @click="ajouterAuPanier(p)">Ajouter au panier</button>
+          <span v-if="p.type" class="badge">{{ p.type }}</span>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- 🔹 Produit vedette -->
-    <section class="mt-8 w-full md:w-1/2 mx-auto text-center">
-      <h2 class="text-xl font-bold mb-4">Produit en vedette</h2>
-      <div v-if="produitVedette" class="border p-4 rounded shadow">
-        <img :src="produitVedette.images" :alt="produitVedette.nom" class="w-full h-64 object-cover rounded" />
-        <h3 class="font-semibold mt-2">{{ produitVedette.nom }}</h3>
-        <p>{{ produitVedette.prix }} €</p>
-        <p>Vendu : {{ ventes[produitVedette.id] || 0 }} fois</p>
-        <button @click="ajouterAuPanier(produitVedette)"
-                class="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">
-          Ajouter au panier
-        </button>
+    <!-- Produit en vedette -->
+    <div v-if="produitVedette" class="featured-product">
+      <h2>Produit en vedette</h2>
+      <p>{{ produitVedette.nom }}</p>
+      <p>{{ produitVedette.prix }} €</p>
+      <p>Vendus : {{ ventes[produitVedette.id] || 0 }}</p>
+      <button @click="ajouterAuPanier(produitVedette)">Ajouter au panier</button>
+    </div>
+    <div v-else>
+      Aucun produit vendu pour l'instant.
+    </div>
+
+    <!-- Produits en promotion -->
+    <div v-if="produitsPromo.length" class="promo-slider">
+      <button @click="prevPromo">‹</button>
+      <div v-for="(p, index) in produitsPromo" :key="p.id" 
+           v-show="currentPromoIndex === index">
+        <p>{{ p.nom }}</p>
+        <p>{{ p.prix }} €</p>
+        <button @click="ajouterAuPanier(p)">Ajouter au panier</button>
       </div>
-      <div v-else class="text-gray-500">Aucun produit vendu pour l'instant.</div>
-    </section>
+      <button @click="nextPromo">›</button>
+    </div>
 
-    <!-- 🔹 Vitrine -->
-    <section class="mt-8">
-      <Vitrine />
-    </section>
+    <!-- Vitrine -->
+    <Vitrine />
 
-    <!-- Mini Shop produits externes -->
-    <section class="mt-8">
-    <MiniShop />
-    </section>
-    
-
-    <!-- 🔹 Grande image en bas -->
-    <section class="mt-8">
-      <img src="https://via.placeholder.com/1200x400/ffffff/cccccc?text=Grande+Image"
-           alt="Grande Image"
-           class="w-full object-cover rounded shadow-lg" />
-    </section>
-    
   </div>
 </template>
 
@@ -58,48 +51,65 @@ import { ref, onMounted, onBeforeUnmount } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
-
 import Vitrine from "../components/Vitrine.vue";
-import MiniShop from "../components/MiniShop.vue";
-  
+
 export default {
   components: { Vitrine },
-  components: { MiniShop },
   setup() {
     const store = useStore();
 
     const produitsSlider = ref([]);
     const produitVedette = ref(null);
+    const produitsPromo = ref([]);
     const ventes = ref({});
     const currentSlide = ref(0);
+    const currentPromoIndex = ref(0);
     let sliderInterval = null;
+    let promoInterval = null;
 
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
         ...produit,
-        image: produit.images,
+        image: produit.images || produit.image,
         quantity: 1,
       });
     };
 
+    // 🔹 Récupérer tous les produits internes + externes
     const fetchProduits = async () => {
-      const snapshot = await getDocs(collection(db, "products"));
-      snapshot.forEach((doc) => {
-        const p = { id: doc.id, ...doc.data() };
+      produitsSlider.value = [];
+      produitsPromo.value = [];
+
+      // Produits internes
+      const snapshotInt = await getDocs(collection(db, "products"));
+      snapshotInt.forEach((doc) => {
+        const p = { id: doc.id, ...doc.data(), type: "interne" };
         produitsSlider.value.push(p);
+        if (p.promo) produitsPromo.value.push(p);
+      });
+
+      // Produits externes
+      const snapshotExt = await getDocs(collection(db, "ProductsExternes"));
+      snapshotExt.forEach((doc) => {
+        const p = { id: doc.id, ...doc.data(), type: "externe" };
+        produitsSlider.value.push(p);
+        if (p.promo) produitsPromo.value.push(p);
       });
     };
 
+    // 🔹 Récupérer les commandes et calculer les ventes
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
       snapshot.forEach((doc) => {
         const cmd = doc.data();
-        cmd.items?.forEach((item) => {
-          ventes.value[item.id] = (ventes.value[item.id] || 0) + item.quantity;
-        });
+        if (cmd.statut !== "payé") return;
+
+        const prodId = cmd.id;
+        const qty = cmd.quantity || 0;
+        ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
       });
 
-      // Produit vedette = plus vendu
+      // Déterminer le produit vedette
       let max = 0;
       produitsSlider.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
@@ -110,9 +120,25 @@ export default {
       });
     };
 
+    // 🔹 Slider automatique
     const nextSlide = () => {
       if (produitsSlider.value.length > 0) {
         currentSlide.value = (currentSlide.value + 1) % produitsSlider.value.length;
+      }
+    };
+
+    // 🔹 Slider promo
+    const nextPromo = () => {
+      if (produitsPromo.value.length > 0) {
+        currentPromoIndex.value =
+          (currentPromoIndex.value + 1) % produitsPromo.value.length;
+      }
+    };
+    const prevPromo = () => {
+      if (produitsPromo.value.length > 0) {
+        currentPromoIndex.value =
+          (currentPromoIndex.value - 1 + produitsPromo.value.length) %
+          produitsPromo.value.length;
       }
     };
 
@@ -120,24 +146,56 @@ export default {
       await fetchProduits();
       await fetchCommandes();
 
-      sliderInterval = setInterval(nextSlide, 3000); // slider automatique
+      sliderInterval = setInterval(nextSlide, 3000);
+      promoInterval = setInterval(nextPromo, 3000);
     });
 
     onBeforeUnmount(() => {
       clearInterval(sliderInterval);
+      clearInterval(promoInterval);
     });
 
     return {
       produitsSlider,
       produitVedette,
+      produitsPromo,
       ventes,
       currentSlide,
+      currentPromoIndex,
       ajouterAuPanier,
+      nextPromo,
+      prevPromo,
     };
   },
 };
 </script>
 
 <style scoped>
-.home img { display: block; width: 100%; object-fit: cover; }
+.slider-container, .promo-slider {
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.slide, .promo-slide {
+  min-width: 100%;
+  text-align: center;
+}
+
+.featured-product {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.badge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.3rem;
+  font-size: 0.7rem;
+  background-color: #4ade80;
+  color: white;
+  border-radius: 0.25rem;
+}
 </style>
