@@ -58,8 +58,8 @@ import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
-import SliderProducts from "../components/SliderProducts.vue";
-import Vitrine from "../components/Vitrine.vue";
+import SliderProducts from "./SliderProducts.vue";
+import Vitrine from "./Vitrine.vue";
 
 export default {
   components: { SliderProducts, Vitrine },
