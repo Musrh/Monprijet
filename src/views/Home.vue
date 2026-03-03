@@ -112,9 +112,11 @@ export default {
       snapshot.forEach((doc) => {
         const cmd = doc.data();
         if (cmd.statut !== "payé") return;
-        const prodId = cmd.id;
-        const qty = cmd.quantity || 0;
-        ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
+
+        // cmd.items est un tableau des produits dans la commande
+        cmd.items?.forEach(item => {
+          ventes.value[item.id] = (ventes.value[item.id] || 0) + (item.quantity || 0);
+        });
       });
 
       // Produit vedette
@@ -152,8 +154,13 @@ export default {
       await fetchProduits();
       await fetchCommandes();
 
-      sliderInterval = setInterval(nextSlide, 3000);
-      promoInterval = setInterval(nextPromo, 3000);
+      // Démarrer slider après chargement des produits
+      if (produitsSlider.value.length > 0) {
+        sliderInterval = setInterval(nextSlide, 3000);
+      }
+      if (produitsPromo.value.length > 0) {
+        promoInterval = setInterval(nextPromo, 3000);
+      }
     });
 
     onBeforeUnmount(() => {
@@ -177,7 +184,6 @@ export default {
 </script>
 
 <style scoped>
-/* Slider & featured product styles */
 .slider-container { max-height: 400px; }
 .slide img { object-fit: cover; }
 .featured-product img { object-fit: cover; }
