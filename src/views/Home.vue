@@ -8,7 +8,7 @@
       :ajouter-au-panier="ajouterAuPanier" 
     />
 
-    <!-- Section Produits en vedette -->
+    <!-- Section Produits en vedette calculée à partir des commandes payées -->
     <section v-if="produitVedette" class="featured-section my-8 px-4">
       <h2 class="text-2xl font-bold mb-4 text-center">Produit en vedette</h2>
       <div class="flex flex-col md:flex-row items-center justify-center gap-6 bg-white p-4 rounded shadow">
@@ -104,16 +104,18 @@ export default {
 
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
+
+      // Calculer la somme des quantities pour chaque produit payé
       snapshot.forEach((doc) => {
         const cmd = doc.data();
         if (cmd.statut !== "payé") return;
 
-        const prodId = cmd.id;
+        const prodId = cmd.id; // id du produit dans la commande
         const qty = cmd.quantity || 0;
         ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
       });
 
-      // Calcul produit vedette = max ventes sur produits internes
+      // Produit vedette = max quantity parmi produits internes
       let max = 0;
       produitsInternes.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
@@ -125,8 +127,8 @@ export default {
     };
 
     onMounted(async () => {
-      await fetchProduits();      // d'abord les produits
-      await fetchCommandes();     // puis calcul produit vedette
+      await fetchProduits();      // d'abord les produits internes/externes
+      await fetchCommandes();     // ensuite produit vedette depuis commandes payées
     });
 
     return {
