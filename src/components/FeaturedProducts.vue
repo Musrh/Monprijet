@@ -33,7 +33,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { db } from "@/firebase";
+import { db } from "../firebase";
 import { collection, getDocs } from "firebase/firestore";
 
 const featuredProducts = ref([]);
