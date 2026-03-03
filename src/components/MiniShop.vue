@@ -7,15 +7,27 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       <div v-for="p in produits" :key="p.id" class="border p-4 rounded shadow text-center">
-        <img :src="p.imageUrl" :alt="p.title" class="w-full h-48 object-cover rounded" />
-        <h3 class="font-semibold mt-2">{{ p.title }}</h3>
-        <p>{{ p.price }} $</p>
-        <button
-          @click="ajouterAuPanier(p)"
-          class="mt-2 bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
-        >
-          Ajouter au panier
-        </button>
+        <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded" />
+        <h3 class="font-semibold mt-2">{{ p.nom }}</h3>
+        <p>{{ p.prix }} €</p>
+
+        <div class="flex justify-center gap-2 mt-2">
+          <button
+            @click="ajouterAuPanier(p)"
+            class="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+          >
+            Ajouter au panier
+          </button>
+
+          <a
+            :href="p.url"
+            target="_blank"
+            rel="noopener"
+            class="bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700"
+          >
+            Voir sur AliExpress
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -44,12 +56,12 @@ const fetchExternalProducts = async () => {
 const ajouterAuPanier = (p) => {
   store.dispatch("addToCart", {
     id: p.id,
-    nom: p.title,
-    image: p.imageUrl,
-    prix: p.price,
+    nom: p.nom,
+    image: p.images,
+    prix: p.prix,
     quantity: 1,
   });
-  alert(`Produit "${p.title}" ajouté au panier !`);
+  alert(`Produit "${p.nom}" ajouté au panier !`);
 };
 
 onMounted(fetchExternalProducts);
