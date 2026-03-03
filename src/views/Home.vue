@@ -1,7 +1,7 @@
 <template>
   <div class="home-page min-h-screen bg-gray-100">
 
-    <!-- Slider des produits internes -->
+    <!-- Slider des produits internes uniquement -->
     <SliderProducts 
       :produits="produitsInternes" 
       :ventes="ventes" 
@@ -58,7 +58,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
-import SliderProducts from "./SliderProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
 export default {
@@ -80,17 +80,17 @@ export default {
     };
 
     const fetchProduits = async () => {
-      // Produits internes
+      // 1️⃣ Produits internes
       const snapshotInt = await getDocs(collection(db, "products"));
       snapshotInt.forEach((doc) => {
-        const p = { id: doc.id, ...doc.data(), type: "interne" };
+        const p = { id: doc.id, ...doc.data() };
         produitsInternes.value.push(p);
       });
 
-      // Produits externes
+      // 2️⃣ Produits externes
       const snapshotExt = await getDocs(collection(db, "ProductsExternes"));
       snapshotExt.forEach((doc) => {
-        const p = { id: doc.id, ...doc.data(), type: "externe" };
+        const p = { id: doc.id, ...doc.data() };
         produitsExternes.value.push(p);
       });
     };
@@ -106,7 +106,7 @@ export default {
         ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
       });
 
-      // Produit vedette = max ventes uniquement parmi produits internes
+      // Calculer produit vedette seulement après avoir rempli produitsInternes
       let max = 0;
       produitsInternes.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
@@ -118,8 +118,8 @@ export default {
     };
 
     onMounted(async () => {
-      await fetchProduits();
-      await fetchCommandes();
+      await fetchProduits();     // d'abord les produits
+      await fetchCommandes();    // puis calcul du produit vedette
     });
 
     return {
