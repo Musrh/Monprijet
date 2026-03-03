@@ -1,54 +1,49 @@
 <template>
-  <div class="home-page">
+  <div class="home-page min-h-screen bg-gray-100">
 
-    <!-- Slider principal full-width -->
-    <div v-if="produitsSlider.length" class="slider-container w-full overflow-hidden relative">
-      <div class="slider flex transition-transform duration-500"
-           :style="{ transform: `translateX(-${currentSlide * 100}%)` }">
-        <div v-for="p in produitsSlider" :key="p.id" class="slide flex-shrink-0 w-full text-center">
-          <img :src="p.images?.[0] || p.image || '/placeholder.png'" 
-               alt="Image produit" 
-               class="w-full h-64 object-cover mb-2 rounded"/>
-          <p class="text-lg font-semibold">{{ p.nom }}</p>
-          <p class="text-green-600 font-bold">{{ p.prix }} €</p>
-          <p class="text-gray-500">Vendus : {{ ventes[p.id] || 0 }}</p>
-          <button @click="ajouterAuPanier(p)"
-                  class="bg-green-600 text-white px-4 py-2 rounded mt-2 hover:bg-green-700 transition">
-            Ajouter au panier
-          </button>
-          <span v-if="p.type" class="badge">{{ p.type }}</span>
-        </div>
-      </div>
-    </div>
+    <!-- Slider des produits internes -->
+    <SliderProducts 
+      :produits="produitsInternes" 
+      :ventes="ventes" 
+      :ajouter-au-panier="ajouterAuPanier" 
+    />
 
-    <!-- Produit en vedette -->
+    <!-- Produit vedette -->
     <div v-if="produitVedette" class="featured-product my-8 text-center">
       <h2 class="text-2xl font-bold mb-4">Produit en vedette</h2>
-      <img :src="produitVedette.images?.[0] || produitVedette.image || '/placeholder.png'" 
-           alt="Produit vedette" class="w-64 h-64 object-cover mx-auto mb-2 rounded"/>
+      <img 
+        :src="produitVedette.images?.[0] || produitVedette.image || '/placeholder.png'" 
+        alt="Produit vedette" 
+        class="w-64 h-64 object-cover mx-auto mb-2 rounded"
+      />
       <p class="text-lg font-semibold">{{ produitVedette.nom }}</p>
       <p class="text-green-600 font-bold">{{ produitVedette.prix }} €</p>
       <p class="text-gray-500">Vendus : {{ ventes[produitVedette.id] || 0 }}</p>
-      <button @click="ajouterAuPanier(produitVedette)"
-              class="bg-green-600 text-white px-4 py-2 rounded mt-2 hover:bg-green-700 transition">
+      <button 
+        @click="ajouterAuPanier(produitVedette)"
+        class="bg-green-600 text-white px-4 py-2 rounded mt-2 hover:bg-green-700 transition"
+      >
         Ajouter au panier
       </button>
     </div>
 
-    <!-- Produits en promotion -->
-    <div v-if="produitsPromo.length" class="promo-slider flex items-center justify-center space-x-4 my-6">
-      <button @click="prevPromo" class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400">‹</button>
-      <div v-for="(p, index) in produitsPromo" :key="p.id" v-show="currentPromoIndex === index" class="text-center">
-        <img :src="p.images?.[0] || p.image || '/placeholder.png'" 
-             alt="Produit promo" class="w-40 h-40 object-cover mb-2 rounded"/>
+    <!-- Produits externes -->
+    <div v-if="produitsExternes.length" class="external-products my-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
+      <div v-for="p in produitsExternes" :key="p.id" class="text-center border rounded p-2 bg-white shadow-sm hover:shadow-md transition">
+        <img 
+          :src="p.image || '/placeholder.png'" 
+          alt="Produit externe" 
+          class="w-full h-40 object-cover mb-2 rounded"
+        />
         <p class="font-semibold">{{ p.nom }}</p>
         <p class="text-green-600 font-bold">{{ p.prix }} €</p>
-        <button @click="ajouterAuPanier(p)" 
-                class="bg-green-600 text-white px-3 py-1 rounded mt-1 hover:bg-green-700 transition">
+        <button 
+          @click="ajouterAuPanier(p)" 
+          class="bg-green-600 text-white px-3 py-1 rounded mt-1 hover:bg-green-700 transition"
+        >
           Ajouter au panier
         </button>
       </div>
-      <button @click="nextPromo" class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400">›</button>
     </div>
 
     <!-- Vitrine -->
@@ -58,25 +53,23 @@
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
+
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
 export default {
-  components: { Vitrine },
+  components: { SliderProducts, Vitrine },
   setup() {
     const store = useStore();
 
-    const produitsSlider = ref([]);
+    const produitsInternes = ref([]);
+    const produitsExternes = ref([]);
     const produitVedette = ref(null);
-    const produitsPromo = ref([]);
     const ventes = ref({});
-    const currentSlide = ref(0);
-    const currentPromoIndex = ref(0);
-    let sliderInterval = null;
-    let promoInterval = null;
 
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
@@ -87,23 +80,18 @@ export default {
     };
 
     const fetchProduits = async () => {
-      produitsSlider.value = [];
-      produitsPromo.value = [];
-
       // Produits internes
       const snapshotInt = await getDocs(collection(db, "products"));
       snapshotInt.forEach((doc) => {
         const p = { id: doc.id, ...doc.data(), type: "interne" };
-        produitsSlider.value.push(p);
-        if (p.promo) produitsPromo.value.push(p);
+        produitsInternes.value.push(p);
       });
 
       // Produits externes
       const snapshotExt = await getDocs(collection(db, "ProductsExternes"));
       snapshotExt.forEach((doc) => {
         const p = { id: doc.id, ...doc.data(), type: "externe" };
-        produitsSlider.value.push(p);
-        if (p.promo) produitsPromo.value.push(p);
+        produitsExternes.value.push(p);
       });
     };
 
@@ -113,7 +101,6 @@ export default {
         const cmd = doc.data();
         if (cmd.statut !== "payé") return;
 
-        // Corrigé : quantity direct dans la commande
         const prodId = cmd.id;
         const qty = cmd.quantity || 0;
         ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
@@ -121,7 +108,7 @@ export default {
 
       // Produit vedette = max ventes
       let max = 0;
-      produitsSlider.value.forEach((p) => {
+      [...produitsInternes.value, ...produitsExternes.value].forEach((p) => {
         const q = ventes.value[p.id] || 0;
         if (q > max) {
           max = q;
@@ -130,61 +117,25 @@ export default {
       });
     };
 
-    const nextSlide = () => {
-      if (produitsSlider.value.length > 0) {
-        currentSlide.value = (currentSlide.value + 1) % produitsSlider.value.length;
-      }
-    };
-
-    const nextPromo = () => {
-      if (produitsPromo.value.length > 0) {
-        currentPromoIndex.value =
-          (currentPromoIndex.value + 1) % produitsPromo.value.length;
-      }
-    };
-    const prevPromo = () => {
-      if (produitsPromo.value.length > 0) {
-        currentPromoIndex.value =
-          (currentPromoIndex.value - 1 + produitsPromo.value.length) %
-          produitsPromo.value.length;
-      }
-    };
-
     onMounted(async () => {
       await fetchProduits();
       await fetchCommandes();
-
-      // Démarrer slider après chargement des produits
-      if (produitsSlider.value.length > 0) {
-        sliderInterval = setInterval(nextSlide, 3000);
-      }
-      if (produitsPromo.value.length > 0) {
-        promoInterval = setInterval(nextPromo, 3000);
-      }
-    });
-
-    onBeforeUnmount(() => {
-      clearInterval(sliderInterval);
-      clearInterval(promoInterval);
     });
 
     return {
-      produitsSlider,
+      produitsInternes,
+      produitsExternes,
       produitVedette,
-      produitsPromo,
       ventes,
-      currentSlide,
-      currentPromoIndex,
       ajouterAuPanier,
-      nextPromo,
-      prevPromo,
     };
   },
 };
 </script>
 
 <style scoped>
-.slider-container { max-height: 400px; }
-.slide img { object-fit: cover; }
-.featured-product img { object-fit: cover; }
+.featured-product img,
+.external-products img {
+  object-fit: cover;
+}
 </style>
