@@ -8,7 +8,7 @@
       :ajouter-au-panier="ajouterAuPanier" 
     />
 
-    <!-- Produit vedette -->
+    <!-- Produit vedette interne -->
     <div v-if="produitVedette" class="featured-product my-8 text-center">
       <h2 class="text-2xl font-bold mb-4">Produit en vedette</h2>
       <img 
@@ -106,9 +106,9 @@ export default {
         ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
       });
 
-      // Produit vedette = max ventes
+      // Produit vedette = max ventes uniquement parmi produits internes
       let max = 0;
-      [...produitsInternes.value, ...produitsExternes.value].forEach((p) => {
+      produitsInternes.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
         if (q > max) {
           max = q;
