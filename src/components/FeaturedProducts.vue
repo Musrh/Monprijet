@@ -1,129 +1,86 @@
+
 <template>
-  <section v-if="produitVedette" class="my-10 px-4">
-    <h2 class="text-3xl font-bold text-center mb-6">
-      ⭐ Produits en vedette
+  <section class="my-10 px-6">
+    <h2 class="text-2xl font-bold mb-6 text-center">
+      🔥 Produits en vedette
     </h2>
 
-    <div class="relative max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-6 flex flex-col md:flex-row items-center gap-8">
-
-      <!-- 🔥 Badge -->
-      <span
-        class="absolute top-4 left-4 bg-red-500 text-white font-bold px-4 py-1 rounded-full shadow-md z-50"
+    <div v-if="featuredProducts.length" class="grid md:grid-cols-3 gap-6">
+      <div
+        v-for="produit in featuredProducts"
+        :key="produit.id"
+        class="border p-4 rounded shadow"
       >
-        🔥 En vedette
-      </span>
+        <img
+          :src="produit.images?.[0]"
+          class="w-full h-48 object-cover rounded mb-3"
+        />
 
-      <!-- Image -->
-      <img
-        :src="produitVedette.images?.[0] || produitVedette.image || '/placeholder.png'"
-        class="w-64 h-64 object-cover rounded-lg"
-      />
+        <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
+        <p class="text-gray-600">{{ produit.prix }} MAD</p>
 
-      <!-- Infos -->
-      <div class="text-center md:text-left">
-        <h3 class="text-2xl font-semibold mb-2">
-          {{ produitVedette.nom }}
-        </h3>
-
-        <p class="text-green-600 text-xl font-bold mb-2">
-          {{ produitVedette.prix }} €
-        </p>
-
-        <p class="text-gray-500 mb-4">
-          Vendus : {{ ventes[produitVedette.id] || 0 }}
-        </p>
-
-        <button
-          @click="ajouterAuPanier(produitVedette)"
-          class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg transition"
-        >
-          Ajouter au panier
-        </button>
+        <span class="text-red-600 font-bold">
+          Vendus: {{ ventes[produit.id] }}
+        </span>
       </div>
-
     </div>
+
+    <p v-else class="text-center text-gray-500">
+      Aucun produit en vedette
+    </p>
   </section>
 </template>
 
-<script>
+<script setup>
 import { ref, onMounted } from "vue";
+import { db } from "@/firebase";
 import { collection, getDocs } from "firebase/firestore";
-import { useStore } from "vuex";
-import { db } from "../firebase";
 
-export default {
-  setup() {
-    const store = useStore();
+const featuredProducts = ref([]);
+const ventes = ref({});
 
-    const produitsInternes = ref([]);
-    const produitVedette = ref(null);
-    const ventes = ref({});
+onMounted(async () => {
+  await calculerProduitsVedettes();
+});
 
-    const ajouterAuPanier = (produit) => {
-      store.dispatch("addToCart", {
-        ...produit,
-        image: produit.images?.[0] || produit.image || "/placeholder.png",
-        quantity: 1,
+async function calculerProduitsVedettes() {
+  const snapshot = await getDocs(collection(db, "commandes"));
+
+  const compteur = {};
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+
+    if (!data.id || !data.quantity) return;
+
+    if (!compteur[data.id]) {
+      compteur[data.id] = 0;
+    }
+
+    compteur[data.id] += data.quantity;
+  });
+
+  ventes.value = compteur;
+
+  // 🔥 Trouver max quantity
+  const max = Math.max(...Object.values(compteur));
+
+  const idsVedettes = Object.keys(compteur).filter(
+    id => compteur[id] === max
+  );
+
+  if (!idsVedettes.length) return;
+
+  // 🔥 Charger les produits correspondants
+  const productsSnap = await getDocs(collection(db, "products"));
+
+  productsSnap.forEach(doc => {
+    if (idsVedettes.includes(doc.id)) {
+      featuredProducts.value.push({
+        id: doc.id,
+        ...doc.data()
       });
-    };
-
-    const fetchProduits = async () => {
-      const snapshot = await getDocs(collection(db, "products"));
-      snapshot.forEach((doc) => {
-        produitsInternes.value.push({
-          id: doc.id,
-          ...doc.data(),
-        });
-      });
-    };
-
-    const fetchCommandes = async () => {
-      const snapshot = await getDocs(collection(db, "commandes"));
-
-      snapshot.forEach((doc) => {
-        const cmd = doc.data();
-        if (cmd.statut !== "payé") return;
-
-        const produit = produitsInternes.value.find(
-          (p) => p.id === cmd.id
-        );
-        if (!produit) return;
-
-        ventes.value[cmd.id] =
-          (ventes.value[cmd.id] || 0) + (cmd.quantity || 0);
-      });
-
-      let max = 0;
-      let vedette = null;
-
-      produitsInternes.value.forEach((p) => {
-        const q = ventes.value[p.id] || 0;
-        if (q > max) {
-          max = q;
-          vedette = p;
-        }
-      });
-
-      // 🔥 Fallback si aucune vente
-      if (!vedette && produitsInternes.value.length > 0) {
-        vedette = produitsInternes.value.reduce((a, b) =>
-          a.prix > b.prix ? a : b
-        );
-      }
-
-      produitVedette.value = vedette;
-    };
-
-    onMounted(async () => {
-      await fetchProduits();
-      await fetchCommandes();
-    });
-
-    return {
-      produitVedette,
-      ventes,
-      ajouterAuPanier,
-    };
-  },
-};
+    }
+  });
+}
 </script>
