@@ -1,92 +1,152 @@
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div :class="theme">
 
-    <!-- Menu principal -->
-    <nav class="bg-gray-800 p-4 flex items-center justify-between">
-      
-      <!-- Left: liens principaux -->
-      <div class="flex items-center space-x-2">
-        <router-link to="/" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Home</router-link>
-        <router-link to="/contact" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Contact</router-link>
-        <router-link to="/produits" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">Produits</router-link>
+    <!-- 🔹 NAVBAR -->
+    <nav class="navbar">
 
-        <!-- Admin Dropdown -->
-        <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
-          <button class="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-green-700 transition">
-            Admin
-            <svg class="w-4 h-4 opacity-60 transition-transform" :class="{'rotate-180': adminDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-            </svg>
-          </button>
-
-          <div v-if="adminDropdown" class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border border-gray-200 py-2 z-50">
-            <router-link @click="adminDropdown=false" to="/admin" class="block px-4 py-2 hover:bg-gray-100">Admin (Utilisateurs)</router-link>
-            <router-link @click="adminDropdown=false" to="/adminproduits" class="block px-4 py-2 hover:bg-gray-100">Admin-Produits</router-link>
-            <router-link @click="adminDropdown=false" to="/admin-commandes" class="block px-4 py-2 hover:bg-gray-100">Admin-Commandes</router-link>
-            <router-link @click="adminDropdown=false" to="/upload" class="block px-4 py-2 hover:bg-gray-100">UploadProduit</router-link>
-          </div>
-        </div>
+      <div class="nav-left">
+        <router-link to="/" class="nav-link">Home</router-link>
+        <router-link to="/contact" class="nav-link">Contact</router-link>
+        <router-link to="/produits" class="nav-link">Produits</router-link>
       </div>
 
-      <!-- Right: ThemeSwitcher + Panier + Login/Logout -->
-      <div class="flex items-center space-x-2">
-        <!-- ThemeSwitcher Dropdown -->
-        <ThemeSwitcher />
+      <div class="nav-right">
 
-        <!-- Panier -->
-        <router-link to="/panier" class="bg-green-600 text-white px-4 py-2 rounded relative hover:bg-green-700 transition">
+        <router-link to="/cart" class="nav-link cart">
           🛒
-          <span v-if="cartItemCount > 0" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-            {{ cartItemCount }}
-          </span>
         </router-link>
 
-        <!-- Login / Logout -->
-        <router-link v-if="!isAuthenticated" to="/login" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+        <router-link v-if="!user" to="/login" class="nav-link">
           Login
         </router-link>
 
-        <template v-if="isAuthenticated">
-          <span class="bg-green-600 text-white px-4 py-2 rounded transition">{{ userEmail }}</span>
-          <button @click="logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition">Logout</button>
-        </template>
+        <button v-if="user" @click="logout" class="btn-logout">
+          Logout
+        </button>
+
+        <!-- ✅ SWITCH THEME EN DERNIER -->
+        <select v-model="theme" @change="applyTheme" class="theme-select">
+          <option value="dark">Dark</option>
+          <option value="pastel">Pastel</option>
+        </select>
+
       </div>
+
     </nav>
 
-    <!-- Contenu principal -->
-    <router-view />
+    <!-- 🔹 SLIDER FULL WIDTH -->
+    <div class="slider">
+      <img src="@/assets/hero.png" alt="banner" />
+    </div>
 
-    <!-- Vitrine placée en dehors du menu -->
-    <Vitrine />
+    <!-- 🔹 ROUTER -->
+    <router-view />
 
   </div>
 </template>
 
 <script>
-import { mapGetters } from "vuex";
-import ThemeSwitcher from './components/ThemeSwitcher.vue';
-import Vitrine from './components/Vitrine.vue';
-
 export default {
-  components: { ThemeSwitcher, Vitrine },
   data() {
     return {
-      adminDropdown: false
-    };
-  },
-  computed: {
-    ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"])
-  },
-  methods: {
-    logout() {
-      this.adminDropdown = false;
-      this.$store.dispatch("logout");
-      this.$router.push("/");
+      theme: localStorage.getItem("theme") || "dark"
     }
+  },
+
+  computed: {
+    user() {
+      return this.$store.state.user
+    }
+  },
+
+  methods: {
+    applyTheme() {
+      document.body.className = this.theme
+      localStorage.setItem("theme", this.theme)
+    },
+
+    logout() {
+      this.$store.dispatch("logout")
+    }
+  },
+
+  mounted() {
+    document.body.className = this.theme
   }
-};
+}
 </script>
 
-<style scoped>
-/* Ajuster les styles si nécessaire */
+<style>
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+/* 🔹 NAVBAR */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #111827;
+  padding: 8px 20px;
+}
+
+.nav-left,
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.nav-link {
+  color: white;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.nav-link:hover {
+  opacity: 0.8;
+}
+
+.btn-logout {
+  background: crimson;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.theme-select {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+/* 🔹 SLIDER */
+.slider {
+  width: 100%;
+}
+
+.slider img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+}
+
+/* 🔹 THEMES */
+.dark {
+  background: #0f172a;
+  color: white;
+  min-height: 100vh;
+}
+
+.pastel {
+  background: #fce7f3;
+  color: #1f2937;
+  min-height: 100vh;
+}
+
 </style>
