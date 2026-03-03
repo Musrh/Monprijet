@@ -1,50 +1,57 @@
 <template>
   <div class="home-page min-h-screen bg-gray-100">
 
-    <!-- Slider des produits internes uniquement -->
+    <!-- Slider des produits internes -->
     <SliderProducts 
       :produits="produitsInternes" 
       :ventes="ventes" 
       :ajouter-au-panier="ajouterAuPanier" 
     />
 
-    <!-- Produit vedette interne -->
-    <div v-if="produitVedette" class="featured-product my-8 text-center">
-      <h2 class="text-2xl font-bold mb-4">Produit en vedette</h2>
-      <img 
-        :src="produitVedette.images?.[0] || produitVedette.image || '/placeholder.png'" 
-        alt="Produit vedette" 
-        class="w-64 h-64 object-cover mx-auto mb-2 rounded"
-      />
-      <p class="text-lg font-semibold">{{ produitVedette.nom }}</p>
-      <p class="text-green-600 font-bold">{{ produitVedette.prix }} €</p>
-      <p class="text-gray-500">Vendus : {{ ventes[produitVedette.id] || 0 }}</p>
-      <button 
-        @click="ajouterAuPanier(produitVedette)"
-        class="bg-green-600 text-white px-4 py-2 rounded mt-2 hover:bg-green-700 transition"
-      >
-        Ajouter au panier
-      </button>
-    </div>
+    <!-- Section Produits en vedette -->
+    <section v-if="produitVedette" class="featured-section my-8 px-4">
+      <h2 class="text-2xl font-bold mb-4 text-center">Produit en vedette</h2>
+      <div class="flex flex-col md:flex-row items-center justify-center gap-6 bg-white p-4 rounded shadow">
+        <img 
+          :src="produitVedette.images?.[0] || produitVedette.image || '/placeholder.png'" 
+          alt="Produit vedette" 
+          class="w-64 h-64 object-cover rounded"
+        />
+        <div class="text-center md:text-left">
+          <p class="text-xl font-semibold mb-1">{{ produitVedette.nom }}</p>
+          <p class="text-green-600 font-bold mb-1">{{ produitVedette.prix }} €</p>
+          <p class="text-gray-500 mb-2">Vendus : {{ ventes[produitVedette.id] || 0 }}</p>
+          <button 
+            @click="ajouterAuPanier(produitVedette)"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+          >
+            Ajouter au panier
+          </button>
+        </div>
+      </div>
+    </section>
 
     <!-- Produits externes -->
-    <div v-if="produitsExternes.length" class="external-products my-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
-      <div v-for="p in produitsExternes" :key="p.id" class="text-center border rounded p-2 bg-white shadow-sm hover:shadow-md transition">
-        <img 
-          :src="p.image || '/placeholder.png'" 
-          alt="Produit externe" 
-          class="w-full h-40 object-cover mb-2 rounded"
-        />
-        <p class="font-semibold">{{ p.nom }}</p>
-        <p class="text-green-600 font-bold">{{ p.prix }} €</p>
-        <button 
-          @click="ajouterAuPanier(p)" 
-          class="bg-green-600 text-white px-3 py-1 rounded mt-1 hover:bg-green-700 transition"
-        >
-          Ajouter au panier
-        </button>
+    <section v-if="produitsExternes.length" class="external-products my-6 px-4">
+      <h2 class="text-2xl font-bold mb-4 text-center">Produits externes</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div v-for="p in produitsExternes" :key="p.id" class="text-center border rounded p-2 bg-white shadow-sm hover:shadow-md transition">
+          <img 
+            :src="p.image || '/placeholder.png'" 
+            alt="Produit externe" 
+            class="w-full h-40 object-cover mb-2 rounded"
+          />
+          <p class="font-semibold">{{ p.nom }}</p>
+          <p class="text-green-600 font-bold">{{ p.prix }} €</p>
+          <button 
+            @click="ajouterAuPanier(p)" 
+            class="bg-green-600 text-white px-3 py-1 rounded mt-1 hover:bg-green-700 transition"
+          >
+            Ajouter au panier
+          </button>
+        </div>
       </div>
-    </div>
+    </section>
 
     <!-- Vitrine -->
     <Vitrine />
@@ -80,14 +87,14 @@ export default {
     };
 
     const fetchProduits = async () => {
-      // 1️⃣ Produits internes
+      // Produits internes
       const snapshotInt = await getDocs(collection(db, "products"));
       snapshotInt.forEach((doc) => {
         const p = { id: doc.id, ...doc.data() };
         produitsInternes.value.push(p);
       });
 
-      // 2️⃣ Produits externes
+      // Produits externes
       const snapshotExt = await getDocs(collection(db, "ProductsExternes"));
       snapshotExt.forEach((doc) => {
         const p = { id: doc.id, ...doc.data() };
@@ -106,7 +113,7 @@ export default {
         ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
       });
 
-      // Calculer produit vedette seulement après avoir rempli produitsInternes
+      // Calcul produit vedette = max ventes sur produits internes
       let max = 0;
       produitsInternes.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
@@ -118,8 +125,8 @@ export default {
     };
 
     onMounted(async () => {
-      await fetchProduits();     // d'abord les produits
-      await fetchCommandes();    // puis calcul du produit vedette
+      await fetchProduits();      // d'abord les produits
+      await fetchCommandes();     // puis calcul produit vedette
     });
 
     return {
@@ -134,7 +141,7 @@ export default {
 </script>
 
 <style scoped>
-.featured-product img,
+.featured-section img,
 .external-products img {
   object-fit: cover;
 }
