@@ -8,7 +8,7 @@
       :ajouter-au-panier="ajouterAuPanier" 
     />
 
-    <!-- Section Produits en vedette calculée à partir des commandes payées -->
+    <!-- Section Produits en vedette -->
     <section v-if="produitVedette" class="featured-section my-8 px-4">
       <h2 class="text-2xl font-bold mb-4 text-center">Produit en vedette</h2>
       <div class="flex flex-col md:flex-row items-center justify-center gap-6 bg-white p-4 rounded shadow">
@@ -65,7 +65,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
-import SliderProducts from "./SliderProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
 export default {
@@ -86,6 +86,7 @@ export default {
       });
     };
 
+    // 🔹 Charger tous les produits internes et externes
     const fetchProduits = async () => {
       // Produits internes
       const snapshotInt = await getDocs(collection(db, "products"));
@@ -102,33 +103,36 @@ export default {
       });
     };
 
+    // 🔹 Calculer le produit vedette à partir des commandes payées
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
 
-      // Calculer la somme des quantities pour chaque produit payé
+      // Calculer la somme des quantities pour chaque produit interne
       snapshot.forEach((doc) => {
         const cmd = doc.data();
-        if (cmd.statut !== "payé") return;
+        if (cmd.statut !== "payé") return; // uniquement commandes payées
 
-        const prodId = cmd.id; // id du produit dans la commande
-        const qty = cmd.quantity || 0;
-        ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
+        // Trouver le produit interne correspondant
+        const produit = produitsInternes.value.find(p => p.id === cmd.id);
+        if (!produit) return; // ignorer les produits externes
+
+        ventes.value[cmd.id] = (ventes.value[cmd.id] || 0) + (cmd.quantity || 0);
       });
 
-      // Produit vedette = max quantity parmi produits internes
+      // Trouver le produit interne avec max ventes
       let max = 0;
       produitsInternes.value.forEach((p) => {
         const q = ventes.value[p.id] || 0;
         if (q > max) {
           max = q;
-          produitVedette.value = { ...p };
+          produitVedette.value = p;
         }
       });
     };
 
     onMounted(async () => {
-      await fetchProduits();      // d'abord les produits internes/externes
-      await fetchCommandes();     // ensuite produit vedette depuis commandes payées
+      await fetchProduits();    // d'abord charger les produits
+      await fetchCommandes();   // ensuite calculer le produit vedette
     });
 
     return {
