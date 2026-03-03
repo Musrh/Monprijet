@@ -58,3 +58,16 @@ const ajouterAuPanier = (produit) => {
     nom: produit.nom,
     image: produit.images, // lien image
     prix: produit.prix,
+    quantity: 1,
+  });
+
+  // ✅ Confirmation
+  alert(`Produit "${produit.nom}" ajouté au panier !`);
+};
+
+onMounted(fetchProduitsExternes);
+</script>
+
+<style scoped>
+.minishop img { display: block; width: 100%; object-fit: cover; }
+</style>
