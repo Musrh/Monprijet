@@ -36,7 +36,7 @@
 
     <!-- 🔹 SLIDER FULL WIDTH -->
     <div class="slider">
-      <img src="@/assets/hero.png" alt="banner" />
+      <img src="./assets/hero.png" alt="banner" />
     </div>
 
     <!-- 🔹 ROUTER -->
