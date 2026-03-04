@@ -91,7 +91,7 @@ export default {
       });
 
       //produits promos 
-      const snapshotInt = await getDocs(collection(db, "products"));
+      //const snapshotInt = await getDocs(collection(db, "products"));
 
   snapshotInt.forEach(doc => {
     const p = { id: doc.id, ...doc.data() };
