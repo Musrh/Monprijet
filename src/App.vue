@@ -9,6 +9,7 @@
         <router-link to="/" class="menu-btn">Home</router-link>
         <router-link to="/contact" class="menu-btn">Contact</router-link>
         <router-link to="/produits" class="menu-btn">Produits</router-link>
+        <router-link to="/minishop" class="menu-btn">Minishop</router-link>
 
         <!-- Admin Dropdown -->
         <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
