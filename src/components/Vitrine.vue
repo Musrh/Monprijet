@@ -8,9 +8,31 @@
         :key="p.id"
         class="border rounded shadow p-4 text-center relative"
       >
-        <img :src="p.images" :alt="p.nom" class="w-full h-48 object-cover rounded mb-2" />
+        <!-- Étiquette Promo -->
+        <span
+          v-if="p.promo"
+          class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold"
+        >
+          50% OFF
+        </span>
+
+        <img 
+          :src="p.images?.[0] || '/placeholder.png'" 
+          :alt="p.nom" 
+          class="w-full h-48 object-cover rounded mb-2" 
+        />
+
         <h3 class="font-semibold">{{ p.nom }}</h3>
-        <p class="text-gray-700">{{ p.prix }} €</p>
+
+        <!-- Prix réduit si promo -->
+        <div>
+          <span v-if="p.promo" class="line-through text-gray-400 mr-2">
+            {{ p.prix }} €
+          </span>
+          <span class="text-green-600 font-bold">
+            {{ p.promo ? (p.prix / 2).toFixed(2) : p.prix }} €
+          </span>
+        </div>
 
         <button
           @click="ajouterAuPanier(p)"
@@ -18,13 +40,6 @@
         >
           Ajouter au panier
         </button>
-
-        <span
-          v-if="p.promo"
-          class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded"
-        >
-          Promo
-        </span>
       </div>
     </div>
 
@@ -44,16 +59,17 @@ export default {
     const store = useStore();
     const produits = ref([]);
 
-    // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
+      // On envoie le prix réduit si promo
       store.dispatch("addToCart", {
-        ...produit,
-        image: produit.images,
+        id: produit.id,
+        nom: produit.nom,
+        prix: produit.promo ? produit.prix / 2 : produit.prix,
+        images: produit.images,
         quantity: 1,
       });
     };
 
-    // 🔹 Récupération des produits depuis Firestore
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach((doc) => {
@@ -61,9 +77,7 @@ export default {
       });
     };
 
-    onMounted(() => {
-      fetchProduits();
-    });
+    onMounted(() => fetchProduits());
 
     return {
       produits,
