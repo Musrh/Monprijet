@@ -10,6 +10,7 @@ import Success from "./views/Success.vue";
 import AdminCommandes from "./views/AdminCommandes.vue";
 import Upload from "./views/Upload.vue";
 import AdminProduits from "./views/AdminProduits.vue";
+import Minishop from "../views/Minishop.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -18,6 +19,7 @@ const routes = [
   { path: "/login", component: Login },
   { path: "/contact", component: Contact },
   { path: "/success", component: Success },
+  { path: "/minishop", component: Minishop }
 
   {
     path: "/admin",
