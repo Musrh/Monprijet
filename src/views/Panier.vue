@@ -16,7 +16,7 @@
         class="flex items-center mb-4 border-b pb-2"
       >
         <img
-          :src="item.image"
+          :src="item.images?.[0] || item.image || '/placeholder.png'"
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
@@ -61,12 +61,17 @@ export default {
     }
   },
   methods: {
+    // Supprimer un produit du panier
     remove(id) {
       this.$store.dispatch("removeItem", id);
     },
+
+    // Mettre à jour la quantité dans le panier
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
     },
+
+    // Payer le panier
     async payer() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
@@ -80,16 +85,32 @@ export default {
       }
 
       try {
+        // On prépare les items pour la commande avec le Document ID
+        const itemsPourCommande = this.cart.map(p => ({
+          id: p.id, // ← Document ID Firestore de la collection products
+          nom: p.nom,
+          prix: p.prix,
+          quantity: p.quantity,
+          image: p.images?.[0] || p.image || '/placeholder.png'
+        }));
+
         const response = await fetch(
           "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: this.cart })
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
           }
         );
+
         const data = await response.json();
-        window.location.href = data.url;
+
+        if (data.url) {
+          window.location.href = data.url; // redirection vers Stripe
+        } else {
+          console.error("Erreur paiement:", data);
+          alert("Erreur lors du paiement");
+        }
       } catch (err) {
         console.error("Erreur paiement:", err);
         alert("Erreur lors du paiement : " + err.message);
@@ -100,7 +121,6 @@ export default {
 </script>
 
 <style scoped>
-/* Images et style du panier */
 img {
   object-fit: cover;
 }
