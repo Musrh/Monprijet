@@ -1,15 +1,31 @@
 <template>
   <div class="home-page min-h-screen bg-gray-100">
 
-    <!-- Slider des produits internes -->
+    <!-- Slider produits internes -->
     <SliderProducts 
       :produits="produitsInternes" 
       :ventes="ventes" 
       :ajouter-au-panier="ajouterAuPanier" 
     />
 
-    <!-- Produits en vedette -->
-    <FeaturedProducts />
+    <!-- Section produit vedette -->
+    <div v-if="produitVedette" class="featured-product my-8 text-center">
+      <h2 class="text-2xl font-bold mb-4">Produit en vedette</h2>
+      <img 
+        :src="produitVedette.images?.[0] || '/placeholder.png'" 
+        alt="Produit vedette" 
+        class="w-64 h-64 object-cover mx-auto mb-2 rounded"
+      />
+      <p class="text-lg font-semibold">{{ produitVedette.nom }}</p>
+      <p class="text-green-600 font-bold">{{ produitVedette.prix }} €</p>
+      <p class="text-gray-500">Vendus : {{ ventes[produitVedette.id] || 0 }}</p>
+      <button 
+        @click="ajouterAuPanier(produitVedette)"
+        class="bg-green-600 text-white px-4 py-2 rounded mt-2 hover:bg-green-700 transition"
+      >
+        Ajouter au panier
+      </button>
+    </div>
 
     <!-- Produits externes -->
     <div v-if="produitsExternes.length" class="external-products my-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
@@ -20,7 +36,7 @@
           class="w-full h-40 object-cover mb-2 rounded"
         />
         <p class="font-semibold">{{ p.nom }}</p>
-        <p class="text-green-600 font-bold">{{ p.prix }} MAD</p>
+        <p class="text-green-600 font-bold">{{ p.prix }} €</p>
         <button 
           @click="ajouterAuPanier(p)" 
           class="bg-green-600 text-white px-3 py-1 rounded mt-1 hover:bg-green-700 transition"
@@ -32,79 +48,102 @@
 
     <!-- Vitrine -->
     <Vitrine />
-
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from "vue";
-import { getDocs, collection } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
-import SliderProducts from "./SliderProducts.vue";
-import FeaturedProducts from "../components/FeaturedProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
 export default {
-  components: { SliderProducts, FeaturedProducts, Vitrine },
+  components: { SliderProducts, Vitrine },
   setup() {
     const store = useStore();
 
     const produitsInternes = ref([]);
     const produitsExternes = ref([]);
+    const produitVedette = ref(null);
     const ventes = ref({});
 
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
-        ...produit,
-        image: produit.images?.[0] || produit.image || "/placeholder.png",
-        quantity: 1,
+        id: produit.id,
+        nom: produit.nom,
+        prix: produit.prix,
+        images: produit.images,
+        quantity: 1
       });
     };
 
     const fetchProduits = async () => {
       // Produits internes
       const snapshotInt = await getDocs(collection(db, "products"));
-      snapshotInt.forEach((doc) => {
-        produitsInternes.value.push({ id: doc.id, ...doc.data() });
+      snapshotInt.forEach(doc => {
+        const p = { id: doc.id, ...doc.data() };
+        produitsInternes.value.push(p);
       });
 
       // Produits externes
       const snapshotExt = await getDocs(collection(db, "ProductsExternes"));
-      snapshotExt.forEach((doc) => {
-        produitsExternes.value.push({ id: doc.id, ...doc.data() });
+      snapshotExt.forEach(doc => {
+        const p = { id: doc.id, ...doc.data() };
+        produitsExternes.value.push(p);
       });
     };
 
-    const fetchVentes = async () => {
-      // Calcule les ventes par id produit
+    const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
-      const compteur = {};
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        if (!data.id || !data.quantity || data.statut !== "payé") return;
-        compteur[data.id] = (compteur[data.id] || 0) + data.quantity;
+      snapshot.forEach(doc => {
+        const cmd = doc.data();
+        if (cmd.statut !== "payé") return;
+
+        // Pour chaque item de la commande
+        cmd.items?.forEach(item => {
+          const prodId = item.id;
+          const qty = item.quantity || 1; // si quantity non défini, on prend 1
+          ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
+        });
       });
-      ventes.value = compteur;
+
+      // Produit vedette = max ventes parmi produits internes
+      let max = 0;
+      produitsInternes.value.forEach(p => {
+        const q = ventes.value[p.id] || 0;
+        if (q > max) {
+          max = q;
+          produitVedette.value = { ...p };
+        }
+      });
+
+      // Si aucune vente enregistrée, prendre un produit interne aléatoire
+      if (!produitVedette.value && produitsInternes.value.length > 0) {
+        produitVedette.value = { ...produitsInternes.value[0] };
+      }
     };
 
     onMounted(async () => {
       await fetchProduits();
-      await fetchVentes();
+      await fetchCommandes();
     });
 
     return {
       produitsInternes,
       produitsExternes,
+      produitVedette,
       ventes,
-      ajouterAuPanier,
+      ajouterAuPanier
     };
-  },
+  }
 };
 </script>
 
 <style scoped>
+.featured-product img,
 .external-products img {
   object-fit: cover;
 }
