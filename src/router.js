@@ -10,7 +10,7 @@ import Success from "./views/Success.vue";
 import AdminCommandes from "./views/AdminCommandes.vue";
 import Upload from "./views/Upload.vue";
 import AdminProduits from "./views/AdminProduits.vue";
-import Minishop from "./views/Minishop.vue";
+import Minishop from "./components/Minishop.vue";
 
 const routes = [
   { path: "/", component: Home },
