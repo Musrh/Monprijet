@@ -19,7 +19,7 @@ const routes = [
   { path: "/login", component: Login },
   { path: "/contact", component: Contact },
   { path: "/success", component: Success },
-  { path: "/minishop", component: Minishop }
+  { path: "/minishop", component: Minishop },
 
   {
     path: "/admin",
