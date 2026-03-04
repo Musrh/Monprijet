@@ -2,13 +2,17 @@
   <section class="vitrine my-8">
     <h2 class="text-2xl font-bold mb-4 text-center">Vitrine</h2>
     
+    <!-- Message d'ajout au panier -->
+    <div v-if="message" class="fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow z-50">
+      {{ message }}
+    </div>
+
     <div v-if="produits.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       <div
         v-for="p in produits"
         :key="p.id"
         class="border rounded shadow p-4 text-center relative"
       >
-        <!-- Étiquette Promo -->
         <span
           v-if="p.promo"
           class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-bold"
@@ -24,7 +28,6 @@
 
         <h3 class="font-semibold">{{ p.nom }}</h3>
 
-        <!-- Prix réduit si promo -->
         <div>
           <span v-if="p.promo" class="line-through text-gray-400 mr-2">
             {{ p.prix }} €
@@ -58,9 +61,9 @@ export default {
   setup() {
     const store = useStore();
     const produits = ref([]);
+    const message = ref("");
 
     const ajouterAuPanier = (produit) => {
-      // On envoie le prix réduit si promo
       store.dispatch("addToCart", {
         id: produit.id,
         nom: produit.nom,
@@ -68,6 +71,12 @@ export default {
         images: produit.images,
         quantity: 1,
       });
+
+      // 🔹 Message temporaire
+      message.value = `${produit.nom} a été ajouté au panier !`;
+      setTimeout(() => {
+        message.value = "";
+      }, 2000); // disparaît après 2 secondes
     };
 
     const fetchProduits = async () => {
@@ -82,6 +91,7 @@ export default {
     return {
       produits,
       ajouterAuPanier,
+      message,
     };
   },
 };
