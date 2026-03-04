@@ -70,6 +70,8 @@ export default {
     const produitVedette = ref(null);
     const ventes = ref({});
 
+    const produitsPromo = ref([]);
+
     const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
         id: produit.id,
@@ -87,6 +89,31 @@ export default {
         const p = { id: doc.id, ...doc.data() };
         produitsInternes.value.push(p);
       });
+
+      //produits promos 
+      const snapshotInt = await getDocs(collection(db, "products"));
+
+  snapshotInt.forEach(doc => {
+    const p = { id: doc.id, ...doc.data() };
+
+    // 👉 Tous les produits
+    produitsInternes.value.push(p);
+
+    // 🔥 Seulement ceux en promo
+    if (p.promo === true) {
+      produitsPromo.value.push(p);
+    }
+  });
+
+  // Produits externes (si tu en as)
+  const snapshotExt = await getDocs(collection(db, "ProductsExternes"));
+  snapshotExt.forEach(doc => {
+    produitsExternes.value.push({ id: doc.id, ...doc.data() });
+  });
+     
+
+
+      
 
       // Produits externes
       const snapshotExt = await getDocs(collection(db, "ProductsExternes"));
