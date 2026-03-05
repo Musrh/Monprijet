@@ -1,17 +1,17 @@
 <template>
-  <div>
+  <div class="w-full">
 
     <!-- Slider + Pub -->
-    <section class="flex flex-col md:flex-row gap-0 w-full">
+    <section class="flex flex-col md:flex-row w-full">
 
       <!-- Slider -->
-      <div class="md:w-2/3 w-full p-0 m-0">
+      <div class="md:w-2/3 w-full">
         <SliderProducts :produits="produitsPromos" />
       </div>
 
-      <!-- Publicité -->
-      <div class="md:w-1/3 w-full p-0 m-0">
-        <div class="w-full h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
+      <!-- Pub -->
+      <div class="md:w-1/3 w-full">
+        <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
           Publicité
         </div>
       </div>
@@ -19,9 +19,7 @@
     </section>
 
     <!-- Vitrine -->
-    <div class="mt-8">
-      <Vitrine />
-    </div>
+    <Vitrine />
 
   </div>
 </template>
@@ -30,7 +28,6 @@
 import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
@@ -44,19 +41,15 @@ export default {
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
 
-      const loaded = [];
-
       snapshot.forEach((doc) => {
         const produit = { id: doc.id, ...doc.data() };
 
-        loaded.push(produit);
+        produits.value.push(produit);
 
         if (produit.promo) {
           produitsPromos.value.push(produit);
         }
       });
-
-      produits.value = loaded;
     };
 
     onMounted(fetchProduits);
