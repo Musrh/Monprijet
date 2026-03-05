@@ -8,7 +8,7 @@
         <div
           v-for="produit in produitsPromos"
           :key="produit.id"
-          class="slider-item w-full flex-shrink-0 p-2 text-center relative"
+          class="slider-item w-full flex-shrink-0 p-2 text-center relative bg-white rounded shadow"
         >
           <!-- Image du produit -->
           <img
@@ -29,7 +29,7 @@
           <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
 
           <!-- Prix réduit avec ancien prix -->
-          <div class="mt-2">
+          <div class="mt-1">
             <span v-if="produit.promo && produit.prix" class="line-through text-gray-400 mr-2">
               {{ produit.prix }} €
             </span>
