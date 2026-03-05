@@ -1,6 +1,10 @@
 <template>
-  <div class="home-page">
+  <div>
+    <!-- Slider des produits en promo -->
     <SliderProducts :produits="produits" />
+
+    <!-- Vitrine -->
+    <Vitrine />
   </div>
 </template>
 
@@ -8,29 +12,19 @@
 import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import SliderProducts from "./SliderProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
+import Vitrine from "../components/Vitrine.vue";
 
 export default {
-  components: { SliderProducts },
+  components: { SliderProducts, Vitrine },
   setup() {
     const produits = ref([]);
 
-    // 🔹 Charger tous les produits depuis Firestore
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       const loaded = [];
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        loaded.push({
-          id: doc.id,
-          nom: data.nom || "Produit",
-          prix: Number(data.prix || 0),
-          promo: data.promo === true,
-          images: data.images || ["/placeholder.png"],
-        });
-      });
+      snapshot.forEach((doc) => loaded.push({ id: doc.id, ...doc.data() }));
       produits.value = loaded;
-      console.log("Produits chargés :", produits.value); // debug
     };
 
     onMounted(() => fetchProduits());
