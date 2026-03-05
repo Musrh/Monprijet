@@ -1,18 +1,17 @@
 <template>
-  <div class="home-page min-h-screen bg-gray-100 px-4">
+  <div class="home-page min-h-screen bg-gray-100 p-4">
 
-    <!-- 🔹 Slider produits internes (aligné à gauche, 75% largeur bureau) -->
-    <div class="w-full md:w-3/4">
-      <SliderProducts 
-        :produits="produitsInternes" 
-        :ventes="ventes" 
-        :ajouter-au-panier="ajouterAuPanier" 
-      />
-    </div>
+    <!-- 🔹 Slider produits internes (75% bureau, 100% mobile) -->
+    <SliderProducts 
+      :produits="produitsInternes" 
+      :ventes="ventes" 
+      :ajouter-au-panier="ajouterAuPanier" 
+      class="w-full md:w-3/4"
+    />
 
-    <!-- 🔥 Produits en promotion (uniquement internes) -->
-    <div v-if="produitsPromo.length" class="my-10">
-      <h2 class="text-2xl font-bold text-red-600 mb-6 text-left">
+    <!-- 🔥 Produits en promotion -->
+    <section v-if="produitsPromo.length" class="my-8">
+      <h2 class="text-2xl font-bold text-left text-red-600 mb-4">
         🔥 Produits en promotion
       </h2>
 
@@ -22,7 +21,6 @@
           :key="p.id"
           class="bg-white border rounded p-4 text-center shadow hover:shadow-lg transition relative"
         >
-          <!-- Étiquette promo -->
           <span class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded">
             PROMO
           </span>
@@ -34,8 +32,7 @@
 
           <h3 class="font-bold">{{ p.nom }}</h3>
 
-          <!-- Ancien prix = prix original dans Firestore -->
-          <p class="text-gray-500 line-through">{{ p.oldPrice }} €</p>
+          <p v-if="p.oldPrice" class="text-gray-500 line-through">{{ p.oldPrice }} €</p>
           <p class="text-green-600 font-bold">{{ p.prix }} €</p>
 
           <button
@@ -46,7 +43,7 @@
           </button>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- 🏪 Vitrine -->
     <Vitrine />
@@ -67,7 +64,6 @@ export default {
   components: { SliderProducts, Vitrine },
   setup() {
     const store = useStore();
-
     const produitsInternes = ref([]);
     const produitsPromo = ref([]);
     const ventes = ref({});
@@ -83,38 +79,24 @@ export default {
     };
 
     const fetchProduits = async () => {
-      const snapshot = await getDocs(collection(db, "products"));
-      snapshot.forEach(doc => {
+      const snapshotInt = await getDocs(collection(db, "products"));
+
+      snapshotInt.forEach(doc => {
         const p = { id: doc.id, ...doc.data() };
 
-        // Slider : tous les produits internes
         produitsInternes.value.push(p);
 
-        // Produits promo uniquement internes
         if (p.promo === true) {
-          // Ancien prix = prix original dans Firestore
-          p.oldPrice = p.prix;
+          // 🔹 Calcul prix promo
+          p.oldPrice = p.prix; 
+          p.prix = Math.round(p.prix * 0.5); // réduction 50 %
           produitsPromo.value.push(p);
         }
       });
     };
 
-    const fetchCommandes = async () => {
-      const snapshot = await getDocs(collection(db, "commandes"));
-      snapshot.forEach(doc => {
-        const cmd = doc.data();
-        if (cmd.statut !== "payé") return;
-        cmd.items?.forEach(item => {
-          const prodId = item.id;
-          const qty = item.quantity || 1;
-          ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
-        });
-      });
-    };
-
     onMounted(async () => {
       await fetchProduits();
-      await fetchCommandes();
     });
 
     return {
@@ -128,12 +110,8 @@ export default {
 </script>
 
 <style scoped>
-.home-page img {
-  object-fit: cover;
-}
-
-/* Tous les titres alignés à gauche */
-h2 {
-  text-align: left;
+/* Slider aligné à gauche, 75% bureau, 100% mobile */
+.home-page .w-3\/4 {
+  margin-left: 0;
 }
 </style>
