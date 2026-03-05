@@ -6,7 +6,7 @@
 
       <!-- Logo -->
       <div class="flex items-center gap-3">
-        <img src="/logo.png" alt="logo" class="h-10" />
+        <img src="/icons.svg" alt="logo" class="h-10" />
       </div>
 
       <!-- Panier -->
