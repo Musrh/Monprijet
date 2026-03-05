@@ -24,7 +24,7 @@
 <script>
 import { ref, onMounted, computed } from "vue";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import { db } from "./firebase";
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
