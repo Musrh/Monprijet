@@ -10,15 +10,13 @@
           MonSite
         </router-link>
 
-        <!-- Hamburger (mobile only) -->
-        <button 
-          @click="mobileMenu = !mobileMenu"
-          class="md:hidden text-2xl"
-        >
+        <!-- Hamburger -->
+        <button @click="mobileMenu = !mobileMenu"
+                class="md:hidden text-2xl">
           ☰
         </button>
 
-        <!-- ===== DESKTOP MENU ===== -->
+        <!-- Desktop -->
         <div class="hidden md:flex items-center space-x-2">
 
           <router-link to="/" class="menu-btn">Home</router-link>
@@ -26,43 +24,6 @@
           <router-link to="/produits" class="menu-btn">Produits</router-link>
           <router-link to="/minishop" class="menu-btn">Minishop</router-link>
 
-          <!-- Admin Dropdown -->
-          <div v-if="isAdmin"
-               class="relative"
-               @mouseenter="adminDropdown = true"
-               @mouseleave="adminDropdown = false">
-
-            <button class="menu-btn">
-              Admin
-            </button>
-
-            <div v-if="adminDropdown"
-                 class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg py-2 z-50">
-
-              <router-link to="/admin"
-                           class="dropdown-link">
-                Admin Utilisateurs
-              </router-link>
-
-              <router-link to="/adminproduits"
-                           class="dropdown-link">
-                Admin Produits
-              </router-link>
-
-              <router-link to="/admin-commandes"
-                           class="dropdown-link">
-                Admin Commandes
-              </router-link>
-
-              <router-link to="/upload"
-                           class="dropdown-link">
-                Upload Produit
-              </router-link>
-
-            </div>
-          </div>
-
-          <!-- Panier -->
           <router-link to="/panier" class="menu-btn relative">
             🛒
             <span v-if="cartItemCount > 0"
@@ -71,14 +32,13 @@
             </span>
           </router-link>
 
-          <!-- Login / Logout -->
           <router-link v-if="!isAuthenticated"
                        to="/login"
                        class="menu-btn">
             Login
           </router-link>
 
-          <template v-if="isAuthenticated">
+          <div v-else class="flex items-center space-x-2">
             <span class="user-badge">
               {{ userEmail }}
             </span>
@@ -86,15 +46,12 @@
                     class="logout-btn">
               Logout
             </button>
-          </template>
-
-          <!-- Theme Switcher -->
-          <ThemeSwitcher />
+          </div>
 
         </div>
       </div>
 
-      <!-- ===== MOBILE MENU ===== -->
+      <!-- Mobile -->
       <div v-if="mobileMenu"
            class="md:hidden mt-4 space-y-2">
 
@@ -128,27 +85,85 @@
           🛒 Panier ({{ cartItemCount }})
         </router-link>
 
-        <!-- Admin mobile -->
-        <div v-if="isAdmin" class="mobile-link font-semibold">
-          Admin
+        <router-link v-if="!isAuthenticated"
+                     @click="closeMobile"
+                     to="/login"
+                     class="mobile-link">
+          Login
+        </router-link>
+
+        <div v-else class="mobile-link flex justify-between items-center">
+          <span>{{ userEmail }}</span>
+          <button @click="logout"
+                  class="text-red-500 font-semibold">
+            Logout
+          </button>
         </div>
 
-        <router-link v-if="isAdmin"
-                     @click="closeMobile"
-                     to="/admin"
-                     class="mobile-sublink">
-          Utilisateurs
-        </router-link>
+      </div>
+    </nav>
 
-        <router-link v-if="isAdmin"
-                     @click="closeMobile"
-                     to="/adminproduits"
-                     class="mobile-sublink">
-          Produits
-        </router-link>
+    <!-- CONTENU -->
+    <router-view />
 
-        <router-link v-if="isAdmin"
-                     @click="closeMobile"
-                     to="/admin-commandes"
-                     class="mobile-sublink">
-          Command
+  </div>
+</template>
+
+<script>
+import { mapGetters } from "vuex";
+
+export default {
+  data() {
+    return {
+      mobileMenu: false
+    };
+  },
+  computed: {
+    ...mapGetters([
+      "isAuthenticated",
+      "userEmail",
+      "cartItemCount"
+    ])
+  },
+  methods: {
+    logout() {
+      this.mobileMenu = false;
+      this.$store.dispatch("logout");
+      this.$router.push("/");
+    },
+    closeMobile() {
+      this.mobileMenu = false;
+    }
+  }
+};
+</script>
+
+<style scoped>
+.menu-btn {
+  background: #16a34a;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.user-badge {
+  background: #22c55e;
+  padding: 6px 12px;
+  border-radius: 8px;
+}
+
+.logout-btn {
+  background: #ef4444;
+  padding: 6px 14px;
+  border-radius: 8px;
+  color: white;
+}
+
+.mobile-link {
+  display: block;
+  background: #16a34a;
+  padding: 10px;
+  border-radius: 8px;
+}
+</style>
