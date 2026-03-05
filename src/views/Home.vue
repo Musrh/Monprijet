@@ -1,16 +1,16 @@
 <template>
-  <div class="w-full">
+  <div class="w-full m-0 p-0">
 
     <!-- Slider + Pub -->
     <section class="flex flex-col md:flex-row w-full items-stretch m-0 p-0">
 
       <!-- Slider -->
-      <div class="md:w-2/3 w-full h-full m-0 p-0">
-        <SliderProducts :produits="produitsPromos" />
+      <div class="md:w-2/3 w-full m-0 p-0">
+        <SliderProducts :produits="produitsPromos" class="m-0 p-0" />
       </div>
 
       <!-- Pub -->
-      <div class="md:w-1/3 w-full h-full m-0 p-0">
+      <div class="md:w-1/3 w-full m-0 p-0">
         <div class="w-full h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
           Publicité
         </div>
@@ -18,9 +18,9 @@
 
     </section>
 
-    <!-- Vitrine -->
-    <div class="m-0 p-0">
-      <Vitrine />
+    <!-- Vitrine sans espace -->
+    <div class="m-0 p-0 -mt-0">
+      <Vitrine class="m-0 p-0" />
     </div>
 
   </div>
@@ -48,7 +48,7 @@ export default {
 
         produits.value.push(produit);
 
-        if (produit.promo === true) {
+        if (produit.promo) {
           produitsPromos.value.push(produit);
         }
       });
@@ -56,7 +56,23 @@ export default {
 
     onMounted(fetchProduits);
 
-    return { produits, produitsPromos };
-  },
+    return {
+      produits,
+      produitsPromos
+    };
+  }
 };
 </script>
+
+<style scoped>
+/* Supprimer tout margin/padding par défaut */
+* {
+  margin: 0;
+  padding: 0;
+}
+
+/* Section Slider + Pub en ligne */
+section {
+  gap: 0 !important; /* supprime tout espace entre slider et pub */
+}
+</style>
