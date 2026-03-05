@@ -17,7 +17,7 @@
             class="w-full h-48 object-cover rounded"
           />
 
-          <!-- Bouton Ajouter au panier sur l'image -->
+          <!-- Bouton Ajouter au panier -->
           <button
             @click="ajouterAuPanier(produit)"
             class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm z-20"
@@ -31,10 +31,10 @@
           <!-- Prix réduit et ancien prix -->
           <div class="mt-1 z-10 relative">
             <span v-if="produit.promo" class="line-through text-gray-400 mr-2">
-              {{ Number(produit.prix) }} €
+              {{ getPrix(produit) }} €
             </span>
             <span class="text-green-600 font-bold">
-              {{ produit.promo ? Math.round(Number(produit.prix) * 0.5) : Number(produit.prix) }} €
+              {{ getPrixFinal(produit) }} €
             </span>
           </div>
 
@@ -86,7 +86,17 @@ export default {
       props.produits.filter((p) => p.promo === true)
     );
 
-    // 🔹 Navigation du slider
+    // 🔹 Sécuriser la récupération du prix
+    const getPrix = (produit) => {
+      return produit.prix !== undefined ? Number(produit.prix) : 0;
+    };
+
+    const getPrixFinal = (produit) => {
+      const prix = getPrix(produit);
+      return produit.promo ? Math.round(prix * 0.5) : prix;
+    };
+
+    // 🔹 Navigation
     const next = () => {
       if (!produitsPromos.value.length) return;
       currentIndex.value = (currentIndex.value + 1) % produitsPromos.value.length;
@@ -98,9 +108,9 @@ export default {
         produitsPromos.value.length;
     };
 
-    // 🔹 Ajouter au panier avec prix final
+    // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
-      const prix = produit.promo ? Math.round(Number(produit.prix) * 0.5) : Number(produit.prix);
+      const prix = getPrixFinal(produit);
       store.dispatch("addToCart", {
         id: produit.id,
         nom: produit.nom,
@@ -125,22 +135,14 @@ export default {
       () => { currentIndex.value = 0; }
     );
 
-    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier };
+    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier, getPrix, getPrixFinal };
   },
 };
 </script>
 
 <style scoped>
-/* Slider aligné à gauche, 100% mobile / 75% bureau */
-.slider-wrapper {
-  margin: 0; /* aligné à gauche */
-}
-@media (min-width: 768px) {
-  .slider-wrapper {
-    width: 75%;
-  }
-}
-
+.slider-wrapper { margin: 0; } /* aligné à gauche */
+@media (min-width: 768px) { .slider-wrapper { width: 75%; } }
 .slider-container { position: relative; }
 .slider-track { display: flex; width: 100%; }
 .slider-item { position: relative; }
