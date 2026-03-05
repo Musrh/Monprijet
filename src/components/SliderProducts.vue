@@ -1,5 +1,5 @@
 <template>
-  <div class="slider-wrapper w-full md:w-3/4">
+  <div class="w-full">
     <div class="slider-container relative overflow-hidden">
       <div
         class="slider-track flex transition-transform duration-500"
