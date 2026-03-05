@@ -2,66 +2,62 @@
   <div class="w-full px-4">
 
     <!-- Slider + Pub -->
-    <section class="flex flex-col md:flex-row w-full mb-4">
-
+    <section class="flex flex-col md:flex-row w-full mb-8">
       <!-- Slider -->
       <div class="md:w-2/3 w-full">
-        <SliderProducts :produits="produitsPromos" />
+        <SliderProducts :produits="produitsAffiches" />
       </div>
 
       <!-- Pub -->
       <div class="md:w-1/3 w-full">
-        <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
+        <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center rounded shadow">
           Publicité
         </div>
       </div>
-
     </section>
 
-    <!-- Résultats filtrés ou Vitrine -->
-    <section class="mb-8">
-      <div v-if="filteredProducts.length > 0">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold">Résultats pour :
-            <span class="text-purple-700">{{ currentCategorie || "Tous" }}</span>
-            <span v-if="searchTerm">avec "{{ searchTerm }}"</span>
-          </h2>
-          <button
-            @click="resetFilter"
-            class="bg-gray-300 px-3 py-1 rounded hover:bg-gray-400"
-          >
-            Revenir à l'accueil
-          </button>
-        </div>
+    <!-- Résultats filtrés -->
+    <div v-if="hasFilter" class="mb-8">
+      <h2 class="text-lg font-bold mb-4">
+        Résultats pour
+        <span v-if="categorie">Catégorie: {{ categorie }}</span>
+        <span v-if="search"> | Recherche: "{{ search }}"</span>
+      </h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <div v-for="produit in filteredProducts" :key="produit.id" class="border rounded p-3 shadow">
-            <img :src="produit.images[0]" alt="" class="w-full h-48 object-cover mb-2" />
-            <h3 class="font-semibold">{{ produit.nom }}</h3>
-            <p class="text-green-700 font-bold">{{ produit.prix }} €</p>
-            <p v-if="produit.promo" class="text-red-500 font-semibold">Promo</p>
-          </div>
+      <div v-if="produitsFiltres.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div v-for="p in produitsFiltres" :key="p.id" class="border p-4 rounded shadow">
+          <img :src="p.image" alt="Produit" class="h-40 w-full object-cover mb-2" />
+          <h3 class="font-semibold">{{ p.nom }}</h3>
+          <p>{{ p.categorie }}</p>
+          <p v-if="p.promo" class="text-red-500 font-bold">En promo !</p>
         </div>
       </div>
 
-      <!-- Si aucun filtre ou réinitialisé -->
-      <Vitrine v-else />
-    </section>
+      <div v-else>
+        <p>Aucun produit trouvé.</p>
+      </div>
+
+      <button @click="resetFilters" class="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+        Retour à la vitrine
+      </button>
+    </div>
+
+    <!-- Vitrine (quand aucun filtre actif) -->
+    <Vitrine v-else />
 
   </div>
 </template>
 
 <script>
-import { ref, onMounted, computed } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { collection, getDocs } from "firebase/firestore";
-import { useRoute, useRouter } from "vue-router";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
+import { useRoute, useRouter } from "vue-router";
 
 export default {
   components: { SliderProducts, Vitrine },
-
   setup() {
     const route = useRoute();
     const router = useRouter();
@@ -71,43 +67,63 @@ export default {
 
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
-
       snapshot.forEach((doc) => {
-        const produit = { id: doc.id, ...doc.data() };
-        produits.value.push(produit);
-        if (produit.promo) produitsPromos.value.push(produit);
+        const p = { id: doc.id, ...doc.data() };
+        produits.value.push(p);
+        if (p.promo) produitsPromos.value.push(p);
       });
     };
 
     onMounted(fetchProduits);
 
-    // Lecture des query params
-    const currentCategorie = ref(route.query.categorie || "");
-    const searchTerm = ref(route.query.search || "");
+    // 🔹 Variables pour filtrage
+    const categorie = ref(route.query.categorie || "");
+    const search = ref(route.query.search || "");
 
-    const filteredProducts = computed(() => {
+    // 🔹 Détecter changement de query params
+    watch(
+      () => route.query,
+      (newQuery) => {
+        categorie.value = newQuery.categorie || "";
+        search.value = newQuery.search || "";
+      }
+    );
+
+    // 🔹 Filtrage des produits
+    const produitsFiltres = computed(() => {
       return produits.value.filter((p) => {
-        const matchCat = currentCategorie.value ? p.categorie === currentCategorie.value : true;
-        const matchSearch = searchTerm.value
-          ? p.nom.toLowerCase().includes(searchTerm.value.toLowerCase())
+        const matchCat = categorie.value ? p.categorie === categorie.value : true;
+        const matchSearch = search.value
+          ? p.nom.toLowerCase().includes(search.value.toLowerCase())
           : true;
         return matchCat && matchSearch;
       });
     });
 
-    const resetFilter = () => {
-      currentCategorie.value = "";
-      searchTerm.value = "";
-      router.push({ path: "/" });
+    const hasFilter = computed(() => categorie.value || search.value);
+
+    const resetFilters = () => {
+      router.push({ path: "/", query: {} });
     };
+
+    const produitsAffiches = computed(() => produitsPromos.value);
 
     return {
       produitsPromos,
-      filteredProducts,
-      currentCategorie,
-      searchTerm,
-      resetFilter
+      produitsAffiches,
+      produitsFiltres,
+      categorie,
+      search,
+      hasFilter,
+      resetFilters,
     };
-  }
+  },
 };
 </script>
+
+<style scoped>
+/* Optionnel : retirer l'espace vertical entre slider et vitrine */
+section + div {
+  margin-top: 0;
+}
+</style>
