@@ -1,8 +1,8 @@
 <template>
   <div class="home-page min-h-screen bg-gray-100 px-4">
 
-    <!-- 🔹 Slider produits internes (max 75% en bureau, 100% mobile) -->
-    <div class="w-full md:w-3/4 mx-auto">
+    <!-- 🔹 Slider produits internes (aligné à gauche, 75% largeur bureau) -->
+    <div class="w-full md:w-3/4">
       <SliderProducts 
         :produits="produitsInternes" 
         :ventes="ventes" 
@@ -24,7 +24,7 @@
         >
           <!-- Étiquette promo -->
           <span class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded">
-            50% 🔥
+            PROMO
           </span>
 
           <img
@@ -34,10 +34,8 @@
 
           <h3 class="font-bold">{{ p.nom }}</h3>
 
-          <!-- Ancien prix barré + prix promo -->
-          <p class="text-gray-500 line-through" v-if="p.oldPrice">
-            {{ p.oldPrice }} €
-          </p>
+          <!-- Ancien prix = prix original dans Firestore -->
+          <p class="text-gray-500 line-through">{{ p.oldPrice }} €</p>
           <p class="text-green-600 font-bold">{{ p.prix }} €</p>
 
           <button
@@ -62,7 +60,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
-import SliderProducts from "./SliderProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
 export default {
@@ -94,10 +92,8 @@ export default {
 
         // Produits promo uniquement internes
         if (p.promo === true) {
-          // Ancien prix barré = double du prix promo par exemple
-          if (!p.oldPrice) {
-            p.oldPrice = p.prix * 2;
-          }
+          // Ancien prix = prix original dans Firestore
+          p.oldPrice = p.prix;
           produitsPromo.value.push(p);
         }
       });
@@ -136,7 +132,7 @@ export default {
   object-fit: cover;
 }
 
-/* Titre section à gauche */
+/* Tous les titres alignés à gauche */
 h2 {
   text-align: left;
 }
