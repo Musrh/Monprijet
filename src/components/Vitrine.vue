@@ -1,7 +1,7 @@
 <template>
   <section class="vitrine  px-4">
 
-    <h2 class="text-2xl font-bold mb-6 text-left">Vitrine</h2>
+    <h2 class="text-2xl font-bold  text-left">Vitrine</h2>
 
     <div v-if="produits.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
