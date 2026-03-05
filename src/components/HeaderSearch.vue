@@ -1,57 +1,102 @@
 <template>
-  <div class="bg-white border-b">
+  <header class="bg-white border-b">
 
-    <div class="max-w-6xl mx-auto flex items-center justify-between py-4 px-4">
+    <!-- Logo + Panier -->
+    <div class="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
 
       <!-- Logo -->
-      <div class="flex items-center">
-        <img src="/logo.png" class="h-10" />
+      <div class="flex items-center gap-3">
+        <img src="/logo.png" alt="logo" class="h-10" />
       </div>
 
-      <!-- Recherche -->
-      <div class="flex items-center w-1/2 border rounded overflow-hidden">
+      <!-- Panier -->
+      <router-link to="/panier" class="flex items-center gap-2 text-purple-700 font-semibold">
+        👜
+        <span>Mon Panier</span>
+
+        <span
+          v-if="cartItemCount > 0"
+          class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"
+        >
+          {{ cartItemCount }}
+        </span>
+      </router-link>
+
+    </div>
+
+    <!-- Barre recherche -->
+    <div class="bg-gray-100 py-3">
+      <div class="max-w-7xl mx-auto flex items-center gap-2 px-4">
 
         <!-- Catégories -->
-        <select class="px-3 py-2 bg-gray-100 border-r outline-none">
-          <option>Catégories</option>
-          <option>Electronique</option>
-          <option>Accessoires</option>
+        <select
+          v-model="categorie"
+          class="border rounded px-3 py-2 bg-white"
+        >
+          <option value="">Catégories</option>
+          <option value="phones">Téléphones</option>
+          <option value="pc">PC</option>
+          <option value="accessoires">Accessoires</option>
         </select>
 
-        <!-- Input -->
+        <!-- Recherche -->
         <input
+          v-model="search"
           type="text"
-          placeholder="Vous cherchez quoi ?"
-          class="flex-1 px-3 py-2 outline-none"
+          placeholder="Vous cherchez quoi ?..."
+          class="flex-1 border rounded px-3 py-2"
         />
 
         <!-- Bouton -->
-        <button class="bg-purple-600 text-white px-4 py-2 hover:bg-purple-700">
+        <button
+          @click="rechercher"
+          class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+        >
           🔍
         </button>
 
       </div>
-
-      <!-- Panier -->
-      <div class="flex items-center gap-2">
-
-        <div class="relative">
-          👜
-          <span
-            class="absolute -top-2 -right-2 bg-purple-600 text-white text-xs px-1 rounded-full"
-          >
-            0
-          </span>
-        </div>
-
-        <div>
-          <p class="text-sm">Mon Panier</p>
-          <p class="font-bold">0,00 MAD</p>
-        </div>
-
-      </div>
-
     </div>
 
-  </div>
+  </header>
 </template>
+
+<script>
+import { mapGetters } from "vuex";
+
+export default {
+  name: "HeaderSearch",
+
+  data() {
+    return {
+      search: "",
+      categorie: ""
+    };
+  },
+
+  computed: {
+    ...mapGetters(["cartItemCount"])
+  },
+
+  methods: {
+    rechercher() {
+      this.$router.push({
+        path: "/produits",
+        query: {
+          search: this.search,
+          categorie: this.categorie
+        }
+      });
+    }
+  }
+};
+</script>
+
+<style scoped>
+
+header {
+  position: relative;
+  z-index: 20;
+}
+
+</style>
