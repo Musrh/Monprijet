@@ -1,9 +1,7 @@
 <template>
-<div>
-  <HeaderSearch />
-  
-  
   <div class="min-h-screen bg-gray-100">
+    <!-- Header avec recherche -->
+    <HeaderSearch />
 
     <!-- Menu principal -->
     <nav class="bg-gray-800 p-4 flex flex-wrap items-center gap-2">
@@ -54,16 +52,15 @@
     <!-- Contenu principal -->
     <router-view />
   </div>
-  </div>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
-import ThemeSwitcher from './components/ThemeSwitcher.vue';
 import HeaderSearch from "./components/HeaderSearch.vue";
+import ThemeSwitcher from './components/ThemeSwitcher.vue';
+
 export default {
-  
-  components: {HeaderSearch,ThemeSwitcher },
+  components: { HeaderSearch, ThemeSwitcher },
   data() {
     return { adminDropdown: false };
   },
@@ -88,7 +85,7 @@ export default {
   border-radius: 8px;
   font-size: 14px;
   transition: all 0.2s ease;
-  margin-right: 0; /* Pas d'espace */
+  margin-right: 0;
 }
 .menu-btn:hover {
   background: #15803d;
