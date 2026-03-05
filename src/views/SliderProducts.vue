@@ -7,20 +7,35 @@
       <div
         v-for="produit in produitsPromos"
         :key="produit.id"
-        class="slider-item w-full flex-shrink-0 p-2 text-center"
+        class="slider-item w-full flex-shrink-0 p-2 text-center relative"
       >
+        <!-- Image du produit -->
         <img
           :src="produit.images?.[0] || '/placeholder.png'"
           :alt="produit.nom"
           class="w-full h-48 object-cover rounded"
         />
+
+        <!-- Bouton Ajouter au panier sur l'image -->
+        <button
+          @click="ajouterAuPanier(produit)"
+          class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+        >
+          Ajouter au panier
+        </button>
+
+        <!-- Nom du produit -->
         <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
+
+        <!-- Prix réduit -->
         <p class="text-green-600 font-bold">
           {{ Math.round(produit.prix * 0.5) }} €
         </p>
+
+        <!-- Badge promo -->
         <span
-          class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
           v-if="produit.promo"
+          class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
         >
           PROMO 50%
         </span>
@@ -45,6 +60,7 @@
 
 <script>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
+import { useStore } from "vuex";
 
 export default {
   name: "SliderProducts",
@@ -64,11 +80,14 @@ export default {
     },
   },
   setup(props) {
+    const store = useStore();
     const currentIndex = ref(0);
     let timer = null;
 
     // 🔥 Filtrer uniquement les produits en promo
-    const produitsPromos = computed(() => props.produits.filter(p => p.promo === true));
+    const produitsPromos = computed(() =>
+      props.produits.filter((p) => p.promo === true)
+    );
 
     const next = () => {
       if (produitsPromos.value.length === 0) return;
@@ -78,7 +97,20 @@ export default {
     const prev = () => {
       if (produitsPromos.value.length === 0) return;
       currentIndex.value =
-        (currentIndex.value - 1 + produitsPromos.value.length) % produitsPromos.value.length;
+        (currentIndex.value - 1 + produitsPromos.value.length) %
+        produitsPromos.value.length;
+    };
+
+    const ajouterAuPanier = (produit) => {
+      const prixFinal = Math.round(produit.prix * 0.5); // prix réduit pour promo
+      store.dispatch("addToCart", {
+        id: produit.id,
+        nom: produit.nom,
+        prix: prixFinal,
+        images: produit.images,
+        quantity: 1,
+      });
+      alert(`Le produit "${produit.nom}" a été ajouté à votre panier !`);
     };
 
     onMounted(() => {
@@ -96,7 +128,7 @@ export default {
       }
     );
 
-    return { currentIndex, next, prev, produitsPromos };
+    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier };
   },
 };
 </script>
