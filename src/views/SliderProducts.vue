@@ -5,17 +5,25 @@
       :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
     >
       <div
-        v-for="produit in produits"
+        v-for="produit in produitsPromos"
         :key="produit.id"
         class="slider-item w-full flex-shrink-0 p-2 text-center"
       >
         <img
-          :src="produit.images"
+          :src="produit.images?.[0] || '/placeholder.png'"
           :alt="produit.nom"
           class="w-full h-48 object-cover rounded"
         />
         <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
-        <p>{{ produit.prix }} €</p>
+        <p class="text-green-600 font-bold">
+          {{ Math.round(produit.prix * 0.5) }} €
+        </p>
+        <span
+          class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
+          v-if="produit.promo"
+        >
+          PROMO 50%
+        </span>
       </div>
     </div>
 
@@ -36,7 +44,7 @@
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 
 export default {
   name: "SliderProducts",
@@ -52,35 +60,35 @@ export default {
     },
     interval: {
       type: Number,
-      default: 3000, // 3 secondes par défaut
+      default: 3000,
     },
   },
   setup(props) {
     const currentIndex = ref(0);
     let timer = null;
 
+    // 🔥 Filtrer uniquement les produits en promo
+    const produitsPromos = computed(() => props.produits.filter(p => p.promo === true));
+
     const next = () => {
-      if (props.produits.length === 0) return;
-      currentIndex.value = (currentIndex.value + 1) % props.produits.length;
+      if (produitsPromos.value.length === 0) return;
+      currentIndex.value = (currentIndex.value + 1) % produitsPromos.value.length;
     };
 
     const prev = () => {
-      if (props.produits.length === 0) return;
+      if (produitsPromos.value.length === 0) return;
       currentIndex.value =
-        (currentIndex.value - 1 + props.produits.length) % props.produits.length;
+        (currentIndex.value - 1 + produitsPromos.value.length) % produitsPromos.value.length;
     };
 
     onMounted(() => {
-      if (props.auto) {
-        timer = setInterval(next, props.interval);
-      }
+      if (props.auto) timer = setInterval(next, props.interval);
     });
 
     onBeforeUnmount(() => {
       if (timer) clearInterval(timer);
     });
 
-    // Redémarrer le timer si l'utilisateur change le tableau de produits
     watch(
       () => props.produits,
       () => {
@@ -88,7 +96,7 @@ export default {
       }
     );
 
-    return { currentIndex, next, prev };
+    return { currentIndex, next, prev, produitsPromos };
   },
 };
 </script>
@@ -97,11 +105,16 @@ export default {
 .slider-container {
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
 }
 
 .slider-track {
   display: flex;
   width: 100%;
+}
+
+.slider-item {
+  position: relative;
 }
 
 .slider-item img {
