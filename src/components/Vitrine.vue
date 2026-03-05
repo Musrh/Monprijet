@@ -1,5 +1,5 @@
 <template>
-  <section class="vitrine my-8 px-4">
+  <section class="vitrine  px-4">
 
     <h2 class="text-2xl font-bold mb-6 text-left">Vitrine</h2>
 
