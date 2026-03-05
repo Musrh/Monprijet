@@ -1,60 +1,67 @@
 <template>
-  <div class="slider-container relative w-full overflow-hidden">
-    <div
-      class="slider-track flex transition-transform duration-500"
-      :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
-    >
+  <div class="slider-wrapper w-full md:w-3/4"> <!-- wrapper pour contrôler largeur -->
+    <div class="slider-container relative overflow-hidden">
       <div
-        v-for="produit in produitsPromos"
-        :key="produit.id"
-        class="slider-item w-full flex-shrink-0 p-2 text-center relative"
+        class="slider-track flex transition-transform duration-500"
+        :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
       >
-        <!-- Image du produit -->
-        <img
-          :src="produit.images?.[0] || '/placeholder.png'"
-          :alt="produit.nom"
-          class="w-full h-48 object-cover rounded"
-        />
-
-        <!-- Bouton Ajouter au panier sur l'image -->
-        <button
-          @click="ajouterAuPanier(produit)"
-          class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+        <div
+          v-for="produit in produitsPromos"
+          :key="produit.id"
+          class="slider-item w-full flex-shrink-0 p-2 text-center relative"
         >
-          Ajouter au panier
-        </button>
+          <!-- Image du produit -->
+          <img
+            :src="produit.images?.[0] || '/placeholder.png'"
+            :alt="produit.nom"
+            class="w-full h-48 object-cover rounded"
+          />
 
-        <!-- Nom du produit -->
-        <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
+          <!-- Bouton Ajouter au panier sur l'image -->
+          <button
+            @click="ajouterAuPanier(produit)"
+            class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+          >
+            Ajouter au panier
+          </button>
 
-        <!-- Prix réduit -->
-        <p class="text-green-600 font-bold">
-          {{ Math.round(produit.prix * 0.5) }} €
-        </p>
+          <!-- Nom du produit -->
+          <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
 
-        <!-- Badge promo -->
-        <span
-          v-if="produit.promo"
-          class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
-        >
-          PROMO 50%
-        </span>
+          <!-- Prix réduit avec ancien prix -->
+          <div class="mt-2">
+            <span v-if="produit.promo" class="line-through text-gray-400 mr-2">
+              {{ produit.prix }} €
+            </span>
+            <span class="text-green-600 font-bold">
+              {{ produit.promo ? Math.round(produit.prix * 0.5) : produit.prix }} €
+            </span>
+          </div>
+
+          <!-- Badge promo -->
+          <span
+            v-if="produit.promo"
+            class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
+          >
+            PROMO 50%
+          </span>
+        </div>
       </div>
-    </div>
 
-    <!-- Flèches manuelles -->
-    <button
-      @click="prev"
-      class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
-    >
-      ‹
-    </button>
-    <button
-      @click="next"
-      class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
-    >
-      ›
-    </button>
+      <!-- Flèches manuelles -->
+      <button
+        @click="prev"
+        class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
+      >
+        ‹
+      </button>
+      <button
+        @click="next"
+        class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
+      >
+        ›
+      </button>
+    </div>
   </div>
 </template>
 
@@ -65,44 +72,34 @@ import { useStore } from "vuex";
 export default {
   name: "SliderProducts",
   props: {
-    produits: {
-      type: Array,
-      required: true,
-      default: () => [],
-    },
-    auto: {
-      type: Boolean,
-      default: true,
-    },
-    interval: {
-      type: Number,
-      default: 3000,
-    },
+    produits: { type: Array, required: true, default: () => [] },
+    auto: { type: Boolean, default: true },
+    interval: { type: Number, default: 3000 },
   },
   setup(props) {
     const store = useStore();
     const currentIndex = ref(0);
     let timer = null;
 
-    // 🔥 Filtrer uniquement les produits en promo
+    // 🔹 Filtrer uniquement les produits en promo
     const produitsPromos = computed(() =>
       props.produits.filter((p) => p.promo === true)
     );
 
     const next = () => {
-      if (produitsPromos.value.length === 0) return;
+      if (!produitsPromos.value.length) return;
       currentIndex.value = (currentIndex.value + 1) % produitsPromos.value.length;
     };
 
     const prev = () => {
-      if (produitsPromos.value.length === 0) return;
+      if (!produitsPromos.value.length) return;
       currentIndex.value =
         (currentIndex.value - 1 + produitsPromos.value.length) %
         produitsPromos.value.length;
     };
 
     const ajouterAuPanier = (produit) => {
-      const prixFinal = Math.round(produit.prix * 0.5); // prix réduit pour promo
+      const prixFinal = produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
       store.dispatch("addToCart", {
         id: produit.id,
         nom: produit.nom,
@@ -123,9 +120,7 @@ export default {
 
     watch(
       () => props.produits,
-      () => {
-        currentIndex.value = 0;
-      }
+      () => { currentIndex.value = 0; }
     );
 
     return { currentIndex, next, prev, produitsPromos, ajouterAuPanier };
@@ -134,26 +129,11 @@ export default {
 </script>
 
 <style scoped>
-.slider-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  position: relative;
+.slider-wrapper {
+  margin: 0; /* aligné à gauche */
 }
-
-.slider-track {
-  display: flex;
-  width: 100%;
-}
-
-.slider-item {
-  position: relative;
-}
-
-.slider-item img {
-  transition: transform 0.3s;
-}
-
-.slider-item img:hover {
-  transform: scale(1.05);
-}
+.slider-container { position: relative; }
+.slider-track { display: flex; width: 100%; }
+.slider-item img { transition: transform 0.3s; }
+.slider-item img:hover { transform: scale(1.05); }
 </style>
