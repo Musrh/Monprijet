@@ -12,43 +12,43 @@
         >
           <!-- Image -->
           <img
-            :src="produit.images?.[0] || '/placeholder.png'"
+            :src="produit.images?.[0]"
             :alt="produit.nom"
             class="w-full h-48 object-cover rounded"
           />
 
+          <!-- Nom -->
+          <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
+
+          <!-- Prix -->
+          <div class="mt-1">
+            <span v-if="produit.promo" class="line-through text-gray-400 mr-2">
+              {{ produit.prix }} €
+            </span>
+            <span class="text-green-600 font-bold">
+              {{ produit.promo ? Math.round(produit.prix * 0.5) : produit.prix }} €
+            </span>
+          </div>
+
           <!-- Bouton Ajouter au panier -->
           <button
             @click="ajouterAuPanier(produit)"
-            class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm z-20"
+            class="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
           >
             Ajouter au panier
           </button>
 
-          <!-- Nom du produit -->
-          <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
-
-          <!-- Prix réduit et ancien prix -->
-          <div class="mt-1 z-10 relative">
-            <span v-if="produit.promo" class="line-through text-gray-400 mr-2">
-              {{ getPrix(produit) }} €
-            </span>
-            <span class="text-green-600 font-bold">
-              {{ getPrixFinal(produit) }} €
-            </span>
-          </div>
-
           <!-- Badge promo -->
           <span
             v-if="produit.promo"
-            class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs z-20"
+            class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
           >
             PROMO
           </span>
         </div>
       </div>
 
-      <!-- Flèches manuelles -->
+      <!-- Flèches -->
       <button
         @click="prev"
         class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
@@ -81,22 +81,11 @@ export default {
     const currentIndex = ref(0);
     let timer = null;
 
-    // 🔹 Filtrer uniquement les produits en promo
+    // 🔹 Produits promo uniquement
     const produitsPromos = computed(() =>
       props.produits.filter((p) => p.promo === true)
     );
 
-    // 🔹 Sécuriser la récupération du prix
-    const getPrix = (produit) => {
-      return produit.prix !== undefined ? Number(produit.prix) : 0;
-    };
-
-    const getPrixFinal = (produit) => {
-      const prix = getPrix(produit);
-      return produit.promo ? Math.round(prix * 0.5) : prix;
-    };
-
-    // 🔹 Navigation
     const next = () => {
       if (!produitsPromos.value.length) return;
       currentIndex.value = (currentIndex.value + 1) % produitsPromos.value.length;
@@ -110,7 +99,7 @@ export default {
 
     // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
-      const prix = getPrixFinal(produit);
+      const prix = produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
       store.dispatch("addToCart", {
         id: produit.id,
         nom: produit.nom,
@@ -129,19 +118,16 @@ export default {
       if (timer) clearInterval(timer);
     });
 
-    // 🔹 Réinitialiser index si produits changent
-    watch(
-      () => props.produits,
-      () => { currentIndex.value = 0; }
-    );
+    // 🔹 Reset index si produits changent
+    watch(() => props.produits, () => currentIndex.value = 0);
 
-    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier, getPrix, getPrixFinal };
+    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier };
   },
 };
 </script>
 
 <style scoped>
-.slider-wrapper { margin: 0; } /* aligné à gauche */
+.slider-wrapper { margin: 0; }
 @media (min-width: 768px) { .slider-wrapper { width: 75%; } }
 .slider-container { position: relative; }
 .slider-track { display: flex; width: 100%; }
