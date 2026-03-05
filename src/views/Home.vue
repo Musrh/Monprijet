@@ -2,16 +2,16 @@
   <div class="w-full">
 
     <!-- Slider + Pub -->
-    <section class="flex flex-col md:flex-row w-full">
+    <section class="flex flex-col md:flex-row w-full items-stretch m-0 p-0">
 
       <!-- Slider -->
-      <div class="md:w-2/3 w-full">
+      <div class="md:w-2/3 w-full h-full m-0 p-0">
         <SliderProducts :produits="produitsPromos" />
       </div>
 
       <!-- Pub -->
-      <div class="md:w-1/3 w-full">
-        <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
+      <div class="md:w-1/3 w-full h-full m-0 p-0">
+        <div class="w-full h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
           Publicité
         </div>
       </div>
@@ -19,7 +19,9 @@
     </section>
 
     <!-- Vitrine -->
-    <Vitrine />
+    <div class="m-0 p-0">
+      <Vitrine />
+    </div>
 
   </div>
 </template>
@@ -46,7 +48,7 @@ export default {
 
         produits.value.push(produit);
 
-        if (produit.promo) {
+        if (produit.promo === true) {
           produitsPromos.value.push(produit);
         }
       });
@@ -54,10 +56,7 @@ export default {
 
     onMounted(fetchProduits);
 
-    return {
-      produits,
-      produitsPromos
-    };
-  }
+    return { produits, produitsPromos };
+  },
 };
 </script>
