@@ -1,7 +1,7 @@
 <template>
-
+<div>
   <HeaderSearch />
-  <div>TEST APP</div>
+  
   
   <div class="min-h-screen bg-gray-100">
 
@@ -53,6 +53,7 @@
 
     <!-- Contenu principal -->
     <router-view />
+  </div>
   </div>
 </template>
 
