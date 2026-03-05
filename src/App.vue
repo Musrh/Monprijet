@@ -11,7 +11,7 @@
       <!-- Pub à côté du slider -->
       <div class="md:w-1/4 w-full pl-2">
         <div class="h-64 bg-yellow-200 flex items-center justify-center rounded shadow text-center font-bold">
-          Publicité
+          Publicité ici
         </div>
       </div>
     </section>
