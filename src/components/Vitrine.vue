@@ -7,10 +7,7 @@
     </h2>
 
     <!-- Liste produits -->
-    <div
-      v-if="produits.length"
-      class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-    >
+    <div v-if="produits.length" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
       <div
         v-for="p in produits"
@@ -29,6 +26,7 @@
         <!-- Image -->
         <img
           :src="p.images?.[0] || '/placeholder.png'"
+          alt="produit"
           class="w-full h-48 object-cover rounded mb-2"
         />
 
@@ -40,7 +38,6 @@
         <!-- Prix -->
         <div class="mt-2">
 
-          <!-- Ancien prix -->
           <span
             v-if="p.promo"
             class="line-through text-gray-400 mr-2"
@@ -48,7 +45,6 @@
             {{ p.prix }} €
           </span>
 
-          <!-- Prix actuel -->
           <span class="text-green-600 font-bold">
             {{ p.promo ? prixPromo(p.prix) : p.prix }} €
           </span>
@@ -88,13 +84,3 @@ export default {
 
     const store = useStore()
     const produits = ref([])
-
-    // Calcul prix promo (-50%)
-    const prixPromo = (prix) => {
-      return Math.round(prix * 0.5)
-    }
-
-    // Ajouter au panier
-    const ajouterAuPanier = (produit) => {
-
-      let
