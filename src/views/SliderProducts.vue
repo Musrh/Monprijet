@@ -30,12 +30,13 @@
 
           <!-- Prix réduit avec ancien prix -->
           <div class="mt-2">
-            <span v-if="produit.promo" class="line-through text-gray-400 mr-2">
+            <span v-if="produit.promo && produit.prix" class="line-through text-gray-400 mr-2">
               {{ produit.prix }} €
             </span>
-            <span class="text-green-600 font-bold">
-              {{ prixFinal(produit) }} €
+            <span v-if="produit.prix" class="text-green-600 font-bold">
+              {{ produit.promo ? Math.round(produit.prix * 0.5) : produit.prix }} €
             </span>
+            <span v-else class="text-gray-400">Prix indisponible</span>
           </div>
 
           <!-- Badge promo -->
@@ -87,7 +88,8 @@ export default {
     );
 
     // 🔹 Calculer prix final
-    const prixFinal = (produit) => produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
+    const prixFinal = (produit) =>
+      produit.prix ? (produit.promo ? Math.round(produit.prix * 0.5) : produit.prix) : 0;
 
     // 🔹 Navigation du slider
     const next = () => {
