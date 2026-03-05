@@ -17,7 +17,7 @@
             class="w-full h-48 object-cover rounded"
           />
 
-          <!-- Bouton Ajouter au panier -->
+          <!-- Bouton Ajouter au panier sur l'image -->
           <button
             @click="ajouterAuPanier(produit)"
             class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm z-20"
@@ -83,7 +83,7 @@ export default {
 
     // 🔹 Filtrer uniquement les produits en promo
     const produitsPromos = computed(() =>
-      props.produits.filter((p) => p.promo)
+      props.produits.filter((p) => p.promo === true)
     );
 
     // 🔹 Navigation du slider
@@ -98,7 +98,7 @@ export default {
         produitsPromos.value.length;
     };
 
-    // 🔹 Ajouter au panier avec prix final calculé
+    // 🔹 Ajouter au panier avec prix final
     const ajouterAuPanier = (produit) => {
       const prix = produit.promo ? Math.round(Number(produit.prix) * 0.5) : Number(produit.prix);
       store.dispatch("addToCart", {
@@ -131,7 +131,16 @@ export default {
 </script>
 
 <style scoped>
-.slider-wrapper { margin: 0; } /* aligné à gauche */
+/* Slider aligné à gauche, 100% mobile / 75% bureau */
+.slider-wrapper {
+  margin: 0; /* aligné à gauche */
+}
+@media (min-width: 768px) {
+  .slider-wrapper {
+    width: 75%;
+  }
+}
+
 .slider-container { position: relative; }
 .slider-track { display: flex; width: 100%; }
 .slider-item { position: relative; }
