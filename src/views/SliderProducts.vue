@@ -1,5 +1,5 @@
 <template>
-  <div class="slider-wrapper w-full md:w-3/4"> <!-- wrapper pour contrôler largeur -->
+  <div class="slider-wrapper w-full md:w-3/4">
     <div class="slider-container relative overflow-hidden">
       <div
         class="slider-track flex transition-transform duration-500"
@@ -34,7 +34,7 @@
               {{ produit.prix }} €
             </span>
             <span class="text-green-600 font-bold">
-              {{ produit.promo ? Math.round(produit.prix * 0.5) : produit.prix }} €
+              {{ prixFinal(produit) }} €
             </span>
           </div>
 
@@ -86,6 +86,10 @@ export default {
       props.produits.filter((p) => p.promo === true)
     );
 
+    // 🔹 Calculer prix final
+    const prixFinal = (produit) => produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
+
+    // 🔹 Navigation du slider
     const next = () => {
       if (!produitsPromos.value.length) return;
       currentIndex.value = (currentIndex.value + 1) % produitsPromos.value.length;
@@ -98,18 +102,19 @@ export default {
         produitsPromos.value.length;
     };
 
+    // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
-      const prixFinal = produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
       store.dispatch("addToCart", {
         id: produit.id,
         nom: produit.nom,
-        prix: prixFinal,
+        prix: prixFinal(produit),
         images: produit.images,
         quantity: 1,
       });
       alert(`Le produit "${produit.nom}" a été ajouté à votre panier !`);
     };
 
+    // 🔹 Auto-slide
     onMounted(() => {
       if (props.auto) timer = setInterval(next, props.interval);
     });
@@ -118,12 +123,13 @@ export default {
       if (timer) clearInterval(timer);
     });
 
+    // 🔹 Réinitialiser index si produits changent
     watch(
       () => props.produits,
       () => { currentIndex.value = 0; }
     );
 
-    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier };
+    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier, prixFinal };
   },
 };
 </script>
@@ -134,6 +140,7 @@ export default {
 }
 .slider-container { position: relative; }
 .slider-track { display: flex; width: 100%; }
+.slider-item { position: relative; }
 .slider-item img { transition: transform 0.3s; }
 .slider-item img:hover { transform: scale(1.05); }
 </style>
