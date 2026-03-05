@@ -20,7 +20,7 @@
           <!-- Bouton Ajouter au panier sur l'image -->
           <button
             @click="ajouterAuPanier(produit)"
-            class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+            class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm z-20"
           >
             Ajouter au panier
           </button>
@@ -29,20 +29,19 @@
           <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
 
           <!-- Prix réduit avec ancien prix -->
-          <div class="mt-1">
-            <span v-if="produit.promo && produit.prix" class="line-through text-gray-400 mr-2">
+          <div class="mt-1 z-10 relative">
+            <span v-if="produit.promo" class="line-through text-gray-400 mr-2">
               {{ produit.prix }} €
             </span>
-            <span v-if="produit.prix" class="text-green-600 font-bold">
+            <span class="text-green-600 font-bold">
               {{ produit.promo ? Math.round(produit.prix * 0.5) : produit.prix }} €
             </span>
-            <span v-else class="text-gray-400">Prix indisponible</span>
           </div>
 
           <!-- Badge promo -->
           <span
             v-if="produit.promo"
-            class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
+            class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs z-20"
           >
             PROMO 50%
           </span>
@@ -84,12 +83,12 @@ export default {
 
     // 🔹 Filtrer uniquement les produits en promo
     const produitsPromos = computed(() =>
-      props.produits.filter((p) => p.promo === true)
+      props.produits.filter((p) => p.promo)
     );
 
     // 🔹 Calculer prix final
     const prixFinal = (produit) =>
-      produit.prix ? (produit.promo ? Math.round(produit.prix * 0.5) : produit.prix) : 0;
+      produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
 
     // 🔹 Navigation du slider
     const next = () => {
