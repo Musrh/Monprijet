@@ -34,7 +34,7 @@
               {{ produit.prix }} €
             </span>
             <span class="text-green-600 font-bold">
-              {{ produit.promo ? Math.round(produit.prix * 0.5) : produit.prix }} €
+              {{ prixFinal(produit) }} €
             </span>
           </div>
 
