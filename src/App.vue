@@ -1,7 +1,7 @@
 <template>
 
   <HeaderSearch />
-  
+  <div>TEST APP</div>
   
   <div class="min-h-screen bg-gray-100">
 
