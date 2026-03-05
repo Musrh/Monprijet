@@ -1,4 +1,5 @@
 <template>
+  <HeaderSearch />
   <div class="min-h-screen bg-gray-100">
 
     <!-- Menu principal -->
@@ -55,8 +56,11 @@
 <script>
 import { mapGetters } from "vuex";
 import ThemeSwitcher from './components/ThemeSwitcher.vue';
-
+import HeaderSearch from "./components/HeaderSearch.vue";
 export default {
+  components: {
+    HeaderSearch
+  }
   components: { ThemeSwitcher },
   data() {
     return { adminDropdown: false };
