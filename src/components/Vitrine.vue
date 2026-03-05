@@ -9,11 +9,13 @@
       v-if="produits.length"
       class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
     >
+
       <div
         v-for="p in produits"
         :key="p.id"
         class="border rounded shadow p-4 text-center relative bg-white"
       >
+
         <!-- Badge promo -->
         <span
           v-if="p.promo"
@@ -24,7 +26,7 @@
 
         <!-- Image -->
         <img
-          :src="p.images?.[0] || p.images || '/placeholder.png'"
+          :src="p.images?.[0] || '/placeholder.png'"
           :alt="p.nom"
           class="w-full h-48 object-cover rounded mb-2"
         />
@@ -39,6 +41,7 @@
 
           <!-- Produit promo -->
           <div v-if="p.promo">
+
             <span class="line-through text-gray-400 mr-2">
               {{ p.prix }} €
             </span>
@@ -46,47 +49,10 @@
             <span class="text-green-600 font-bold">
               {{ prixPromo(p.prix) }} €
             </span>
+
           </div>
 
           <!-- Produit normal -->
           <div v-else>
-            <span class="text-green-600 font-bold">
-              {{ p.prix }} €
-            </span>
-          </div>
 
-        </div>
-
-        <!-- Bouton -->
-        <button
-          @click="ajouterAuPanier(p)"
-          class="mt-3 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition"
-        >
-          Ajouter au panier
-        </button>
-
-      </div>
-    </div>
-
-    <div v-else class="text-gray-500 text-center">
-      Aucun produit à afficher.
-    </div>
-
-  </section>
-</template>
-
-<script>
-import { ref, onMounted } from "vue";
-import { collection, getDocs } from "firebase/firestore";
-import { useStore } from "vuex";
-import { db } from "../firebase";
-
-export default {
-  name: "Vitrine",
-
-  setup() {
-    const store = useStore();
-    const produits = ref([]);
-
-    // 🔹 calcul prix promo
-    const prixPromo = (prix) => {
+            <
