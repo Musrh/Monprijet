@@ -1,8 +1,8 @@
 <template>
-  <div class="home-page min-h-screen bg-gray-100">
+  <div class="home-page min-h-screen bg-gray-100 px-4">
 
-    <!-- 🔹 Slider produits internes réduit pour bureau -->
-    <div class="mx-auto max-w-[1200px]">
+    <!-- 🔹 Slider produits internes (max 75% en bureau, 100% mobile) -->
+    <div class="w-full md:w-3/4 mx-auto">
       <SliderProducts 
         :produits="produitsInternes" 
         :ventes="ventes" 
@@ -11,8 +11,8 @@
     </div>
 
     <!-- 🔥 Produits en promotion (uniquement internes) -->
-    <div v-if="produitsPromo.length" class="my-10 px-6">
-      <h2 class="text-2xl font-bold text-center text-red-600 mb-6">
+    <div v-if="produitsPromo.length" class="my-10">
+      <h2 class="text-2xl font-bold text-red-600 mb-6 text-left">
         🔥 Produits en promotion
       </h2>
 
@@ -22,6 +22,7 @@
           :key="p.id"
           class="bg-white border rounded p-4 text-center shadow hover:shadow-lg transition relative"
         >
+          <!-- Étiquette promo -->
           <span class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded">
             50% 🔥
           </span>
@@ -32,6 +33,11 @@
           />
 
           <h3 class="font-bold">{{ p.nom }}</h3>
+
+          <!-- Ancien prix barré + prix promo -->
+          <p class="text-gray-500 line-through" v-if="p.oldPrice">
+            {{ p.oldPrice }} €
+          </p>
           <p class="text-green-600 font-bold">{{ p.prix }} €</p>
 
           <button
@@ -56,7 +62,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
-import SliderProducts from "./SliderProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
 export default {
@@ -82,8 +88,16 @@ export default {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach(doc => {
         const p = { id: doc.id, ...doc.data() };
+
+        // Slider : tous les produits internes
         produitsInternes.value.push(p);
+
+        // Produits promo uniquement internes
         if (p.promo === true) {
+          // Ancien prix barré = double du prix promo par exemple
+          if (!p.oldPrice) {
+            p.oldPrice = p.prix * 2;
+          }
           produitsPromo.value.push(p);
         }
       });
@@ -122,11 +136,8 @@ export default {
   object-fit: cover;
 }
 
-/* Limite largeur Slider pour bureau */
-@media (min-width: 768px) {
-  .home-page > div > .slider-container {
-    max-width: 1200px;
-    margin: 0 auto;
-  }
+/* Titre section à gauche */
+h2 {
+  text-align: left;
 }
 </style>
