@@ -4,7 +4,7 @@
     <!-- Menu principal -->
     <nav class="bg-gray-800 p-4 flex flex-wrap items-center gap-2">
 
-      <!-- Liens principaux + Minishop + Admin -->
+      <!-- Tous les liens côte à côte -->
       <router-link to="/" class="menu-btn">Home</router-link>
       <router-link to="/contact" class="menu-btn">Contact</router-link>
       <router-link to="/produits" class="menu-btn">Produits</router-link>
@@ -82,6 +82,7 @@ export default {
   border-radius: 8px;
   font-size: 14px;
   transition: all 0.2s ease;
+  margin-right: 0; /* Pas d'espace */
 }
 .menu-btn:hover {
   background: #15803d;
@@ -107,7 +108,7 @@ export default {
   background: #dc2626;
 }
 
-/* Responsive mobile : menu en colonne */
+/* Mobile : menu en colonne */
 @media (max-width: 768px) {
   nav {
     flex-direction: column;
