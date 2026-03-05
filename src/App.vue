@@ -1,7 +1,10 @@
 <template>
+
+  <HeaderSearch />
+  
   
   <div class="min-h-screen bg-gray-100">
-<HeaderSearch />
+
     <!-- Menu principal -->
     <nav class="bg-gray-800 p-4 flex flex-wrap items-center gap-2">
 
