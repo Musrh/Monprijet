@@ -1,15 +1,16 @@
 <template>
   <div class="home-page min-h-screen bg-gray-100">
 
-    <!-- 🔹 Slider produits internes -->
-    <SliderProducts 
-      :produits="produitsInternes" 
-      :ventes="ventes" 
-      :ajouter-au-panier="ajouterAuPanier" 
-      class="max-w-6xl mx-auto"
-    />
+    <!-- 🔹 Slider produits internes réduit pour bureau -->
+    <div class="mx-auto max-w-[1200px]">
+      <SliderProducts 
+        :produits="produitsInternes" 
+        :ventes="ventes" 
+        :ajouter-au-panier="ajouterAuPanier" 
+      />
+    </div>
 
-    <!-- 🔥 Produits en promotion -->
+    <!-- 🔥 Produits en promotion (uniquement internes) -->
     <div v-if="produitsPromo.length" class="my-10 px-6">
       <h2 class="text-2xl font-bold text-center text-red-600 mb-6">
         🔥 Produits en promotion
@@ -22,7 +23,7 @@
           class="bg-white border rounded p-4 text-center shadow hover:shadow-lg transition relative"
         >
           <span class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded">
-            PROMO 50%
+            50% 🔥
           </span>
 
           <img
@@ -31,39 +32,16 @@
           />
 
           <h3 class="font-bold">{{ p.nom }}</h3>
-          <p class="text-green-600 font-bold">{{ (p.prix * 0.5).toFixed(2) }} €</p>
+          <p class="text-green-600 font-bold">{{ p.prix }} €</p>
 
           <button
-            @click="ajouterAuPanier(p, true)"
+            @click="ajouterAuPanier(p)"
             class="bg-green-600 text-white px-3 py-1 rounded mt-2 hover:bg-green-700"
           >
             Ajouter au panier
           </button>
         </div>
       </div>
-    </div>
-
-    <!-- ⭐ Produit en vedette -->
-    <div v-if="produitVedette" class="featured-product my-8 text-center">
-      <h2 class="text-2xl font-bold mb-4">⭐ Produit en vedette</h2>
-
-      <img 
-        :src="produitVedette.images?.[0] || '/placeholder.png'" 
-        class="w-64 h-64 object-cover mx-auto mb-2 rounded"
-      />
-
-      <p class="text-lg font-semibold">{{ produitVedette.nom }}</p>
-      <p class="text-green-600 font-bold">{{ produitVedette.prix }} €</p>
-      <p class="text-gray-500">
-        Vendus : {{ ventes[produitVedette.id] || 0 }}
-      </p>
-
-      <button 
-        @click="ajouterAuPanier(produitVedette)"
-        class="bg-green-600 text-white px-4 py-2 rounded mt-2 hover:bg-green-700"
-      >
-        Ajouter au panier
-      </button>
     </div>
 
     <!-- 🏪 Vitrine -->
@@ -78,7 +56,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
-import SliderProducts from "./SliderProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
 export default {
@@ -88,63 +66,40 @@ export default {
 
     const produitsInternes = ref([]);
     const produitsPromo = ref([]);
-    const produitVedette = ref(null);
     const ventes = ref({});
 
-    // Ajouter au panier
-    const ajouterAuPanier = (produit, isPromo = false) => {
+    const ajouterAuPanier = (produit) => {
       store.dispatch("addToCart", {
         id: produit.id,
         nom: produit.nom,
-        prix: isPromo ? (produit.prix * 0.5) : produit.prix,
+        prix: produit.prix,
         images: produit.images,
         quantity: 1
       });
-      alert(`${produit.nom} a été ajouté au panier`);
     };
 
-    // Récupérer les produits internes et promos
     const fetchProduits = async () => {
-      const snapshotInt = await getDocs(collection(db, "products"));
-
-      snapshotInt.forEach(doc => {
+      const snapshot = await getDocs(collection(db, "products"));
+      snapshot.forEach(doc => {
         const p = { id: doc.id, ...doc.data() };
         produitsInternes.value.push(p);
-
         if (p.promo === true) {
           produitsPromo.value.push(p);
         }
       });
     };
 
-    // Récupérer les commandes pour déterminer le produit vedette
     const fetchCommandes = async () => {
       const snapshot = await getDocs(collection(db, "commandes"));
-
       snapshot.forEach(doc => {
         const cmd = doc.data();
         if (cmd.statut !== "payé") return;
-
         cmd.items?.forEach(item => {
           const prodId = item.id;
           const qty = item.quantity || 1;
-          ventes.value[prodId] =
-            (ventes.value[prodId] || 0) + qty;
+          ventes.value[prodId] = (ventes.value[prodId] || 0) + qty;
         });
       });
-
-      let max = 0;
-      produitsInternes.value.forEach(p => {
-        const q = ventes.value[p.id] || 0;
-        if (q > max) {
-          max = q;
-          produitVedette.value = { ...p };
-        }
-      });
-
-      if (!produitVedette.value && produitsInternes.value.length > 0) {
-        produitVedette.value = { ...produitsInternes.value[0] };
-      }
     };
 
     onMounted(async () => {
@@ -155,7 +110,6 @@ export default {
     return {
       produitsInternes,
       produitsPromo,
-      produitVedette,
       ventes,
       ajouterAuPanier
     };
@@ -164,7 +118,15 @@ export default {
 </script>
 
 <style scoped>
-.featured-product img {
+.home-page img {
   object-fit: cover;
+}
+
+/* Limite largeur Slider pour bureau */
+@media (min-width: 768px) {
+  .home-page > div > .slider-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
 }
 </style>
