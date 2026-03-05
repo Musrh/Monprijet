@@ -37,11 +37,10 @@
         </h3>
 
         <!-- Prix -->
-        <div class="mt-1">
+        <div class="mt-2">
 
           <!-- Produit promo -->
           <div v-if="p.promo">
-
             <span class="line-through text-gray-400 mr-2">
               {{ p.prix }} €
             </span>
@@ -49,10 +48,50 @@
             <span class="text-green-600 font-bold">
               {{ prixPromo(p.prix) }} €
             </span>
-
           </div>
 
           <!-- Produit normal -->
           <div v-else>
+            <span class="text-green-600 font-bold">
+              {{ p.prix }} €
+            </span>
+          </div>
 
-            <
+        </div>
+
+        <!-- Bouton -->
+        <button
+          @click="ajouterAuPanier(p)"
+          class="mt-3 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+        >
+          Ajouter au panier
+        </button>
+
+      </div>
+
+    </div>
+
+    <div v-else class="text-gray-500 text-center">
+      Aucun produit à afficher.
+    </div>
+
+  </section>
+</template>
+
+<script>
+import { ref, onMounted } from "vue";
+import { collection, getDocs } from "firebase/firestore";
+import { useStore } from "vuex";
+import { db } from "../firebase";
+
+export default {
+  name: "Vitrine",
+
+  setup() {
+
+    const store = useStore();
+    const produits = ref([]);
+
+    // Calcul prix promo
+    const prixPromo = (prix) => {
+      return Math.round(pr
