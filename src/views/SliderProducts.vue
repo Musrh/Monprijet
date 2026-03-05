@@ -30,12 +30,13 @@
 
           <!-- Prix réduit avec ancien prix -->
           <div class="mt-1 z-10 relative">
-            <span v-if="produit.promo" class="line-through text-gray-400 mr-2">
+            <span v-if="produit.promo && produit.prix !== undefined" class="line-through text-gray-400 mr-2">
               {{ produit.prix }} €
             </span>
-            <span class="text-green-600 font-bold">
-              {{ prixFinal(produit) }} €
+            <span v-if="produit.prix !== undefined" class="text-green-600 font-bold">
+              {{ produit.promo ? Math.round(produit.prix * 0.5) : produit.prix }} €
             </span>
+            <span v-else class="text-gray-400">Prix indisponible</span>
           </div>
 
           <!-- Badge promo -->
@@ -43,7 +44,7 @@
             v-if="produit.promo"
             class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs z-20"
           >
-            PROMO 50%
+            PROMO
           </span>
         </div>
       </div>
@@ -86,7 +87,7 @@ export default {
       props.produits.filter((p) => p.promo)
     );
 
-    // 🔹 Calculer prix final
+    // 🔹 Calculer le prix final
     const prixFinal = (produit) =>
       produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
 
@@ -95,12 +96,10 @@ export default {
       if (!produitsPromos.value.length) return;
       currentIndex.value = (currentIndex.value + 1) % produitsPromos.value.length;
     };
-
     const prev = () => {
       if (!produitsPromos.value.length) return;
       currentIndex.value =
-        (currentIndex.value - 1 + produitsPromos.value.length) %
-        produitsPromos.value.length;
+        (currentIndex.value - 1 + produitsPromos.value.length) % produitsPromos.value.length;
     };
 
     // 🔹 Ajouter au panier
@@ -119,7 +118,6 @@ export default {
     onMounted(() => {
       if (props.auto) timer = setInterval(next, props.interval);
     });
-
     onBeforeUnmount(() => {
       if (timer) clearInterval(timer);
     });
