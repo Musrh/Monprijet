@@ -1,15 +1,17 @@
 <template>
-  <div class="home-page min-h-screen bg-gray-100">
+  <div class="home-page min-h-screen bg-gray-100 px-4">
 
-    <!-- 🔹 Slider produits internes -->
-    <SliderProducts 
-      :produits="produitsInternes" 
-      :ventes="ventes" 
-      :ajouter-au-panier="ajouterAuPanier" 
-    />
+    <!-- 🔹 Slider produits internes réduit sur bureau -->
+    <div class="mx-auto w-full md:w-3/4 lg:w-2/3">
+      <SliderProducts 
+        :produits="produitsInternes" 
+        :ventes="ventes" 
+        :ajouter-au-panier="ajouterAuPanier" 
+      />
+    </div>
 
-    <!-- 🔥 Produits en promotion -->
-    <div v-if="produitsPromo.length" class="my-10 px-6">
+    <!-- 🔥 Produits internes en promotion -->
+    <div v-if="produitsPromo.length" class="my-10 px-2 md:px-6">
       <h2 class="text-2xl font-bold text-center text-red-600 mb-6">
         🔥 Produits en promotion
       </h2>
@@ -20,9 +22,9 @@
           :key="p.id"
           class="bg-white border rounded p-4 text-center shadow hover:shadow-lg transition relative"
         >
-          <!-- Badge -->
-          <span class="absolute top-2 left-2 bg-red-600 text-white px-3 py-1 text-xs font-bold rounded-full shadow">
-            -50%
+          <!-- Étiquette PROMO -->
+          <span class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 text-xs rounded">
+            PROMO
           </span>
 
           <img
@@ -31,21 +33,13 @@
           />
 
           <h3 class="font-bold">{{ p.nom }}</h3>
-
-          <div class="mt-2">
-            <p class="text-gray-400 line-through text-sm">
-              {{ p.prix }} €
-            </p>
-            <p class="text-red-600 font-bold text-lg">
-              {{ (p.prix / 2).toFixed(2) }} €
-            </p>
-          </div>
+          <p class="text-green-600 font-bold">{{ p.prix }} €</p>
 
           <button
-            @click="ajouterAuPanier({ ...p, prix: p.prix / 2 })"
-            class="bg-red-600 text-white px-3 py-1 rounded mt-3 hover:bg-red-700"
+            @click="ajouterAuPanier(p)"
+            class="bg-green-600 text-white px-3 py-1 rounded mt-2 hover:bg-green-700"
           >
-            Acheter en promo
+            Ajouter au panier
           </button>
         </div>
       </div>
@@ -77,7 +71,7 @@
     <!-- 🌍 Produits externes -->
     <div
       v-if="produitsExternes.length"
-      class="external-products my-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4"
+      class="external-products my-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2 md:px-4"
     >
       <div
         v-for="p in produitsExternes"
@@ -112,7 +106,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
 
-import SliderProducts from "./SliderProducts.vue";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 
 export default {
@@ -139,11 +133,12 @@ export default {
     const fetchProduits = async () => {
       // 🔹 Produits internes
       const snapshotInt = await getDocs(collection(db, "products"));
+
       snapshotInt.forEach(doc => {
         const p = { id: doc.id, ...doc.data() };
         produitsInternes.value.push(p);
 
-        // 🔥 Ajouter produits promo
+        // 🔥 Seulement produits internes en promo
         if (p.promo === true) {
           produitsPromo.value.push(p);
         }
@@ -179,7 +174,6 @@ export default {
         }
       });
 
-      // Si aucune vente, prendre premier produit interne
       if (!produitVedette.value && produitsInternes.value.length > 0) {
         produitVedette.value = { ...produitsInternes.value[0] };
       }
