@@ -4,10 +4,9 @@
     <!-- Logo + Panier -->
     <div class="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
 
-      <!-- Logo -->
-      <div class="flex items-center gap-3">
-        <img src="/icons.svg" alt="logo" class="h-10" />
-      </div>
+      <div class="text-red-500 text-xl font-bold">
+HEADER TEST
+</div>
 
       <!-- Panier -->
       <router-link to="/panier" class="flex items-center gap-2 text-purple-700 font-semibold">
