@@ -51,7 +51,8 @@
 
 <script>
 import { ref, onMounted, watch } from "vue";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { useRoute, useRouter } from "vue-router";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
@@ -59,13 +60,16 @@ import Vitrine from "../components/Vitrine.vue";
 export default {
   components: { SliderProducts, Vitrine },
 
-  setup(_, { root }) {
+  setup() {
     const produits = ref([]);
     const produitsPromos = ref([]);
     const produitsFiltres = ref([]);
     const showFiltered = ref(false);
     const filtreCategorie = ref("");
     const filtreSearch = ref("");
+
+    const route = useRoute();   // Composable pour récupérer query params
+    const router = useRouter(); // Composable pour naviguer / reset
 
     // Charger tous les produits
     const fetchProduits = async () => {
@@ -76,11 +80,9 @@ export default {
         if (produit.promo) produitsPromos.value.push(produit);
       });
     };
-
     onMounted(fetchProduits);
 
-    // Réagir aux changements de query params (HeaderSearch)
-    const route = root.$route;
+    // Surveiller les query params et filtrer
     watch(
       () => route.query,
       (q) => {
@@ -95,6 +97,8 @@ export default {
             return matchCat && matchSearch;
           });
           showFiltered.value = true;
+        } else {
+          showFiltered.value = false;
         }
       },
       { immediate: true }
@@ -104,7 +108,7 @@ export default {
       showFiltered.value = false;
       filtreCategorie.value = "";
       filtreSearch.value = "";
-      root.$router.push({ path: "/" }); // Supprime les query params
+      router.push({ path: "/" }); // Supprime les query params
     };
 
     return {
@@ -118,10 +122,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* Optionnel : réduire l'espace vertical */
-section {
-  margin-bottom: 0;
-}
-</style>
