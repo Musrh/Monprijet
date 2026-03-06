@@ -5,8 +5,6 @@
 
     <!-- Menu principal -->
     <nav class="bg-gray-800 p-4 flex flex-wrap items-center gap-2">
-
-      <!-- Tous les liens côte à côte -->
       <router-link to="/" class="menu-btn">Home</router-link>
       <router-link to="/contact" class="menu-btn">Contact</router-link>
       <router-link to="/produits" class="menu-btn">Produits</router-link>
@@ -20,7 +18,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
           </svg>
         </button>
-
         <div v-if="adminDropdown" class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border border-gray-200 py-2 z-50">
           <router-link @click="adminDropdown=false" to="/admin" class="block px-4 py-2 hover:bg-gray-100">Admin (Utilisateurs)</router-link>
           <router-link @click="adminDropdown=false" to="/adminproduits" class="block px-4 py-2 hover:bg-gray-100">Admin-Produits</router-link>
@@ -46,7 +43,6 @@
 
       <!-- ThemeSwitcher -->
       <ThemeSwitcher />
-
     </nav>
 
     <!-- Contenu principal -->
@@ -78,48 +74,15 @@ export default {
 </script>
 
 <style scoped>
-.menu-btn {
-  background: #16a34a; /* vert */
-  color: #ffffff;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-  margin-right: 0;
-}
-.menu-btn:hover {
-  background: #15803d;
-  transform: translateY(-1px);
-}
+.menu-btn { background: #16a34a; color: #fff; padding: 6px 14px; border-radius: 8px; font-size: 14px; transition: all 0.2s ease; margin-right: 0; }
+.menu-btn:hover { background: #15803d; transform: translateY(-1px); }
+.user-badge { background: #22c55e; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 13px; }
+.logout-btn { background: #ef4444; color: #fff; padding: 6px 14px; border-radius: 8px; transition: 0.2s; }
+.logout-btn:hover { background: #dc2626; }
 
-.user-badge {
-  background: #22c55e;
-  color: #ffffff;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-}
-
-.logout-btn {
-  background: #ef4444;
-  color: #ffffff;
-  padding: 6px 14px;
-  border-radius: 8px;
-  transition: 0.2s;
-}
-.logout-btn:hover {
-  background: #dc2626;
-}
-
-/* Mobile : menu en colonne */
+/* Mobile */
 @media (max-width: 768px) {
-  nav {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .menu-btn, .user-badge, .logout-btn {
-    width: 100%;
-    text-align: left;
-  }
+  nav { flex-direction: column; align-items: flex-start; }
+  .menu-btn, .user-badge, .logout-btn { width: 100%; text-align: left; }
 }
 </style>
