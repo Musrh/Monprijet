@@ -4,36 +4,34 @@
     <!-- Header -->
     <HeaderSearch />
 
-    <!-- Barre mobile -->
+    <!-- Barre mobile : Menu + Login/Logout -->
     <div class="md:hidden bg-gray-800 p-3 flex justify-between items-center text-white">
 
-      <span class="font-bold text-lg">Menu</span>
+      <div class="flex items-center gap-4">
+        <span class="font-bold text-lg">Menu</span>
 
-      <div class="flex items-center gap-3">
-
-        <!-- Login mobile -->
+        <!-- Login -->
         <router-link
           v-if="!isAuthenticated"
           to="/login"
-          class="mobile-login"
+          class="mobile-auth"
         >
           Login
         </router-link>
 
-        <!-- Email mobile -->
-        <span
+        <!-- Logout -->
+        <button
           v-if="isAuthenticated"
-          class="mobile-login"
+          @click="logout"
+          class="mobile-auth logout"
         >
-          {{ userEmail }}
-        </span>
-
-        <!-- Hamburger -->
-        <button @click="toggleMenu" class="text-2xl">
-          ☰
+          Logout
         </button>
-
       </div>
+
+      <button @click="toggleMenu" class="text-2xl">
+        ☰
+      </button>
 
     </div>
 
@@ -44,11 +42,20 @@
     >
 
       <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
-      <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
-      <router-link @click="closeMenu" to="/produits" class="menu-btn">Produits</router-link>
-      <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
 
-      <!-- Admin -->
+      <router-link @click="closeMenu" to="/contact" class="menu-btn">
+        Contact
+      </router-link>
+
+      <router-link @click="closeMenu" to="/produits" class="menu-btn">
+        Produits
+      </router-link>
+
+      <router-link @click="closeMenu" to="/minishop" class="menu-btn">
+        Minishop
+      </router-link>
+
+      <!-- Admin dropdown -->
       <div
         v-if="isAdmin"
         class="relative"
@@ -56,7 +63,7 @@
         @mouseleave="adminDropdown=false"
       >
 
-        <button class="menu-btn flex items-center gap-1 justify-center">
+        <button class="menu-btn flex items-center justify-center gap-1">
           Admin
           <svg
             class="w-4 h-4 opacity-60 transition-transform"
@@ -65,15 +72,18 @@
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 9l-7 7-7-7">
-            </path>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            />
           </svg>
         </button>
 
         <div
           v-if="adminDropdown"
-          class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border border-gray-200 py-2 z-50"
+          class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border py-2 z-50"
         >
 
           <router-link
@@ -113,14 +123,20 @@
       </div>
 
       <!-- Panier -->
-      <router-link @click="closeMenu" to="/panier" class="menu-btn relative">
+      <router-link
+        @click="closeMenu"
+        to="/panier"
+        class="menu-btn relative"
+      >
         🛒
+
         <span
           v-if="cartItemCount > 0"
           class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"
         >
           {{ cartItemCount }}
         </span>
+
       </router-link>
 
       <!-- Login desktop -->
@@ -128,19 +144,22 @@
         v-if="!isAuthenticated"
         @click="closeMenu"
         to="/login"
-        class="menu-btn"
+        class="menu-btn hidden md:block"
       >
         Login
       </router-link>
 
-      <!-- Utilisateur -->
+      <!-- Utilisateur connecté -->
       <template v-if="isAuthenticated">
 
-        <span class="user-badge">
+        <span class="user-badge hidden md:block">
           {{ userEmail }}
         </span>
 
-        <button @click="logout" class="logout-btn">
+        <button
+          @click="logout"
+          class="logout-btn hidden md:block"
+        >
           Logout
         </button>
 
@@ -177,12 +196,14 @@ export default {
   },
 
   computed: {
+
     ...mapGetters([
       "isAuthenticated",
       "userEmail",
       "isAdmin",
       "cartItemCount"
     ])
+
   },
 
   methods: {
@@ -214,7 +235,8 @@ export default {
   padding:10px 14px;
   border-radius:10px;
   font-size:15px;
-  transition:all 0.2s ease;
+  transition:all .2s;
+
   width:220px;
   text-align:center;
 }
@@ -243,14 +265,15 @@ export default {
   background:#dc2626;
 }
 
-/* Login dans la barre mobile */
-
-.mobile-login{
+.mobile-auth{
   background:#16a34a;
-  padding:6px 10px;
-  border-radius:8px;
+  padding:4px 10px;
+  border-radius:6px;
   font-size:13px;
-  color:white;
+}
+
+.mobile-auth.logout{
+  background:#ef4444;
 }
 
 </style>
