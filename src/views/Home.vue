@@ -2,58 +2,63 @@
   <div class="w-full px-4">
 
     <!-- Slider + Pub -->
-    <section class="flex flex-col md:flex-row w-full gap-0">
-      <!-- Slider -->
+    <section class="flex flex-col md:flex-row w-full my-6">
+      <!-- Slider des produits en promo -->
       <div class="md:w-2/3 w-full">
         <SliderProducts :produits="produitsPromos" />
       </div>
 
       <!-- Pub -->
       <div class="md:w-1/3 w-full">
-        <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
+        <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center rounded">
           Publicité
         </div>
       </div>
     </section>
 
     <!-- Résultats filtrés ou Vitrine -->
-    <section class="my-8">
-      <div v-if="filtreActif">
+    <section class="my-6">
+      <div v-if="filteredProduits.length > 0">
         <h2 class="text-xl font-bold mb-4">Résultats filtrés</h2>
-
-        <div v-if="produitsFiltres.length === 0">
-          Aucun produit ne correspond à votre recherche.
-        </div>
-
-        <div v-else class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div
-            v-for="p in produitsFiltres"
-            :key="p.id"
-            class="border rounded p-3 flex flex-col items-center"
+            v-for="produit in filteredProduits"
+            :key="produit.id"
+            class="border p-4 rounded shadow"
           >
-            <img :src="p.images[0]" alt="" class="h-32 object-cover mb-2" />
-            <span class="font-semibold">{{ p.nom }}</span>
-            <span class="text-gray-600">{{ p.prix }} $</span>
+            <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-2" />
+            <h3 class="font-semibold">{{ produit.nom }}</h3>
+            <p class="text-gray-600">{{ produit.description }}</p>
+            <p class="font-bold mt-1">{{ produit.prix }} €</p>
           </div>
         </div>
-
         <button
-          @click="resetFiltre"
-          class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          @click="clearFilter"
+          class="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
         >
-          Revenir à l'accueil
+          Revenir à la page d'accueil
         </button>
       </div>
-
-      <Vitrine v-else />
+      <div v-else-if="searchActive">
+        <h2 class="text-xl font-bold mb-4">Résultats filtrés</h2>
+        <p>Aucun produit ne correspond à votre recherche.</p>
+        <button
+          @click="clearFilter"
+          class="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
+        >
+          Revenir à la page d'accueil
+        </button>
+      </div>
+      <div v-else>
+        <Vitrine />
+      </div>
     </section>
 
   </div>
 </template>
 
 <script>
-import { ref, onMounted, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
@@ -62,68 +67,66 @@ import Vitrine from "../components/Vitrine.vue";
 export default {
   components: { SliderProducts, Vitrine },
 
-  setup() {
-    const route = useRoute();
-    const router = useRouter();
-
+  setup(_, { root }) {
     const produits = ref([]);
     const produitsPromos = ref([]);
-    const produitsFiltres = ref([]);
-    const filtreActif = ref(false);
+    const filteredProduits = ref([]);
+    const searchActive = ref(false);
 
-    // 🔹 Charger les produits
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
-      snapshot.forEach(doc => {
+      snapshot.forEach((doc) => {
         const produit = { id: doc.id, ...doc.data() };
         produits.value.push(produit);
         if (produit.promo) produitsPromos.value.push(produit);
       });
-      appliquerFiltre(); // Appliquer filtre si query présente
     };
 
     onMounted(fetchProduits);
 
-    // 🔹 Appliquer filtre selon query
-    const appliquerFiltre = () => {
-      const search = route.query.search || "";
-      const categorie = route.query.categorie || "";
+    // Récupérer les paramètres de recherche depuis l'URL
+    const searchParams = root.$route.query;
+    const searchText = searchParams.search || "";
+    const categorie = searchParams.categorie || "";
 
-      if (search || categorie) {
-        produitsFiltres.value = produitsPromos.value.filter(p => {
-          let ok = true;
-          if (categorie) ok = ok && p.categorie.toLowerCase() === categorie.toLowerCase();
-          if (search) ok = ok && p.nom.toLowerCase().includes(search.toLowerCase());
-          return ok;
+    const filterProduits = () => {
+      if (searchText || categorie) {
+        searchActive.value = true;
+        filteredProduits.value = produits.value.filter((p) => {
+          const matchesText = searchText
+            ? p.nom.toLowerCase().includes(searchText.toLowerCase())
+            : true;
+          const matchesCat = categorie ? p.categorie === categorie : true;
+          return matchesText && matchesCat;
         });
-        filtreActif.value = true;
-      } else {
-        produitsFiltres.value = [];
-        filtreActif.value = false;
       }
     };
 
-    // 🔹 Observer les changements de query
-    watch(() => route.query, appliquerFiltre);
+    onMounted(() => {
+      // Laisser le temps à produits.value d'être rempli avant filtrage
+      setTimeout(filterProduits, 500);
+    });
 
-    // 🔹 Réinitialiser pour revenir à l'accueil
-    const resetFiltre = () => {
-      router.push({ path: "/" });
+    const clearFilter = () => {
+      searchActive.value = false;
+      filteredProduits.value = [];
+      root.$router.push("/");
     };
 
     return {
+      produits,
       produitsPromos,
-      produitsFiltres,
-      filtreActif,
-      resetFiltre
+      filteredProduits,
+      searchActive,
+      clearFilter,
     };
-  }
+  },
 };
 </script>
 
 <style scoped>
-/* Supprimer tout espace entre slider et pub */
-section.flex > div {
-  margin: 0 !important;
+/* Ajustement du grid et images */
+img {
+  object-fit: cover;
 }
 </style>
