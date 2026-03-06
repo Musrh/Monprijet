@@ -4,13 +4,37 @@
     <!-- Header -->
     <HeaderSearch />
 
-    <!-- bouton hamburger mobile -->
+    <!-- Barre mobile -->
     <div class="md:hidden bg-gray-800 p-3 flex justify-between items-center text-white">
-      <span class="font-bold">Menu</span>
 
-      <button @click="toggleMenu" class="text-2xl">
-        ☰
-      </button>
+      <span class="font-bold text-lg">Menu</span>
+
+      <div class="flex items-center gap-3">
+
+        <!-- Login mobile -->
+        <router-link
+          v-if="!isAuthenticated"
+          to="/login"
+          class="mobile-login"
+        >
+          Login
+        </router-link>
+
+        <!-- Email mobile -->
+        <span
+          v-if="isAuthenticated"
+          class="mobile-login"
+        >
+          {{ userEmail }}
+        </span>
+
+        <!-- Hamburger -->
+        <button @click="toggleMenu" class="text-2xl">
+          ☰
+        </button>
+
+      </div>
+
     </div>
 
     <!-- Menu principal -->
@@ -24,14 +48,15 @@
       <router-link @click="closeMenu" to="/produits" class="menu-btn">Produits</router-link>
       <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
 
-      <!-- Admin Dropdown -->
+      <!-- Admin -->
       <div
         v-if="isAdmin"
         class="relative"
         @mouseenter="adminDropdown=true"
         @mouseleave="adminDropdown=false"
       >
-        <button class="menu-btn flex items-center gap-1">
+
+        <button class="menu-btn flex items-center gap-1 justify-center">
           Admin
           <svg
             class="w-4 h-4 opacity-60 transition-transform"
@@ -50,22 +75,41 @@
           v-if="adminDropdown"
           class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border border-gray-200 py-2 z-50"
         >
-          <router-link @click="adminDropdown=false" to="/admin" class="block px-4 py-2 hover:bg-gray-100">
+
+          <router-link
+            @click="adminDropdown=false"
+            to="/admin"
+            class="block px-4 py-2 hover:bg-gray-100"
+          >
             Admin (Utilisateurs)
           </router-link>
 
-          <router-link @click="adminDropdown=false" to="/adminproduits" class="block px-4 py-2 hover:bg-gray-100">
+          <router-link
+            @click="adminDropdown=false"
+            to="/adminproduits"
+            class="block px-4 py-2 hover:bg-gray-100"
+          >
             Admin-Produits
           </router-link>
 
-          <router-link @click="adminDropdown=false" to="/admin-commandes" class="block px-4 py-2 hover:bg-gray-100">
+          <router-link
+            @click="adminDropdown=false"
+            to="/admin-commandes"
+            class="block px-4 py-2 hover:bg-gray-100"
+          >
             Admin-Commandes
           </router-link>
 
-          <router-link @click="adminDropdown=false" to="/upload" class="block px-4 py-2 hover:bg-gray-100">
+          <router-link
+            @click="adminDropdown=false"
+            to="/upload"
+            class="block px-4 py-2 hover:bg-gray-100"
+          >
             UploadProduit
           </router-link>
+
         </div>
+
       </div>
 
       <!-- Panier -->
@@ -79,7 +123,7 @@
         </span>
       </router-link>
 
-      <!-- Login -->
+      <!-- Login desktop -->
       <router-link
         v-if="!isAuthenticated"
         @click="closeMenu"
@@ -91,11 +135,15 @@
 
       <!-- Utilisateur -->
       <template v-if="isAuthenticated">
-        <span class="user-badge">{{ userEmail }}</span>
+
+        <span class="user-badge">
+          {{ userEmail }}
+        </span>
 
         <button @click="logout" class="logout-btn">
           Logout
         </button>
+
       </template>
 
       <!-- Theme -->
@@ -116,7 +164,10 @@ import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 
 export default {
 
-  components: { HeaderSearch, ThemeSwitcher },
+  components: {
+    HeaderSearch,
+    ThemeSwitcher
+  },
 
   data() {
     return {
@@ -157,40 +208,49 @@ export default {
 
 <style scoped>
 
-.menu-btn {
-  background: #16a34a;
-  color: #fff;
-  padding: 10px 14px;
-  border-radius: 10px;
-  font-size: 15px;
-  transition: all 0.2s ease;
-
-  width: 220px;        /* largeur identique */
-  text-align: center;  /* texte centré */
+.menu-btn{
+  background:#16a34a;
+  color:#fff;
+  padding:10px 14px;
+  border-radius:10px;
+  font-size:15px;
+  transition:all 0.2s ease;
+  width:220px;
+  text-align:center;
 }
 
-.menu-btn:hover {
-  background: #15803d;
-  transform: translateY(-1px);
+.menu-btn:hover{
+  background:#15803d;
+  transform:translateY(-1px);
 }
 
-.user-badge {
-  background: #22c55e;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 13px;
+.user-badge{
+  background:#22c55e;
+  color:#fff;
+  padding:6px 12px;
+  border-radius:8px;
+  font-size:13px;
 }
 
-.logout-btn {
-  background: #ef4444;
-  color: #fff;
-  padding: 6px 14px;
-  border-radius: 8px;
+.logout-btn{
+  background:#ef4444;
+  color:#fff;
+  padding:6px 14px;
+  border-radius:8px;
 }
 
-.logout-btn:hover {
-  background: #dc2626;
+.logout-btn:hover{
+  background:#dc2626;
+}
+
+/* Login dans la barre mobile */
+
+.mobile-login{
+  background:#16a34a;
+  padding:6px 10px;
+  border-radius:8px;
+  font-size:13px;
+  color:white;
 }
 
 </style>
