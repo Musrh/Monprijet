@@ -29,7 +29,7 @@
       <div class="max-w-7xl mx-auto flex items-center gap-2 px-4">
 
         <!-- Catégories -->
-        <select v-model="categorie" @change="rechercher" class="border rounded px-3 py-2 bg-white">
+        <select v-model="categorie" @change="filtrerCategorie" class="border rounded px-3 py-2 bg-white">
           <option value="">Toutes catégories</option>
           <option value="phones">Téléphones</option>
           <option value="pc">PC</option>
@@ -73,12 +73,22 @@ export default {
     ...mapGetters(["cartItemCount"])
   },
   methods: {
+    // Clique sur le bouton recherche
     rechercher() {
-      // Redirige vers Home avec query params
-      this.$router.push({
+      this.$router.replace({
         path: "/",
         query: {
           search: this.search,
+          categorie: this.categorie
+        }
+      });
+    },
+    // Changement de catégorie
+    filtrerCategorie() {
+      this.$router.replace({
+        path: "/",
+        query: {
+          search: "", // Réinitialise la zone texte quand on filtre par catégorie
           categorie: this.categorie
         }
       });
@@ -92,15 +102,12 @@ header {
   position: relative;
   z-index: 20;
 }
-
 header img {
   display: block;
 }
-
 select, input {
   outline: none;
 }
-
 button {
   transition: background-color 0.2s;
 }
