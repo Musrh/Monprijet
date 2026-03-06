@@ -4,10 +4,12 @@
     <!-- Slider + Pub -->
     <section class="flex flex-col md:flex-row w-full gap-0">
 
+      <!-- Slider -->
       <div class="md:w-2/3 w-full">
         <SliderProducts :produits="produitsPromos" />
       </div>
 
+      <!-- Pub -->
       <div class="md:w-1/3 w-full">
         <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
           Publicité
@@ -17,44 +19,64 @@
     </section>
 
     <!-- Résultats filtrés -->
-    <section class="mt-4 w-full">
+    <section class="mt-6 w-full">
 
       <div v-if="hasFilter">
 
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold">Résultats filtrés</h2>
+        <h2 class="text-xl font-bold mb-4">Résultats filtrés</h2>
+
+        <!-- Aucun résultat -->
+        <div v-if="filteredProducts.length === 0">
+          <p>Aucun produit ne correspond à votre recherche.</p>
 
           <button
             @click="clearFilter"
-            class="bg-gray-600 text-white px-3 py-1 rounded"
+            class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
           >
-            Retour accueil
+            Retour à l'accueil
           </button>
-
         </div>
 
-        <div v-if="filteredProducts.length === 0">
-          Aucun produit trouvé
-        </div>
-
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <!-- Résultats -->
+        <div
+          v-else
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"
+        >
 
           <div
             v-for="produit in filteredProducts"
             :key="produit.id"
-            class="border rounded p-4"
+            class="border rounded-lg p-4 bg-white shadow flex flex-col"
           >
 
+            <!-- Image -->
             <img
               :src="produit.images[0]"
-              class="h-32 w-full object-cover mb-2 rounded"
+              class="h-40 w-full object-cover rounded mb-3"
             />
 
-            <h3 class="font-bold">{{ produit.nom }}</h3>
+            <!-- Nom -->
+            <h3 class="font-bold text-lg">
+              {{ produit.nom }}
+            </h3>
 
-            <p>{{ produit.description }}</p>
+            <!-- Description -->
+            <p class="text-gray-600 text-sm mb-2">
+              {{ produit.description }}
+            </p>
 
-            <p class="font-semibold">{{ produit.prix }} $</p>
+            <!-- Prix -->
+            <p class="text-green-600 font-bold text-lg mb-3">
+              {{ produit.prix }} $
+            </p>
+
+            <!-- Bouton panier -->
+            <button
+              @click="addToCart(produit)"
+              class="mt-auto bg-green-600 text-white py-2 rounded hover:bg-green-700"
+            >
+              Ajouter au panier
+            </button>
 
           </div>
 
@@ -73,108 +95,107 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from "vue"
-import { collection, getDocs } from "firebase/firestore"
-import { db } from "../firebase"
-import { useRoute, useRouter } from "vue-router"
-
-import SliderProducts from "../components/SliderProducts.vue"
-import Vitrine from "../components/Vitrine.vue"
+import { ref, onMounted, computed, watch } from "vue";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
+import SliderProducts from "../components/SliderProducts.vue";
+import Vitrine from "../components/Vitrine.vue";
+import { useRoute, useRouter } from "vue-router";
+import { useStore } from "vuex";
 
 export default {
-
-  components: {
-    SliderProducts,
-    Vitrine
-  },
+  components: { SliderProducts, Vitrine },
 
   setup() {
 
-    const produits = ref([])
-    const produitsPromos = ref([])
-    const filteredProducts = ref([])
+    const produits = ref([]);
+    const produitsPromos = ref([]);
+    const filteredProducts = ref([]);
 
-    const route = useRoute()
-    const router = useRouter()
+    const route = useRoute();
+    const router = useRouter();
+    const store = useStore();
 
     const hasFilter = computed(() => {
-      return route.query.search || route.query.categorie
-    })
+      return route.query.search || route.query.categorie;
+    });
 
     const fetchProduits = async () => {
 
-      const snapshot = await getDocs(collection(db, "products"))
-
-      produits.value = []
-      produitsPromos.value = []
+      const snapshot = await getDocs(collection(db, "products"));
 
       snapshot.forEach((doc) => {
 
-        const produit = {
-          id: doc.id,
-          ...doc.data()
-        }
+        const produit = { id: doc.id, ...doc.data() };
 
-        produits.value.push(produit)
+        produits.value.push(produit);
 
         if (produit.promo) {
-          produitsPromos.value.push(produit)
+          produitsPromos.value.push(produit);
         }
 
-      })
+      });
 
-    }
+    };
 
     const applyFilter = () => {
 
-      const search = (route.query.search || "").toLowerCase().trim()
-      const categorie = (route.query.categorie || "").toLowerCase().trim()
+      const searchText = (route.query.search || "").toLowerCase();
+      const categorie = (route.query.categorie || "").toLowerCase();
 
       filteredProducts.value = produits.value.filter((p) => {
 
-        const nom = (p.nom || "").toLowerCase()
-        const description = (p.description || "").toLowerCase()
-        const cat = (p.categorie || "").toLowerCase().trim()
+        const nom = (p.nom || "").toLowerCase();
+        const description = (p.description || "").toLowerCase();
+        const cat = (p.categorie || "").toLowerCase();
 
         const matchText =
-          search === "" ||
-          nom.includes(search) ||
-          description.includes(search)
+          searchText === "" ||
+          nom.includes(searchText) ||
+          description.includes(searchText) ||
+          cat.includes(searchText);
 
         const matchCategorie =
-          categorie === "" ||
-          cat === categorie
+          categorie === "" || cat === categorie;
 
-        return matchText && matchCategorie
+        return matchText && matchCategorie;
 
-      })
+      });
 
-    }
+    };
 
     const clearFilter = () => {
-      router.push("/")
-    }
+      router.push({ path: "/" });
+    };
+
+    const addToCart = (produit) => {
+      store.dispatch("addToCart", produit);
+    };
 
     onMounted(async () => {
+      await fetchProduits();
+      applyFilter();
+    });
 
-      await fetchProduits()
-
-      applyFilter()
-
-    })
-
-    watch(() => route.query, () => {
-      applyFilter()
-    })
+    watch(() => route.query, applyFilter);
 
     return {
       produitsPromos,
       filteredProducts,
       hasFilter,
-      clearFilter
-    }
+      clearFilter,
+      addToCart
+    };
 
   }
-
-}
+};
 </script>
+
+<style scoped>
+
+/* espace vertical léger */
+section + section {
+  margin-top: 1rem;
+}
+
+</style>
