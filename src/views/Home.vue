@@ -50,13 +50,17 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
+import { useRoute, useRouter } from "vue-router";
 
 export default {
   components: { SliderProducts, Vitrine },
 
-  setup(_, { root }) {
+  setup() {
     const produits = ref([]);
     const produitsPromos = ref([]);
+
+    const route = useRoute();
+    const router = useRouter();
 
     // Charger tous les produits
     const fetchProduits = async () => {
@@ -70,15 +74,13 @@ export default {
 
     onMounted(fetchProduits);
 
-    // Détecter s'il y a un filtre actif dans l'URL
-    const hasFilter = computed(() => {
-      return !!root.$route.query.search || !!root.$route.query.categorie;
-    });
+    // Détecter si un filtre est actif
+    const hasFilter = computed(() => !!route.query.search || !!route.query.categorie);
 
     // Produits filtrés selon search et categorie
     const filteredProduits = computed(() => {
-      const searchText = (root.$route.query.search || "").toLowerCase();
-      const categorie = root.$route.query.categorie || "";
+      const searchText = (route.query.search || "").toLowerCase();
+      const categorie = route.query.categorie || "";
 
       return produits.value.filter((p) => {
         const matchesText = searchText ? p.nom.toLowerCase().includes(searchText) : true;
@@ -87,9 +89,9 @@ export default {
       });
     });
 
-    // Réinitialiser filtre et revenir à la Vitrine
+    // Réinitialiser filtre
     const resetFilter = () => {
-      root.$router.push("/");
+      router.push("/");
     };
 
     return {
