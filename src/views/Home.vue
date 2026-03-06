@@ -6,7 +6,7 @@
 
       <!-- Slider -->
       <div class="md:w-2/3 w-full">
-        <SliderProducts :produits="produitsPromos" />
+        <SliderProducts :produits="produitsFiltres.length ? produitsFiltres : produitsPromos" />
       </div>
 
       <!-- Pub -->
@@ -18,37 +18,20 @@
 
     </section>
 
-    <!-- Résultats filtrés ou Vitrine -->
-    <section class="mt-6 w-full">
-      <div v-if="hasFilter">
-        <h2 class="text-xl font-bold mb-4">Résultats filtrés</h2>
-
-        <div v-if="filteredProducts.length === 0">
-          <p>Aucun produit ne correspond à votre recherche.</p>
-          <button
-            @click="clearFilter"
-            class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          >
-            Retour à l'accueil
-          </button>
-        </div>
-
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          <div
-            v-for="produit in filteredProducts"
-            :key="produit.id"
-            class="border rounded p-4"
-          >
-            <img :src="produit.images[0]" alt="" class="h-32 w-full object-cover mb-2 rounded"/>
-            <h3 class="font-bold">{{ produit.nom }}</h3>
-            <p>{{ produit.description }}</p>
-            <p class="font-semibold">{{ produit.prix }} $</p>
+    <!-- Résultats filtrés ou vitrine -->
+    <section class="my-6">
+      <div v-if="produitsFiltres.length && (routeQuery.search || routeQuery.categorie)">
+        <h2 class="font-bold text-xl mb-3">Résultats filtrés</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div v-for="p in produitsFiltres" :key="p.id" class="border p-3 rounded shadow">
+            <img :src="p.images[0]" class="h-40 w-full object-cover rounded mb-2" />
+            <div class="font-semibold">{{ p.nom }}</div>
+            <div>{{ p.prix }} €</div>
           </div>
         </div>
+        <router-link to="/" class="text-purple-600 underline mt-4 inline-block">Revenir à l'accueil</router-link>
       </div>
-
       <div v-else>
-        <!-- Vitrine normale si aucun filtre -->
         <Vitrine />
       </div>
     </section>
@@ -57,78 +40,60 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 
 export default {
   components: { SliderProducts, Vitrine },
-
   setup() {
     const produits = ref([]);
     const produitsPromos = ref([]);
-    const filteredProducts = ref([]);
-
     const route = useRoute();
-    const router = useRouter();
 
-    const hasFilter = computed(() => {
-      return route.query.search || route.query.categorie;
-    });
+    const routeQuery = computed(() => ({
+      search: route.query.search || "",
+      categorie: route.query.categorie || ""
+    }));
 
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
-
-      snapshot.forEach((doc) => {
+      snapshot.forEach(doc => {
         const produit = { id: doc.id, ...doc.data() };
         produits.value.push(produit);
         if (produit.promo) produitsPromos.value.push(produit);
       });
     };
 
-    const applyFilter = () => {
-      const searchText = (route.query.search || "").toLowerCase();
-      const categorie = route.query.categorie || "";
+    onMounted(fetchProduits);
 
-      filteredProducts.value = produits.value.filter((p) => {
-        const matchesText = searchText
-          ? p.nom.toLowerCase().includes(searchText)
-          : true;
-        const matchesCategorie = categorie
-          ? p.categorie === categorie
-          : true;
-        return matchesText && matchesCategorie;
-      });
-    };
+    // Produits filtrés selon recherche ou catégorie
+    const produitsFiltres = computed(() => {
+      let result = produits.value;
 
-    const clearFilter = () => {
-      router.push({ path: "/" });
-    };
+      if (routeQuery.value.categorie) {
+        result = result.filter(p => p.categorie === routeQuery.value.categorie);
+      }
+      if (routeQuery.value.search) {
+        const s = routeQuery.value.search.toLowerCase();
+        result = result.filter(p => p.nom.toLowerCase().includes(s));
+      }
 
-    onMounted(async () => {
-      await fetchProduits();
-      applyFilter();
+      return result;
     });
 
-    // Re-appliquer le filtre si query change
-    watch(() => route.query, applyFilter);
-
-    return {
-      produitsPromos,
-      filteredProducts,
-      hasFilter,
-      clearFilter
-    };
+    return { produitsPromos, produitsFiltres, routeQuery };
   }
 };
 </script>
 
 <style scoped>
-/* Optionnel : un petit espace vertical réduit entre slider et vitrine */
-section + section {
-  margin-top: 1rem;
+/* Supprime l'espace vertical entre slider et vitrine */
+section {
+  margin: 0;
+  padding: 0;
 }
 </style>
