@@ -3,7 +3,7 @@
 
     <!-- Slider + Pub -->
     <section class="flex flex-col md:flex-row w-full my-6">
-      <!-- Slider des produits en promo -->
+      <!-- Slider des produits promos -->
       <div class="md:w-2/3 w-full">
         <SliderProducts :produits="produitsPromos" />
       </div>
@@ -18,9 +18,9 @@
 
     <!-- Résultats filtrés ou Vitrine -->
     <section class="my-6">
-      <div v-if="filteredProduits.length > 0">
+      <div v-if="searchActive">
         <h2 class="text-xl font-bold mb-4">Résultats filtrés</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div v-if="filteredProduits.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div
             v-for="produit in filteredProduits"
             :key="produit.id"
@@ -32,6 +32,9 @@
             <p class="font-bold mt-1">{{ produit.prix }} €</p>
           </div>
         </div>
+        <div v-else>
+          <p>Aucun produit ne correspond à votre recherche.</p>
+        </div>
         <button
           @click="clearFilter"
           class="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
@@ -39,16 +42,7 @@
           Revenir à la page d'accueil
         </button>
       </div>
-      <div v-else-if="searchActive">
-        <h2 class="text-xl font-bold mb-4">Résultats filtrés</h2>
-        <p>Aucun produit ne correspond à votre recherche.</p>
-        <button
-          @click="clearFilter"
-          class="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
-        >
-          Revenir à la page d'accueil
-        </button>
-      </div>
+
       <div v-else>
         <Vitrine />
       </div>
@@ -58,7 +52,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
@@ -66,13 +60,13 @@ import Vitrine from "../components/Vitrine.vue";
 
 export default {
   components: { SliderProducts, Vitrine },
-
   setup(_, { root }) {
     const produits = ref([]);
     const produitsPromos = ref([]);
     const filteredProduits = ref([]);
     const searchActive = ref(false);
 
+    // Charger tous les produits
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach((doc) => {
@@ -80,21 +74,23 @@ export default {
         produits.value.push(produit);
         if (produit.promo) produitsPromos.value.push(produit);
       });
+
+      // Après avoir chargé, lancer le filtre si on vient avec query
+      applyFilter();
     };
 
     onMounted(fetchProduits);
 
-    // Récupérer les paramètres de recherche depuis l'URL
-    const searchParams = root.$route.query;
-    const searchText = searchParams.search || "";
-    const categorie = searchParams.categorie || "";
+    // Fonction pour filtrer selon search et categorie
+    const applyFilter = () => {
+      const searchText = (root.$route.query.search || "").toLowerCase();
+      const categorie = root.$route.query.categorie || "";
 
-    const filterProduits = () => {
       if (searchText || categorie) {
         searchActive.value = true;
         filteredProduits.value = produits.value.filter((p) => {
           const matchesText = searchText
-            ? p.nom.toLowerCase().includes(searchText.toLowerCase())
+            ? p.nom.toLowerCase().includes(searchText)
             : true;
           const matchesCat = categorie ? p.categorie === categorie : true;
           return matchesText && matchesCat;
@@ -102,9 +98,11 @@ export default {
       }
     };
 
-    onMounted(() => {
-      // Laisser le temps à produits.value d'être rempli avant filtrage
-      setTimeout(filterProduits, 500);
+    // Re-filtrer si l'URL change (ex: clic sur une catégorie depuis HeaderSearch)
+    watch(() => root.$route.query, () => {
+      filteredProduits.value = [];
+      searchActive.value = false;
+      applyFilter();
     });
 
     const clearFilter = () => {
@@ -118,14 +116,13 @@ export default {
       produitsPromos,
       filteredProduits,
       searchActive,
-      clearFilter,
+      clearFilter
     };
-  },
+  }
 };
 </script>
 
 <style scoped>
-/* Ajustement du grid et images */
 img {
   object-fit: cover;
 }
