@@ -37,16 +37,21 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
+import { useRoute, useRouter } from "vue-router";
 
 export default {
   components: { SliderProducts, Vitrine },
 
-  setup(_, { route, router }) {
+  setup() {
+    const route = useRoute();
+    const router = useRouter();
+
     const produits = ref([]);
     const produitsPromos = ref([]);
     const produitsFiltres = ref([]);
     const filtreActif = ref(false);
 
+    // Récupération des produits depuis Firestore
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       const loaded = [];
@@ -59,14 +64,15 @@ export default {
       appliquerFiltre();
     };
 
+    // Appliquer le filtre selon query params
     const appliquerFiltre = () => {
       const { search, categorie } = route.query;
 
-      if (search || categorie) {
+      if ((search && search !== "") || (categorie && categorie !== "")) {
         produitsFiltres.value = produitsPromos.value.filter((p) => {
           let ok = true;
-          if (categorie) ok = ok && p.categorie === categorie;
-          if (search) ok = ok && p.nom.toLowerCase().includes(search.toLowerCase());
+          if (categorie && categorie !== "") ok = ok && p.categorie === categorie;
+          if (search && search !== "") ok = ok && p.nom.toLowerCase().includes(search.toLowerCase());
           return ok;
         });
         filtreActif.value = true;
@@ -91,6 +97,6 @@ export default {
     );
 
     return { produitsFiltres, filtreActif, resetFiltre };
-  }
+  },
 };
 </script>
