@@ -3,18 +3,25 @@
 
     <!-- Logo + Panier -->
     <div class="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
+
+      <!-- Logo -->
       <div class="flex items-center gap-3">
         <img src="../assets/hero.png" alt="logo" class="h-10" />
         <span class="font-bold text-lg">Mon Site</span>
       </div>
 
+      <!-- Panier -->
       <router-link to="/panier" class="flex items-center gap-2 text-purple-700 font-semibold">
         🛒
         <span>Mon Panier</span>
-        <span v-if="cartItemCount > 0" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+        <span
+          v-if="cartItemCount > 0"
+          class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"
+        >
           {{ cartItemCount }}
         </span>
       </router-link>
+
     </div>
 
     <!-- Barre de recherche -->
@@ -22,7 +29,7 @@
       <div class="max-w-7xl mx-auto flex items-center gap-2 px-4">
 
         <!-- Catégories -->
-        <select v-model="categorie" @change="filterCategorie" class="border rounded px-3 py-2 bg-white">
+        <select v-model="categorie" @change="rechercher" class="border rounded px-3 py-2 bg-white">
           <option value="">Toutes catégories</option>
           <option value="phones">Téléphones</option>
           <option value="pc">PC</option>
@@ -38,17 +45,21 @@
         />
 
         <!-- Bouton recherche -->
-        <button @click="rechercher" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+        <button
+          @click="rechercher"
+          class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+        >
           🔍
         </button>
+
       </div>
     </div>
+
   </header>
 </template>
 
 <script>
 import { mapGetters } from "vuex";
-import { useRouter, useRoute } from "vue-router";
 
 export default {
   name: "HeaderSearch",
@@ -61,27 +72,14 @@ export default {
   computed: {
     ...mapGetters(["cartItemCount"])
   },
-  setup() {
-    const router = useRouter();
-    const route = useRoute();
-    return { router, route };
-  },
   methods: {
-    // Bouton Recherche → texte seulement
     rechercher() {
-      this.router.push({
-        path: "/",
-        query: { search: this.search }
-      });
-    },
-
-    // Changement de catégorie → filtre automatiquement
-    filterCategorie() {
-      this.router.push({
+      // Redirige vers Home avec query params
+      this.$router.push({
         path: "/",
         query: {
-          categorie: this.categorie,
-          search: this.search // garder texte si présent
+          search: this.search,
+          categorie: this.categorie
         }
       });
     }
@@ -90,8 +88,20 @@ export default {
 </script>
 
 <style scoped>
-header { position: relative; z-index: 20; }
-header img { display: block; }
-select, input { outline: none; }
-button { transition: background-color 0.2s; }
+header {
+  position: relative;
+  z-index: 20;
+}
+
+header img {
+  display: block;
+}
+
+select, input {
+  outline: none;
+}
+
+button {
+  transition: background-color 0.2s;
+}
 </style>
