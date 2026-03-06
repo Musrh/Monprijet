@@ -43,16 +43,12 @@
 
       <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
 
-      <router-link @click="closeMenu" to="/contact" class="menu-btn">
-        Contact
-      </router-link>
-
-      <router-link @click="closeMenu" to="/produits" class="menu-btn">
-        Produits
-      </router-link>
-
       <router-link @click="closeMenu" to="/minishop" class="menu-btn">
         Minishop
+      </router-link>   
+
+      <router-link @click="closeMenu" to="/contact" class="menu-btn">
+        Contact 
       </router-link>
 
       <!-- Admin dropdown -->
