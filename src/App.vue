@@ -160,10 +160,13 @@ export default {
 .menu-btn {
   background: #16a34a;
   color: #fff;
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 15px;
   transition: all 0.2s ease;
+
+  width: 220px;        /* largeur identique */
+  text-align: center;  /* texte centré */
 }
 
 .menu-btn:hover {
