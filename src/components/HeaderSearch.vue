@@ -12,8 +12,7 @@
 
       <!-- Panier -->
       <router-link to="/panier" class="flex items-center gap-2 text-purple-700 font-semibold">
-        🛒
-        <span>Mon Panier</span>
+        🛒 Mon Panier
         <span
           v-if="cartItemCount > 0"
           class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"
@@ -26,10 +25,10 @@
 
     <!-- Barre de recherche -->
     <div class="bg-gray-100 py-3">
-      <div class="max-w-7xl mx-auto flex items-center gap-2 px-4">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center gap-2 px-4">
 
         <!-- Catégories -->
-        <select v-model="categorie" class="border rounded px-3 py-2 bg-white">
+        <select v-model="categorie" class="border rounded px-3 py-2 bg-white w-full sm:w-auto">
           <option value="">Toutes catégories</option>
           <option value="phones">Téléphones</option>
           <option value="pc">PC</option>
@@ -41,15 +40,15 @@
           v-model="search"
           type="text"
           placeholder="Vous cherchez quoi ?..."
-          class="flex-1 border rounded px-3 py-2"
+          class="flex-1 border rounded px-3 py-2 w-full sm:w-auto"
         />
 
         <!-- Bouton recherche -->
         <button
           @click="rechercher"
-          class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+          class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 w-full sm:w-auto"
         >
-          🔍
+          🔍 Rechercher
         </button>
 
       </div>
@@ -60,6 +59,7 @@
 
 <script>
 import { mapGetters } from "vuex";
+import { useRouter } from "vue-router";
 
 export default {
   name: "HeaderSearch",
@@ -72,10 +72,15 @@ export default {
   computed: {
     ...mapGetters(["cartItemCount"])
   },
+  setup() {
+    const router = useRouter();
+    return { router };
+  },
   methods: {
     rechercher() {
+      // Redirige vers Home.vue avec query params
       this.$router.push({
-        path: "/produits",
+        path: "/",
         query: {
           search: this.search,
           categorie: this.categorie
