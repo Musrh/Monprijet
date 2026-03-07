@@ -60,6 +60,9 @@
           🔍
         </button>
 
+        <!-- ThemeSwitcher ajouté -->
+    <ThemeSwitcher />
+
       </div>
     </div>
 
