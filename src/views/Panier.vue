@@ -41,30 +41,29 @@
         </button>
       </div>
 
-      <!-- Total -->
+      <!-- TOTAL -->
       <h3 class="text-lg font-bold mt-4">Total : {{ total.toFixed(2) }} €</h3>
 
       <!-- Choix paiement -->
       <div class="mt-4">
         <label class="font-semibold block mb-2">Mode de paiement</label>
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
-          <option disabled value="">Choisir paiement</option>
           <option value="stripe">💳 Carte bancaire</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
       </div>
 
-      <!-- Stripe -->
+      <!-- Bouton Payer Stripe -->
       <button
-        v-if="paymentMethod==='stripe'"
+        v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
         class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
       >
         💳 Payer avec Stripe
       </button>
 
-      <!-- PayPal -->
-      <div id="paypal-button-container" class="mt-4"></div>
+      <!-- Container PayPal -->
+      <div v-if="paymentMethod === 'paypal'" id="paypal-button-container" class="mt-4"></div>
 
     </div>
   </div>
@@ -75,17 +74,19 @@ import { mapState } from "vuex";
 
 export default {
   data() {
-    return { paymentMethod: "" };
+    return {
+      paymentMethod: "stripe",
+    };
   },
 
   computed: {
     ...mapState(["cart", "user"]),
+
     total() {
-      return this.cart.reduce(
-        (sum, item) => sum + (Number(item.prix) || 0) * (Number(item.quantity) || 1),
-        0
-      );
-    }
+      return this.cart.reduce((sum, item) => {
+        return sum + Number(item.prix) * Number(item.quantity);
+      }, 0);
+    },
   },
 
   watch: {
@@ -93,62 +94,99 @@ export default {
       if (newVal === "paypal") {
         this.$nextTick(() => this.renderPaypal());
       }
-    }
+    },
   },
 
   methods: {
-    remove(id) { this.$store.dispatch("removeItem", id); },
-    updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
-
-    async payerStripe() {
-      if (!this.user) { alert("Connectez-vous"); this.$router.push("/login"); return; }
-      if (!this.cart.length) { alert("Panier vide"); return; }
-
-      const items = this.cart.map(p => ({ id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity }));
-      try {
-        const res = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items, email: this.user.email })
-        });
-        const data = await res.json();
-        if (data.url) window.location.href = data.url;
-      } catch (err) { console.error(err); alert("Erreur Stripe"); }
+    remove(id) {
+      this.$store.dispatch("removeItem", id);
     },
 
-    renderPaypal() {
-      if (!window.paypal) { console.error("SDK PayPal non chargé"); return; }
+    updateQuantity(item) {
+      this.$store.dispatch("updateQuantity", {
+        id: item.id,
+        quantity: item.quantity,
+      });
+    },
 
-      const items = this.cart.map(p => ({ id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity }));
+    // Paiement Stripe
+    async payerStripe() {
+      if (!this.user) {
+        alert("Veuillez vous connecter avant de payer");
+        this.$router.push("/login");
+        return;
+      }
+
+      if (!this.cart.length) {
+        alert("Panier vide");
+        return;
+      }
+
+      try {
+        const itemsPourCommande = this.cart.map((p) => ({
+          id: p.id,
+          nom: p.nom,
+          prix: p.prix,
+          quantity: p.quantity,
+          image: p.images?.[0] || p.image || "/placeholder.png",
+        }));
+
+        const response = await fetch(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (data.url) window.location.href = data.url;
+        else alert("Erreur Stripe : " + JSON.stringify(data));
+      } catch (err) {
+        console.error(err);
+        alert("Erreur Stripe : " + err.message);
+      }
+    },
+
+    // Render PayPal Buttons
+    renderPaypal() {
+      if (!window.paypal) return console.error("SDK PayPal non chargé");
 
       const container = document.getElementById("paypal-button-container");
-      container.innerHTML = ""; // Supprime anciens boutons si existants
+      container.innerHTML = ""; // vider ancien bouton
 
       window.paypal.Buttons({
         createOrder: (data, actions) => {
           return actions.order.create({
-            purchase_units: [{ amount: { value: this.total.toFixed(2) } }]
+            purchase_units: [
+              { amount: { value: this.total.toFixed(2) } },
+            ],
           });
         },
+
         onApprove: async (data, actions) => {
           const details = await actions.order.capture();
+
           alert(`Paiement PayPal réussi : ${details.payer.name.given_name}`);
 
-          // Enregistrer commande dans Firestore
-          await fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: data.orderID, user: this.user, items })
-          });
+          // Ici tu peux envoyer au backend pour sauvegarder la commande
+          // await fetch('/capture-paypal-order', {...})
+        },
 
-          this.$store.dispatch("clearCart");
-        }
+        onError: (err) => {
+          console.error("Erreur PayPal:", err);
+          alert("Erreur PayPal : " + err.message);
+        },
       }).render("#paypal-button-container");
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-img { object-fit: cover; }
+img {
+  object-fit: cover;
+}
 </style>
