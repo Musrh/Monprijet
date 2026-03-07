@@ -3,28 +3,45 @@
 
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
+    <!-- Panier vide -->
     <div v-if="cart.length === 0">
       <p class="text-gray-500">Votre panier est vide.</p>
     </div>
 
+    <!-- Panier rempli -->
     <div v-else>
       <div
         v-for="item in cart"
         :key="item.id"
         class="flex items-center mb-4 border-b pb-2"
       >
-        <img :src="item.images?.[0] || item.image || '/placeholder.png'" :alt="item.nom"
-             class="w-20 h-20 object-cover rounded mr-4"/>
+        <img
+          :src="item.images?.[0] || item.image || '/placeholder.png'"
+          :alt="item.nom"
+          class="w-20 h-20 object-cover rounded mr-4"
+        />
+
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
-          <input type="number" min="1" v-model.number="item.quantity"
-                 @change="updateQuantity(item)" class="border w-20 p-1 mt-1"/>
+          <input
+            type="number"
+            min="1"
+            v-model.number="item.quantity"
+            @change="updateQuantity(item)"
+            class="border w-20 p-1 mt-1"
+          />
         </div>
-        <button @click="remove(item.id)"
-                class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">❌</button>
+
+        <button
+          @click="remove(item.id)"
+          class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+        >
+          ❌
+        </button>
       </div>
 
+      <!-- Total -->
       <h3 class="text-lg font-bold mt-4">Total : {{ total.toFixed(2) }} €</h3>
 
       <!-- Choix paiement -->
@@ -38,8 +55,11 @@
       </div>
 
       <!-- Stripe -->
-      <button v-if="paymentMethod==='stripe'" @click="payerStripe"
-              class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full">
+      <button
+        v-if="paymentMethod==='stripe'"
+        @click="payerStripe"
+        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
+      >
         💳 Payer avec Stripe
       </button>
 
@@ -57,6 +77,7 @@ export default {
   data() {
     return { paymentMethod: "" };
   },
+
   computed: {
     ...mapState(["cart", "user"]),
     total() {
@@ -66,6 +87,7 @@ export default {
       );
     }
   },
+
   watch: {
     paymentMethod(newVal) {
       if (newVal === "paypal") {
@@ -73,6 +95,7 @@ export default {
       }
     }
   },
+
   methods: {
     remove(id) { this.$store.dispatch("removeItem", id); },
     updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
@@ -98,9 +121,8 @@ export default {
 
       const items = this.cart.map(p => ({ id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity }));
 
-      // Supprime anciens boutons si existants
       const container = document.getElementById("paypal-button-container");
-      container.innerHTML = "";
+      container.innerHTML = ""; // Supprime anciens boutons si existants
 
       window.paypal.Buttons({
         createOrder: (data, actions) => {
@@ -112,6 +134,7 @@ export default {
           const details = await actions.order.capture();
           alert(`Paiement PayPal réussi : ${details.payer.name.given_name}`);
 
+          // Enregistrer commande dans Firestore
           await fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
