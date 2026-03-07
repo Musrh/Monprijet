@@ -60,9 +60,11 @@
           🔍
         </button>
 
-        <!-- ThemeSwitcher ajouté -->
-    <ThemeSwitcher />
-
+ <!-- ThemeSwitcher à droite -->
+    <div class="ml-2">
+      <ThemeSwitcher />
+    </div>
+        
       </div>
     </div>
 
