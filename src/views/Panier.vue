@@ -20,11 +20,9 @@
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
-
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
-
           <input
             type="number"
             min="1"
@@ -33,7 +31,6 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
-
         <button
           @click="remove(item.id)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
@@ -42,8 +39,8 @@
         </button>
       </div>
 
-      <!-- Total -->
-      <h3 class="text-lg font-bold mt-4">Total : {{ total.toFixed(2) }} €</h3>
+      <!-- TOTAL -->
+      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
 
       <!-- Choix paiement -->
       <div class="mt-4">
@@ -51,16 +48,13 @@
           Mode de paiement
         </label>
 
-        <select
-          v-model="paymentMethod"
-          class="border p-2 rounded w-full"
-        >
-          <option value="stripe">💳 Carte bancaire</option>
+        <select v-model="paymentMethod" class="border p-2 rounded w-full">
+          <option value="stripe">💳 Carte bancaire (Stripe)</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
       </div>
 
-      <!-- Bouton payer Stripe -->
+      <!-- Bouton Payer Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -70,7 +64,9 @@
       </button>
 
       <!-- Conteneur bouton PayPal -->
-      <div v-if="paymentMethod === 'paypal'" id="paypal-button-container" class="mt-4"></div>
+      <div v-if="paymentMethod === 'paypal'" class="mt-4">
+        <div id="paypal-button-container"></div>
+      </div>
 
     </div>
   </div>
@@ -85,14 +81,15 @@ export default {
       paymentMethod: "stripe"
     };
   },
-
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
+      return this.cart.reduce(
+        (sum, item) => sum + item.prix * item.quantity,
+        0
+      );
     }
   },
-
   watch: {
     paymentMethod(newMethod) {
       if (newMethod === "paypal") {
@@ -102,24 +99,15 @@ export default {
       }
     }
   },
-
-  mounted() {
-    if (this.paymentMethod === "paypal") {
-      this.renderPaypalButton();
-    }
-  },
-
   methods: {
-
     remove(id) {
       this.$store.dispatch("removeItem", id);
     },
-
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
     },
 
-    // Stripe
+    // ---------------- STRIPE ----------------
     async payerStripe() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
@@ -136,7 +124,7 @@ export default {
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
-        image: p.images?.[0] || p.image || '/placeholder.png'
+        image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
       try {
@@ -151,16 +139,27 @@ export default {
         const data = await response.json();
         if (data.url) window.location.href = data.url;
       } catch (err) {
-        console.error("Erreur Stripe:", err);
-        alert("Erreur Stripe : " + err.message);
+        console.error("Stripe error:", err);
+        alert("Erreur lors du paiement Stripe : " + err.message);
       }
     },
 
-    // PayPal
-    renderPaypalButton() {
-      const container = document.getElementById("paypal-button-container");
-      if (!container) return;
-      container.innerHTML = ""; // reset
+    // ---------------- PAYPAL ----------------
+    async loadPaypalScript() {
+      return new Promise((resolve, reject) => {
+        if (window.paypal) return resolve(window.paypal);
+        const script = document.createElement("script");
+        script.src = "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
+        script.onload = () => resolve(window.paypal);
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    },
+
+    async renderPaypalButton() {
+      if (!this.cart.length || !this.user) return;
+
+      const paypalSdk = await this.loadPaypalScript();
 
       const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
@@ -169,29 +168,22 @@ export default {
         quantity: p.quantity
       }));
 
-      // eslint-disable-next-line no-undef
-      paypal.Buttons({
+      paypalSdk.Buttons({
         createOrder: (data, actions) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-            }
-          )
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+          })
           .then(res => res.json())
           .then(order => order.id);
         },
-        onApprove: (data, actions) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email } })
-            }
-          )
+        onApprove: (data) => {
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email } })
+          })
           .then(res => res.json())
           .then(() => {
             alert("Paiement PayPal réussi !");
@@ -209,7 +201,5 @@ export default {
 </script>
 
 <style scoped>
-img {
-  object-fit: cover;
-}
+img { object-fit: cover; }
 </style>
