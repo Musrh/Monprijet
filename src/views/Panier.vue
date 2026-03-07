@@ -3,26 +3,50 @@
 
 <h1 class="text-2xl font-bold mb-6">🛒 Mon Panier</h1>
 
+<!-- PANIER VIDE -->
+
 <div v-if="cart.length === 0">
 Panier vide
 </div>
 
-<div v-for="item in cart" :key="item.id" class="flex items-center mb-4 border-b pb-3">
+<!-- LISTE PRODUITS -->
 
-  <img :src="item.image" class="w-16 h-16 mr-4">
+<div
+v-for="item in cart"
+:key="item.id"
+class="flex items-center mb-4 border-b pb-3"
+>
 
-  <div class="flex-1">
-    <h3 class="font-bold">{{ item.nom }}</h3>
-    <p>{{ item.prix }} €</p>
-  </div>
+<img :src="item.image" class="w-16 h-16 object-cover mr-4"/>
 
-  <p>x {{ item.qty }}</p>
+<div class="flex-1">
+<h3 class="font-bold">{{ item.nom }}</h3>
+<p>{{ item.prix }} €</p>
+</div>
+
+<input
+type="number"
+min="1"
+v-model.number="item.qty"
+class="border w-16 text-center mr-4"
+/>
+
+<button
+@click="removeItem(item.id)"
+class="bg-red-500 text-white px-3 py-1 rounded"
+>
+X
+</button>
 
 </div>
+
+<!-- TOTAL -->
 
 <h2 class="text-xl font-bold mt-6">
 Total : {{ total }} €
 </h2>
+
+<!-- CHOIX PAIEMENT -->
 
 <select v-model="paymentMethod" class="border p-2 mt-4">
 <option disabled value="">Choisir paiement</option>
@@ -30,8 +54,12 @@ Total : {{ total }} €
 <option value="paypal">PayPal</option>
 </select>
 
-<div v-if="paymentMethod === 'paypal'" class="mt-6">
+<!-- PAYPAL BUTTON -->
+
+<div v-if="paymentMethod === 'paypal' && total > 0" class="mt-6">
+
 <div id="paypal-button-container"></div>
+
 </div>
 
 </div>
@@ -50,13 +78,20 @@ paymentMethod:""
 computed:{
 
 cart(){
-return this.$store.state.cart
+return this.$store.state.cart || []
 },
 
 total(){
+
 return this.cart.reduce((sum,item)=>{
-return sum + item.prix * item.qty
+
+const prix = Number(item.prix) || 0
+const qty = Number(item.qty) || 1
+
+return sum + prix * qty
+
 },0)
+
 }
 
 },
@@ -65,7 +100,7 @@ watch:{
 
 paymentMethod(value){
 
-if(value==="paypal"){
+if(value==="paypal" && this.total>0){
 
 this.$nextTick(()=>{
 this.renderPaypal()
@@ -78,6 +113,12 @@ this.renderPaypal()
 },
 
 methods:{
+
+removeItem(id){
+
+this.$store.commit("removeFromCart",id)
+
+},
 
 renderPaypal(){
 
@@ -124,3 +165,12 @@ this.$store.commit("clearCart")
 }
 
 </script>
+
+<style scoped>
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+</style>
