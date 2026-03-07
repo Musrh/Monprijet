@@ -20,11 +20,9 @@
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
-
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
-
           <input
             type="number"
             min="1"
@@ -33,7 +31,6 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
-
         <button
           @click="remove(item.id)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
@@ -42,7 +39,6 @@
         </button>
       </div>
 
-      <!-- TOTAL -->
       <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
 
       <!-- Choix paiement -->
@@ -50,7 +46,6 @@
         <label class="font-semibold block mb-2">
           Mode de paiement
         </label>
-
         <select
           v-model="paymentMethod"
           class="border p-2 rounded w-full"
@@ -60,17 +55,17 @@
         </select>
       </div>
 
-      <!-- Bouton payer Stripe -->
+      <!-- Stripe -->
       <button
-        v-if="paymentMethod === 'stripe'"
+        v-if="paymentMethod==='stripe'"
         @click="payerStripe"
         class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
       >
         💳 Payer avec Stripe
       </button>
 
-      <!-- Boutons PayPal -->
-      <div v-if="paymentMethod === 'paypal'" class="mt-4">
+      <!-- PayPal -->
+      <div v-if="paymentMethod==='paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
 
@@ -80,21 +75,29 @@
 
 <script>
 import { mapState } from "vuex";
-import { nextTick, watch } from "vue";
 
 export default {
   data() {
     return {
-      paymentMethod: "stripe"
+      paymentMethod: "stripe",
     };
   },
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart.reduce(
-        (sum, item) => sum + item.prix * item.quantity,
-        0
-      );
+      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
+    }
+  },
+  watch: {
+    paymentMethod(newVal) {
+      if (newVal === "paypal") {
+        this.$nextTick(() => this.renderPayPalButtons());
+      }
+    }
+  },
+  mounted() {
+    if (this.paymentMethod === "paypal") {
+      this.renderPayPalButtons();
     }
   },
   methods: {
@@ -102,31 +105,23 @@ export default {
       this.$store.dispatch("removeItem", id);
     },
     updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", {
-        id: item.id,
-        quantity: item.quantity
-      });
+      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
     },
 
-    // Payer via Stripe
+    // ---------------- Stripe ----------------
     async payerStripe() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
         this.$router.push("/login");
         return;
       }
+      if (!this.cart.length) { alert("Panier vide"); return; }
 
-      if (!this.cart.length) {
-        alert("Panier vide");
-        return;
-      }
-
-      const itemsPourCommande = this.cart.map(p => ({
+      const items = this.cart.map(p => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
-        quantity: p.quantity,
-        image: p.images?.[0] || p.image || "/placeholder.png"
+        quantity: p.quantity
       }));
 
       try {
@@ -135,30 +130,30 @@ export default {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+            body: JSON.stringify({ items, email: this.user.email })
           }
         );
         const data = await response.json();
         if (data.url) window.location.href = data.url;
       } catch (err) {
         console.error("Erreur Stripe:", err);
-        alert("Erreur lors du paiement Stripe : " + err.message);
+        alert("Erreur Stripe: " + err.message);
       }
     },
 
-    // Rendu des boutons PayPal
+    // ---------------- PayPal ----------------
     renderPayPalButtons() {
-      if (!window.paypal || !document.getElementById("paypal-button-container")) return;
+      if (!window.paypal) return;
 
-      // nettoyer si déjà rendu
-      document.getElementById("paypal-button-container").innerHTML = "";
-
-      const itemsPourCommande = this.cart.map(p => ({
+      const items = this.cart.map(p => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity
       }));
+
+      const container = document.getElementById("paypal-button-container");
+      container.innerHTML = ""; // reset
 
       window.paypal.Buttons({
         createOrder: async (data, actions) => {
@@ -167,45 +162,30 @@ export default {
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+              body: JSON.stringify({ items, email: this.user.email })
             }
           );
-          const orderData = await response.json();
-          return orderData.id;
+          const order = await response.json();
+          return order.id;
         },
         onApprove: async (data, actions) => {
-          const captureResponse = await fetch(
+          const capture = await fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: data.orderID, user: this.user, items: itemsPourCommande })
+              body: JSON.stringify({ orderId: data.orderID, items, user: this.user })
             }
           );
-          const result = await captureResponse.json();
+          await capture.json();
           alert("Paiement PayPal effectué avec succès !");
-          // vider le panier si nécessaire
           this.$store.dispatch("clearCart");
         },
         onError: (err) => {
-          console.error("Erreur PayPal:", err);
-          alert("Erreur lors du paiement PayPal : " + err);
+          console.error("PayPal error:", err);
+          alert("Erreur PayPal: " + err);
         }
       }).render("#paypal-button-container");
-    }
-  },
-
-  mounted() {
-    if (this.paymentMethod === "paypal") this.renderPayPalButtons();
-  },
-
-  watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
-        nextTick(() => {
-          this.renderPayPalButtons();
-        });
-      }
     }
   }
 };
