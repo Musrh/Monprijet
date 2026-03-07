@@ -8,24 +8,22 @@
         <span class="font-bold text-lg">Mon Site</span>
       </div>
 
+      <!-- Panier -->
       <router-link to="/panier" class="flex items-center gap-2 text-purple-700 font-semibold">
         🛒
         <span>Mon Panier</span>
-        <span
-          v-if="cartItemCount > 0"
-          class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"
-        >
+        <span v-if="cartItemCount > 0" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
           {{ cartItemCount }}
         </span>
       </router-link>
     </div>
 
-    <!-- Barre de recherche + ThemeSwitcher -->
+    <!-- Barre de recherche -->
     <div class="bg-gray-100 py-3">
-      <div class="max-w-7xl mx-auto flex items-center gap-2 px-4">
+      <div class="max-w-7xl mx-auto flex flex-wrap md:flex-nowrap items-center gap-2 px-4">
 
         <!-- Catégories -->
-        <select v-model="categorie" @change="filterCategorie" class="border rounded px-3 py-2 bg-white">
+        <select v-model="categorie" @change="filterCategorie" class="border rounded px-3 py-2 bg-white flex-shrink-0">
           <option value="">Toutes catégories</option>
           <option value="phones">Téléphones</option>
           <option value="pc">PC</option>
@@ -37,16 +35,16 @@
           v-model="search"
           type="text"
           placeholder="Vous cherchez quoi ?..."
-          class="flex-grow border rounded px-3 py-2"
+          class="flex-1 min-w-0 border rounded px-3 py-2"
         />
 
         <!-- Bouton recherche -->
-        <button @click="rechercher" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+        <button @click="rechercher" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex-shrink-0">
           🔍
         </button>
 
         <!-- ThemeSwitcher -->
-        <div class="ml-2">
+        <div class="ml-2 flex-shrink-0">
           <ThemeSwitcher />
         </div>
 
@@ -79,13 +77,21 @@ export default {
     return { router, route };
   },
   methods: {
+    // Bouton Recherche → texte seulement
     rechercher() {
-      this.router.push({ path: "/", query: { search: this.search } });
+      this.router.push({
+        path: "/",
+        query: { search: this.search }
+      });
     },
+    // Changement de catégorie → filtre automatiquement
     filterCategorie() {
       this.router.push({
         path: "/",
-        query: { categorie: this.categorie, search: this.search }
+        query: {
+          categorie: this.categorie,
+          search: this.search
+        }
       });
     }
   }
@@ -93,7 +99,10 @@ export default {
 </script>
 
 <style scoped>
-input.flex-grow {
-  flex-grow: 1; /* permet au champ de recherche de prendre l'espace restant */
+input {
+  min-width: 0; /* important pour flex-grow en mobile */
+}
+.flex-shrink-0 {
+  flex-shrink: 0;
 }
 </style>
