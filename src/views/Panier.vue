@@ -1,26 +1,71 @@
 <template>
-  <div>
-    <h2>Mon Panier</h2>
+  <div class="p-4 max-w-3xl mx-auto">
 
-    <div v-if="cart.length === 0">Panier vide</div>
+    <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
+    <!-- Panier vide -->
+    <div v-if="cart.length === 0">
+      <p class="text-gray-500">Votre panier est vide.</p>
+    </div>
+
+    <!-- Panier rempli -->
     <div v-else>
-      <div v-for="item in cart" :key="item.id">
-        {{ item.nom }} - {{ item.prix }}€
+      <div
+        v-for="item in cart"
+        :key="item.id"
+        class="flex items-center mb-4 border-b pb-2"
+      >
+        <img
+          :src="item.images?.[0] || item.image || '/placeholder.png'"
+          :alt="item.nom"
+          class="w-20 h-20 object-cover rounded mr-4"
+        />
+
+        <div class="flex-1">
+          <h3 class="font-semibold">{{ item.nom }}</h3>
+          <p>{{ item.prix }} €</p>
+
+          <input
+            type="number"
+            min="1"
+            v-model.number="item.quantity"
+            @change="updateQuantity(item)"
+            class="border w-20 p-1 mt-1"
+          />
+        </div>
+
+        <button
+          @click="remove(item.id)"
+          class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+        >
+          ❌
+        </button>
       </div>
 
-      <p>Total : {{ total.toFixed(2) }} €</p>
+      <!-- TOTAL -->
+      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
 
-      <select v-model="paymentMethod">
-        <option value="stripe">Carte bancaire</option>
-        <option value="paypal">PayPal</option>
-      </select>
+      <!-- Choix paiement -->
+      <div class="mt-4">
+        <label class="font-semibold block mb-2">Mode de paiement</label>
+        <select v-model="paymentMethod" class="border p-2 rounded w-full">
+          <option value="stripe">💳 Carte bancaire (Stripe)</option>
+          <option value="paypal">🅿️ PayPal</option>
+        </select>
+      </div>
 
-      <!-- Stripe -->
-      <button v-if="paymentMethod === 'stripe'" @click="payerStripe">Payer Stripe</button>
+      <!-- Bouton Stripe -->
+      <button
+        v-if="paymentMethod === 'stripe'"
+        @click="payerStripe"
+        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
+      >
+        💳 Payer avec Stripe
+      </button>
 
-      <!-- PayPal -->
-      <div v-show="paymentMethod === 'paypal'" id="paypal-button-container"></div>
+      <!-- Conteneur PayPal -->
+      <div v-if="paymentMethod === 'paypal'" id="paypal-button-container" class="mt-4"></div>
+
     </div>
   </div>
 </template>
@@ -30,43 +75,113 @@ import { mapState } from "vuex";
 
 export default {
   data() {
-    return { paymentMethod: "stripe" };
+    return {
+      paymentMethod: "stripe",
+    };
   },
+
   computed: {
     ...mapState(["cart", "user"]),
-    total() { return this.cart.reduce((s,i)=>s+i.prix*i.quantity,0); }
+
+    total() {
+      // Assurez-vous que prix et quantity sont bien des nombres
+      return this.cart.reduce(
+        (sum, item) => sum + Number(item.prix) * Number(item.quantity),
+        0
+      ).toFixed(2);
+    },
   },
+
   watch: {
+    // Re-render PayPal button si sélectionné
     paymentMethod(newVal) {
       if (newVal === "paypal") this.$nextTick(this.renderPayPalButton);
     },
     cart() {
       if (this.paymentMethod === "paypal") this.$nextTick(this.renderPayPalButton);
-    }
+    },
   },
+
   methods: {
-    payerStripe() { /* ton code Stripe ici */ },
+    remove(id) {
+      this.$store.dispatch("removeItem", id);
+    },
+
+    updateQuantity(item) {
+      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
+    },
+
+    async payerStripe() {
+      if (!this.user) {
+        alert("Veuillez vous connecter avant de payer");
+        this.$router.push("/login");
+        return;
+      }
+      if (!this.cart.length) {
+        alert("Panier vide");
+        return;
+      }
+
+      const itemsPourCommande = this.cart.map(p => ({
+        id: p.id,
+        nom: p.nom,
+        prix: p.prix,
+        quantity: p.quantity,
+        image: p.images?.[0] || p.image || "/placeholder.png",
+      }));
+
+      try {
+        const response = await fetch(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email }),
+          }
+        );
+
+        const data = await response.json();
+        if (data.url) window.location.href = data.url;
+      } catch (err) {
+        console.error("Erreur paiement Stripe:", err);
+        alert("Erreur lors du paiement Stripe : " + err.message);
+      }
+    },
 
     renderPayPalButton() {
-      if (!window.paypal) return console.error("SDK PayPal non chargé");
+      if (!window.paypal || !this.cart.length) return;
 
       const container = document.getElementById("paypal-button-container");
-      container.innerHTML = ""; // vide le conteneur avant de créer un nouveau bouton
+      container.innerHTML = ""; // vide le conteneur
 
-      const total = this.cart.reduce((s,i)=>s+i.prix*i.quantity,0).toFixed(2);
+      const total = this.cart.reduce(
+        (sum, item) => sum + Number(item.prix) * Number(item.quantity),
+        0
+      ).toFixed(2);
 
       window.paypal.Buttons({
-        createOrder: (data, actions) => actions.order.create({
-          purchase_units: [{ amount: { currency_code: "EUR", value: total } }]
-        }),
+        createOrder: (data, actions) =>
+          actions.order.create({
+            purchase_units: [{ amount: { currency_code: "EUR", value: total } }],
+          }),
         onApprove: async (data, actions) => {
           const capture = await actions.order.capture();
           alert("Paiement PayPal réussi ! ID: " + capture.id);
-          console.log("Capture:", capture);
+          console.log("Capture PayPal:", capture);
+          // Ici tu peux aussi enregistrer dans Firestore via ton backend
         },
-        onError: err => { console.error(err); alert("Erreur PayPal"); }
+        onError: (err) => {
+          console.error("Erreur PayPal:", err);
+          alert("Erreur lors du paiement PayPal");
+        },
       }).render("#paypal-button-container");
-    }
-  }
+    },
+  },
 };
 </script>
+
+<style scoped>
+img {
+  object-fit: cover;
+}
+</style>
