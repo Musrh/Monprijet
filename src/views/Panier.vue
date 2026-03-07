@@ -1,6 +1,5 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
-
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
     <!-- Panier vide -->
@@ -39,22 +38,19 @@
         </button>
       </div>
 
-      <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
+      <!-- Total -->
+      <h3 class="text-lg font-bold mt-4">Total : {{ total.toFixed(2) }} €</h3>
 
       <!-- Choix paiement -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Mode de paiement
-        </label>
-
+        <label class="font-semibold block mb-2">Mode de paiement</label>
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
           <option value="stripe">💳 Carte bancaire (Stripe)</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
       </div>
 
-      <!-- Bouton Payer Stripe -->
+      <!-- Bouton Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -63,11 +59,10 @@
         💳 Payer avec Stripe
       </button>
 
-      <!-- Conteneur bouton PayPal -->
+      <!-- Bouton PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
-
     </div>
   </div>
 </template>
@@ -91,11 +86,12 @@ export default {
     }
   },
   watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
-        this.$nextTick(() => {
-          this.renderPaypalButton();
-        });
+    paymentMethod: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal === "paypal" && this.cart.length && this.user) {
+          this.renderPayPalButton();
+        }
       }
     }
   },
@@ -106,8 +102,6 @@ export default {
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
     },
-
-    // ---------------- STRIPE ----------------
     async payerStripe() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
@@ -124,7 +118,7 @@ export default {
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
-        image: p.images?.[0] || p.image || "/placeholder.png"
+        image: p.images?.[0] || p.image || '/placeholder.png'
       }));
 
       try {
@@ -139,60 +133,64 @@ export default {
         const data = await response.json();
         if (data.url) window.location.href = data.url;
       } catch (err) {
-        console.error("Stripe error:", err);
+        console.error("Erreur paiement Stripe:", err);
         alert("Erreur lors du paiement Stripe : " + err.message);
       }
     },
-
-    // ---------------- PAYPAL ----------------
-    async loadPaypalScript() {
-      return new Promise((resolve, reject) => {
-        if (window.paypal) return resolve(window.paypal);
-        const script = document.createElement("script");
-        script.src = "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
-        script.onload = () => resolve(window.paypal);
-        script.onerror = reject;
-        document.body.appendChild(script);
-      });
-    },
-
-    async renderPaypalButton() {
-      if (!this.cart.length || !this.user) return;
-
-      const paypalSdk = await this.loadPaypalScript();
+    renderPayPalButton() {
+      if (!window.paypal || !this.user) return;
 
       const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
-        quantity: p.quantity
+        quantity: p.quantity,
+        image: p.images?.[0] || p.image || '/placeholder.png'
       }));
 
-      paypalSdk.Buttons({
+      // Supprime l'ancien bouton si nécessaire
+      const container = document.getElementById("paypal-button-container");
+      container.innerHTML = "";
+
+      window.paypal.Buttons({
         createOrder: (data, actions) => {
-          return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-          })
+          return fetch(
+            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+            }
+          )
           .then(res => res.json())
-          .then(order => order.id);
+          .then(order => {
+            if (!order.id) throw new Error("Aucun order ID reçu du backend");
+            return order.id;
+          });
         },
-        onApprove: (data) => {
-          return fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email } })
-          })
+        onApprove: (data, actions) => {
+          return fetch(
+            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                orderId: data.orderID,
+                user: this.user,
+                items: itemsPourCommande
+              })
+            }
+          )
           .then(res => res.json())
-          .then(() => {
+          .then(capture => {
             alert("Paiement PayPal réussi !");
-            this.$store.dispatch("clearCart");
+            // Reset panier si nécessaire
+            this.cart.forEach(item => this.remove(item.id));
           });
         },
         onError: (err) => {
           console.error("Erreur PayPal:", err);
-          alert("Erreur PayPal : " + err.message);
+          alert("Erreur lors du paiement PayPal : " + err.message);
         }
       }).render("#paypal-button-container");
     }
@@ -201,5 +199,7 @@ export default {
 </script>
 
 <style scoped>
-img { object-fit: cover; }
+img {
+  object-fit: cover;
+}
 </style>
