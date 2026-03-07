@@ -1,18 +1,38 @@
 <template>
-
 <div class="container mx-auto p-6">
 
-<h1 class="text-2xl font-bold mb-4">Mon Panier</h1>
+<h1 class="text-2xl font-bold mb-6">🛒 Mon Panier</h1>
 
-<div v-for="item in $store.state.cart" :key="item.id" class="flex mb-4">
-  <img :src="item.image" class="w-16 mr-4">
-  <div>
-    <p>{{ item.nom }}</p>
-    <p>{{ item.prix }} €</p>
-  </div>
+<div v-if="cart.length === 0">
+  Panier vide
 </div>
 
-<h2 class="text-xl mt-4">
+<div v-for="item in cart" :key="item.id" class="flex items-center mb-4 border-b pb-3">
+
+  <img :src="item.image" class="w-16 h-16 object-cover mr-4">
+
+  <div class="flex-1">
+    <h3 class="font-bold">{{ item.nom }}</h3>
+    <p>{{ item.prix }} €</p>
+  </div>
+
+  <input
+    type="number"
+    min="1"
+    v-model.number="item.qty"
+    class="border w-16 text-center mr-4"
+  />
+
+  <button
+    @click="removeItem(item.id)"
+    class="bg-red-500 text-white px-3 py-1 rounded"
+  >
+    X
+  </button>
+
+</div>
+
+<h2 class="text-xl font-bold mt-6">
 Total : {{ total }} €
 </h2>
 
@@ -22,48 +42,152 @@ Total : {{ total }} €
   <option value="paypal">PayPal</option>
 </select>
 
+<!-- BOUTON PAYPAL -->
+
 <div v-if="paymentMethod === 'paypal'" class="mt-6">
-  <PayPalButton
-    :amount="total"
-    @success="paymentSuccess"
-  />
-</div>
+
+  <div id="paypal-button-container"></div>
 
 </div>
 
+</div>
 </template>
 
 <script>
-import PayPalButton from "../components/PayPalButton.vue";
 
 export default {
-  components: {
-    PayPalButton
-  },
 
-  data() {
-    return {
-      paymentMethod: "",
-    };
-  },
+data() {
+  return {
 
-  computed: {
-    total() {
-      return this.$store.state.cart.reduce(
-        (sum, item) => sum + item.prix * item.qty,
-        0
-      );
-    }
-  },
+    paymentMethod: "",
 
-  methods: {
-    paymentSuccess(details) {
-      console.log("Commande validée :", details);
+    cart: JSON.parse(localStorage.getItem("cart")) || []
 
-      alert("Commande enregistrée !");
-      
-      this.$store.commit("clearCart");
-    }
   }
-};
+},
+
+computed: {
+
+  total() {
+
+    return this.cart.reduce((sum, item) => {
+
+      const prix = Number(item.prix) || 0
+      const qty = Number(item.qty) || 1
+
+      return sum + prix * qty
+
+    }, 0)
+
+  }
+
+},
+
+watch: {
+
+  cart: {
+    handler(newCart) {
+
+      localStorage.setItem("cart", JSON.stringify(newCart))
+
+    },
+    deep: true
+  },
+
+  paymentMethod(value) {
+
+    if (value === "paypal") {
+
+      this.$nextTick(() => {
+
+        this.renderPaypal()
+
+      })
+
+    }
+
+  }
+
+},
+
+methods: {
+
+removeItem(id) {
+
+  this.cart = this.cart.filter(item => item.id !== id)
+
+},
+
+renderPaypal() {
+
+  if (!window.paypal) {
+
+    console.error("PayPal SDK non chargé")
+
+    return
+
+  }
+
+  document.getElementById("paypal-button-container").innerHTML = ""
+
+  window.paypal.Buttons({
+
+    createOrder: (data, actions) => {
+
+      return actions.order.create({
+
+        purchase_units: [{
+
+          amount: {
+
+            value: this.total.toFixed(2)
+
+          }
+
+        }]
+
+      })
+
+    },
+
+    onApprove: (data, actions) => {
+
+      return actions.order.capture().then(details => {
+
+        alert("Paiement réussi par " + details.payer.name.given_name)
+
+        this.cart = []
+
+        localStorage.removeItem("cart")
+
+      })
+
+    },
+
+    onError: (err) => {
+
+      console.error(err)
+
+      alert("Erreur paiement")
+
+    }
+
+  }).render("#paypal-button-container")
+
+}
+
+}
+
+}
+
 </script>
+
+<style>
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+</style>
