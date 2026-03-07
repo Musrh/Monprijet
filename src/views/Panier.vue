@@ -14,19 +14,20 @@
         class="flex items-center mb-4 border-b pb-2"
       >
         <img :src="item.images?.[0] || item.image || '/placeholder.png'" :alt="item.nom"
-          class="w-20 h-20 object-cover rounded mr-4"/>
+             class="w-20 h-20 object-cover rounded mr-4"/>
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
-          <input type="number" min="1" v-model.number="item.quantity" @change="updateQuantity(item)"
-            class="border w-20 p-1 mt-1"/>
+          <input type="number" min="1" v-model.number="item.quantity"
+                 @change="updateQuantity(item)" class="border w-20 p-1 mt-1"/>
         </div>
-        <button @click="remove(item.id)" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">❌</button>
+        <button @click="remove(item.id)"
+                class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">❌</button>
       </div>
 
       <h3 class="text-lg font-bold mt-4">Total : {{ total.toFixed(2) }} €</h3>
 
-      <!-- Choix du paiement -->
+      <!-- Choix paiement -->
       <div class="mt-4">
         <label class="font-semibold block mb-2">Mode de paiement</label>
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
@@ -36,16 +37,14 @@
         </select>
       </div>
 
-      <!-- Bouton Stripe -->
+      <!-- Stripe -->
       <button v-if="paymentMethod==='stripe'" @click="payerStripe"
-        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full">
+              class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full">
         💳 Payer avec Stripe
       </button>
 
-      <!-- Conteneur PayPal -->
-      <div v-if="paymentMethod==='paypal'" class="mt-4">
-        <div id="paypal-button-container"></div>
-      </div>
+      <!-- PayPal -->
+      <div id="paypal-button-container" class="mt-4"></div>
 
     </div>
   </div>
@@ -56,12 +55,8 @@ import { mapState } from "vuex";
 
 export default {
   data() {
-    return {
-      paymentMethod: "",
-      paypalLoaded: false
-    };
+    return { paymentMethod: "" };
   },
-
   computed: {
     ...mapState(["cart", "user"]),
     total() {
@@ -71,89 +66,56 @@ export default {
       );
     }
   },
-
   watch: {
-    paymentMethod(value) {
-      if (value === "paypal") {
-        this.loadPaypalButton();
+    paymentMethod(newVal) {
+      if (newVal === "paypal") {
+        this.$nextTick(() => this.renderPaypal());
       }
     }
   },
-
   methods: {
-    remove(id) {
-      this.$store.dispatch("removeItem", id);
-    },
-
-    updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
-    },
+    remove(id) { this.$store.dispatch("removeItem", id); },
+    updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
 
     async payerStripe() {
-      if (!this.user) { alert("Veuillez vous connecter"); this.$router.push("/login"); return; }
+      if (!this.user) { alert("Connectez-vous"); this.$router.push("/login"); return; }
       if (!this.cart.length) { alert("Panier vide"); return; }
 
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity,
-        image: p.images?.[0] || p.image || "/placeholder.png"
-      }));
-
+      const items = this.cart.map(p => ({ id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity }));
       try {
-        const response = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session", {
+        const res = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+          body: JSON.stringify({ items, email: this.user.email })
         });
-
-        const data = await response.json();
+        const data = await res.json();
         if (data.url) window.location.href = data.url;
-      } catch (err) {
-        console.error("Erreur Stripe:", err);
-        alert("Erreur lors du paiement Stripe : " + err.message);
-      }
+      } catch (err) { console.error(err); alert("Erreur Stripe"); }
     },
 
-    loadPaypalButton() {
-      if (!window.paypal) {
-        console.error("Le SDK PayPal n'est pas chargé !");
-        return;
-      }
+    renderPaypal() {
+      if (!window.paypal) { console.error("SDK PayPal non chargé"); return; }
 
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity
-      }));
+      const items = this.cart.map(p => ({ id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity }));
 
-      // Nettoyer le container avant de rendre le bouton
+      // Supprime anciens boutons si existants
       const container = document.getElementById("paypal-button-container");
       container.innerHTML = "";
 
       window.paypal.Buttons({
         createOrder: (data, actions) => {
           return actions.order.create({
-            purchase_units: [{
-              amount: { value: this.total.toFixed(2) }
-            }]
+            purchase_units: [{ amount: { value: this.total.toFixed(2) } }]
           });
         },
         onApprove: async (data, actions) => {
           const details = await actions.order.capture();
-          alert("Paiement PayPal réussi : " + details.payer.name.given_name);
+          alert(`Paiement PayPal réussi : ${details.payer.name.given_name}`);
 
-          // Enregistre la commande dans Firestore via ton backend PayPal
           await fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: data.orderID,
-              user: this.user,
-              items: itemsPourCommande
-            })
+            body: JSON.stringify({ orderId: data.orderID, user: this.user, items })
           });
 
           this.$store.dispatch("clearCart");
