@@ -1,9 +1,9 @@
 /* 🌙 Thème Dark Moderne */
 [data-theme="dark"] {
   --bg-color: #FD6C9E;
-  --card-bg: #1e1e1e;
+  --card-bg: #FD6C9E;
   --nav-bg: #FD6C9E;
-  --text-color: #f1f1f1;
+  --text-color: #ffff00;
   --muted-text: #b0b0b0;
   --primary-color: #FD6C9E;
   --primary-hover: #22c55e;
