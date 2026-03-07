@@ -5,8 +5,8 @@
     <HeaderSearch />
 
     <!-- Barre mobile : Menu + Login/Logout + Email -->
-    <div class="md:hidden bg-gray-800 p-3 flex justify-between items-center text-white">
-      <div class="flex items-center gap-2">
+    <div class="md:hidden bg-gray-800 p-4 flex justify-between items-center text-white">
+      <div class="flex items-center gap-3">
 
         <span class="font-bold text-lg">Menu</span>
 
@@ -20,7 +20,7 @@
         <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
       </div>
 
-      <button @click="toggleMenu" class="text-2xl">☰</button>
+      <button @click="toggleMenu" class="text-3xl">☰</button>
     </div>
 
     <!-- Menu principal -->
@@ -33,7 +33,7 @@
       <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
       <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
 
-      <!-- Admin Dropdown -->
+      <!-- Admin dropdown -->
       <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
         <button class="menu-btn flex items-center justify-center gap-1">
           Admin
@@ -95,14 +95,14 @@ export default {
 .menu-btn{
   background:#16a34a;
   color:#fff;
-  padding:6px 10px;
-  border-radius:8px;
-  font-size:14px;
+  padding:12px 18px;
+  border-radius:10px;
+  font-size:16px;
   transition:all 0.2s;
   display:inline-flex;
   justify-content:center;
-  min-width:80px;
-  max-width:120px;
+  min-width:100px;
+  max-width:140px;
   text-align:center;
 }
 .menu-btn:hover{ background:#15803d; transform:translateY(-1px); }
@@ -111,13 +111,18 @@ export default {
 .logout-btn{ background:#ef4444; color:#fff; padding:4px 8px; border-radius:6px; font-size:13px; }
 .logout-btn:hover{ background:#dc2626; }
 
-.mobile-auth{ background:#16a34a; padding:2px 6px; border-radius:6px; font-size:12px; }
+.mobile-auth{ background:#16a34a; padding:4px 8px; border-radius:6px; font-size:13px; }
 .mobile-auth.logout{ background:#ef4444; }
-.mobile-email{ background:#22c55e; padding:2px 6px; border-radius:6px; font-size:12px; color:#fff; }
+.mobile-email{ background:#22c55e; padding:3px 6px; border-radius:6px; font-size:13px; color:#fff; }
 
 @media (max-width: 768px){
-  .menu-btn{ width:auto; min-width:unset; max-width:unset; padding:3px 6px; font-size:12px; text-align:left; }
-  .user-badge{ padding:2px 4px; font-size:11px; }
-  .logout-btn{ padding:2px 4px; font-size:12px; }
+  .menu-btn{
+    width:100%;
+    padding:10px 12px;
+    font-size:15px;
+    text-align:center;
+  }
+  .user-badge{ padding:3px 6px; font-size:12px; }
+  .logout-btn{ padding:3px 6px; font-size:13px; }
 }
 </style>
