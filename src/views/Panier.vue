@@ -20,9 +20,11 @@
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
+
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
+
           <input
             type="number"
             min="1"
@@ -31,6 +33,7 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
+
         <button
           @click="remove(item.id)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
@@ -39,13 +42,32 @@
         </button>
       </div>
 
+      <!-- TOTAL -->
       <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
+
+      <!-- Choix paiement -->
+      <div class="mt-4">
+        <label class="font-semibold block mb-2">
+          Mode de paiement
+        </label>
+
+        <select
+          v-model="paymentMethod"
+          class="border p-2 rounded w-full"
+        >
+          <option value="stripe">💳 Carte bancaire</option>
+          <option value="paypal">🅿️ PayPal</option>
+        </select>
+      </div>
+
+      <!-- Bouton payer -->
       <button
         @click="payer"
-        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-2"
+        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
       >
         💳 Payer
       </button>
+
     </div>
   </div>
 </template>
@@ -54,25 +76,41 @@
 import { mapState } from "vuex";
 
 export default {
+
+  data() {
+    return {
+      paymentMethod: "stripe"
+    };
+  },
+
   computed: {
     ...mapState(["cart", "user"]),
+
     total() {
-      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
+      return this.cart.reduce(
+        (sum, item) => sum + item.prix * item.quantity,
+        0
+      );
     }
   },
+
   methods: {
-    // Supprimer un produit du panier
+
+    // Supprimer un produit
     remove(id) {
       this.$store.dispatch("removeItem", id);
     },
 
-    // Mettre à jour la quantité dans le panier
+    // Modifier quantité
     updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
+      this.$store.dispatch("updateQuantity", {
+        id: item.id,
+        quantity: item.quantity
+      });
     },
 
-    // Payer le panier
     async payer() {
+
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
         this.$router.push("/login");
@@ -84,37 +122,73 @@ export default {
         return;
       }
 
+      const itemsPourCommande = this.cart.map(p => ({
+        id: p.id,
+        nom: p.nom,
+        prix: p.prix,
+        quantity: p.quantity,
+        image: p.images?.[0] || p.image || "/placeholder.png"
+      }));
+
+
       try {
-        // On prépare les items pour la commande avec le Document ID
-        const itemsPourCommande = this.cart.map(p => ({
-          id: p.id, // ← Document ID Firestore de la collection products
-          nom: p.nom,
-          prix: p.prix,
-          quantity: p.quantity,
-          image: p.images?.[0] || p.image || '/placeholder.png'
-        }));
 
-        const response = await fetch(
-          "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+        // Paiement STRIPE
+        if (this.paymentMethod === "stripe") {
+
+          const response = await fetch(
+            "https://stripe-backend-production-2ac4.up.railway.app/create-checkout-session",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+
+              body: JSON.stringify({
+                items: itemsPourCommande,
+                email: this.user.email
+              })
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.url) {
+            window.location.href = data.url;
           }
-        );
 
-        const data = await response.json();
-
-        if (data.url) {
-          window.location.href = data.url; // redirection vers Stripe
-        } else {
-          console.error("Erreur paiement:", data);
-          alert("Erreur lors du paiement");
         }
+
+
+        // Paiement PAYPAL
+        if (this.paymentMethod === "paypal") {
+
+          const response = await fetch(
+            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+
+              body: JSON.stringify({
+                items: itemsPourCommande,
+                email: this.user.email
+              })
+            }
+          );
+
+          const data = await response.json();
+
+          if (data.url) {
+            window.location.href = data.url;
+          }
+
+        }
+
       } catch (err) {
+
         console.error("Erreur paiement:", err);
         alert("Erreur lors du paiement : " + err.message);
+
       }
+
     }
   }
 };
