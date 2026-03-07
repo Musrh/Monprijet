@@ -50,7 +50,7 @@
         </select>
       </div>
 
-      <!-- Bouton Payer Stripe -->
+      <!-- Bouton Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -59,7 +59,7 @@
         💳 Payer avec Stripe
       </button>
 
-      <!-- Conteneur bouton PayPal -->
+      <!-- Bouton PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
@@ -73,17 +73,14 @@ import { mapState } from "vuex";
 export default {
   data() {
     return {
-      paymentMethod: "stripe"
+      paymentMethod: "stripe",
     };
   },
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart.reduce(
-        (sum, item) => sum + (item.prix || 0) * (item.quantity || 0),
-        0
-      );
-    }
+      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
+    },
   },
   watch: {
     paymentMethod(newMethod) {
@@ -92,7 +89,7 @@ export default {
           this.renderPaypalButton();
         });
       }
-    }
+    },
   },
   methods: {
     remove(id) {
@@ -114,12 +111,12 @@ export default {
         return;
       }
 
-      const itemsPourCommande = this.cart.map(p => ({
+      const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
-        image: p.images?.[0] || p.image || "/placeholder.png"
+        image: p.images?.[0] || p.image || "/placeholder.png",
       }));
 
       try {
@@ -128,7 +125,7 @@ export default {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email }),
           }
         );
         const data = await response.json();
@@ -144,7 +141,8 @@ export default {
       return new Promise((resolve, reject) => {
         if (window.paypal) return resolve(window.paypal);
         const script = document.createElement("script");
-        script.src = "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
+        script.src =
+          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
         script.onload = () => resolve(window.paypal);
         script.onerror = reject;
         document.body.appendChild(script);
@@ -155,43 +153,38 @@ export default {
       if (!this.cart.length || !this.user) return;
 
       const paypalSdk = await this.loadPaypalScript();
-      const itemsPourCommande = this.cart.map(p => ({
+      const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
-        quantity: p.quantity
+        quantity: p.quantity,
       }));
 
       paypalSdk.Buttons({
         createOrder: (data, actions) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-            }
-          )
-            .then(res => res.json())
-            .then(order => {
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email }),
+          })
+            .then((res) => res.json())
+            .then((order) => {
+              console.log("Order reçu:", order); // Vérifie que order.id existe
               if (!order.id) throw new Error("Aucun order id reçu du Backend");
               return order.id;
             });
         },
-        onApprove: (data) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: data.orderID,
-                items: itemsPourCommande,
-                user: { email: this.user.email }
-              })
-            }
-          )
-            .then(res => res.json())
+        onApprove: (data, actions) => {
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: data.orderID,
+              items: itemsPourCommande,
+              user: { email: this.user.email },
+            }),
+          })
+            .then((res) => res.json())
             .then(() => {
               alert("Paiement PayPal réussi !");
               this.$store.dispatch("clearCart");
@@ -200,13 +193,15 @@ export default {
         onError: (err) => {
           console.error("Erreur PayPal:", err);
           alert("Erreur PayPal : " + err.message);
-        }
+        },
       }).render("#paypal-button-container");
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-img { object-fit: cover; }
+img {
+  object-fit: cover;
+}
 </style>
