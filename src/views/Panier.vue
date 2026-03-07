@@ -20,9 +20,11 @@
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
+
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
+
           <input
             type="number"
             min="1"
@@ -31,6 +33,7 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
+
         <button
           @click="remove(item.id)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
@@ -40,12 +43,18 @@
       </div>
 
       <!-- Total -->
-      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
+      <h3 class="text-lg font-bold mt-4">Total : {{ total.toFixed(2) }} €</h3>
 
       <!-- Choix paiement -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">Mode de paiement</label>
-        <select v-model="paymentMethod" class="border p-2 rounded w-full">
+        <label class="font-semibold block mb-2">
+          Mode de paiement
+        </label>
+
+        <select
+          v-model="paymentMethod"
+          class="border p-2 rounded w-full"
+        >
           <option value="stripe">💳 Carte bancaire</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
@@ -60,8 +69,9 @@
         💳 Payer avec Stripe
       </button>
 
-      <!-- Container PayPal -->
-      <div v-if="paymentMethod === 'paypal'" class="mt-4" id="paypal-button-container"></div>
+      <!-- Conteneur bouton PayPal -->
+      <div v-if="paymentMethod === 'paypal'" id="paypal-button-container" class="mt-4"></div>
+
     </div>
   </div>
 </template>
@@ -75,26 +85,40 @@ export default {
       paymentMethod: "stripe"
     };
   },
+
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0).toFixed(2);
+      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
     }
   },
+
   watch: {
     paymentMethod(newMethod) {
       if (newMethod === "paypal") {
-        this.renderPaypalButton();
+        this.$nextTick(() => {
+          this.renderPaypalButton();
+        });
       }
     }
   },
+
+  mounted() {
+    if (this.paymentMethod === "paypal") {
+      this.renderPaypalButton();
+    }
+  },
+
   methods: {
+
     remove(id) {
       this.$store.dispatch("removeItem", id);
     },
+
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
     },
+
     // Stripe
     async payerStripe() {
       if (!this.user) {
@@ -102,7 +126,10 @@ export default {
         this.$router.push("/login");
         return;
       }
-      if (!this.cart.length) return alert("Panier vide");
+      if (!this.cart.length) {
+        alert("Panier vide");
+        return;
+      }
 
       const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
@@ -128,13 +155,12 @@ export default {
         alert("Erreur Stripe : " + err.message);
       }
     },
+
     // PayPal
     renderPaypalButton() {
-      if (!this.user || !this.cart.length) return;
-
-      // Supprime bouton précédent si existe
       const container = document.getElementById("paypal-button-container");
-      container.innerHTML = "";
+      if (!container) return;
+      container.innerHTML = ""; // reset
 
       const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
@@ -142,44 +168,42 @@ export default {
         prix: p.prix,
         quantity: p.quantity
       }));
-      const total = this.total;
 
       // eslint-disable-next-line no-undef
       paypal.Buttons({
         createOrder: (data, actions) => {
-          return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-          })
+          return fetch(
+            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+            }
+          )
           .then(res => res.json())
           .then(order => order.id);
         },
         onApprove: (data, actions) => {
-          return fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              orderId: data.orderID,
-              items: itemsPourCommande,
-              user: { email: this.user.email }
-            })
-          })
+          return fetch(
+            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email } })
+            }
+          )
           .then(res => res.json())
-          .then(result => {
+          .then(() => {
             alert("Paiement PayPal réussi !");
             this.$store.dispatch("clearCart");
           });
         },
-        onError: err => {
+        onError: (err) => {
           console.error("Erreur PayPal:", err);
           alert("Erreur PayPal : " + err.message);
         }
       }).render("#paypal-button-container");
     }
-  },
-  mounted() {
-    if (this.paymentMethod === "paypal") this.renderPaypalButton();
   }
 };
 </script>
