@@ -47,18 +47,20 @@
 
       <!-- Choix paiement -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">Mode de paiement</label>
+        <label class="font-semibold block mb-2">
+          Mode de paiement
+        </label>
 
         <select
           v-model="paymentMethod"
           class="border p-2 rounded w-full"
         >
-          <option value="stripe">💳 Carte bancaire (Stripe)</option>
+          <option value="stripe">💳 Carte bancaire</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
       </div>
 
-      <!-- Bouton payer pour Stripe -->
+      <!-- Bouton payer Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -67,18 +69,18 @@
         💳 Payer avec Stripe
       </button>
 
-      <!-- Container pour PayPal Buttons -->
-      <div
-        v-if="paymentMethod === 'paypal'"
-        id="paypal-button-container"
-        class="mt-4"
-      ></div>
+      <!-- Boutons PayPal -->
+      <div v-if="paymentMethod === 'paypal'" class="mt-4">
+        <div id="paypal-button-container"></div>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script>
 import { mapState } from "vuex";
+import { nextTick, watch } from "vue";
 
 export default {
   data() {
@@ -86,7 +88,6 @@ export default {
       paymentMethod: "stripe"
     };
   },
-
   computed: {
     ...mapState(["cart", "user"]),
     total() {
@@ -96,24 +97,10 @@ export default {
       );
     }
   },
-
-  watch: {
-    // Quand l'utilisateur choisit PayPal, on rend les boutons
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
-        this.renderPayPalButtons();
-      }
-    }
-  },
-
   methods: {
-
-    // Supprimer un produit
     remove(id) {
       this.$store.dispatch("removeItem", id);
     },
-
-    // Modifier quantité
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", {
         id: item.id,
@@ -121,7 +108,7 @@ export default {
       });
     },
 
-    // Payer avec Stripe
+    // Payer via Stripe
     async payerStripe() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
@@ -148,90 +135,82 @@ export default {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              items: itemsPourCommande,
-              email: this.user.email
-            })
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
           }
         );
         const data = await response.json();
-        if (data.url) {
-          window.location.href = data.url;
-        }
+        if (data.url) window.location.href = data.url;
       } catch (err) {
         console.error("Erreur Stripe:", err);
         alert("Erreur lors du paiement Stripe : " + err.message);
       }
     },
 
-    // Rendre PayPal Buttons
+    // Rendu des boutons PayPal
     renderPayPalButtons() {
-      if (!this.user) {
-        alert("Veuillez vous connecter avant de payer");
-        this.$router.push("/login");
-        return;
-      }
+      if (!window.paypal || !document.getElementById("paypal-button-container")) return;
+
+      // nettoyer si déjà rendu
+      document.getElementById("paypal-button-container").innerHTML = "";
 
       const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
-        quantity: p.quantity,
-        image: p.images?.[0] || p.image || "/placeholder.png"
+        quantity: p.quantity
       }));
 
-      // Supprimer les anciens boutons
-      const container = document.getElementById("paypal-button-container");
-      container.innerHTML = "";
-
-      if (typeof paypal === "undefined") {
-        console.error("PayPal SDK non chargé !");
-        return;
-      }
-
-      paypal.Buttons({
+      window.paypal.Buttons({
         createOrder: async (data, actions) => {
           const response = await fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: itemsPourCommande, user: this.user })
+              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
             }
           );
-          const order = await response.json();
-          return order.id;
+          const orderData = await response.json();
+          return orderData.id;
         },
-
         onApprove: async (data, actions) => {
-          const response = await fetch(
+          const captureResponse = await fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: this.user })
+              body: JSON.stringify({ orderId: data.orderID, user: this.user, items: itemsPourCommande })
             }
           );
-          const capture = await response.json();
-          alert("Paiement PayPal réussi !");
-          // vider le panier après paiement
+          const result = await captureResponse.json();
+          alert("Paiement PayPal effectué avec succès !");
+          // vider le panier si nécessaire
           this.$store.dispatch("clearCart");
-          this.$router.push("/success");
         },
-
         onError: (err) => {
           console.error("Erreur PayPal:", err);
-          alert("Erreur lors du paiement PayPal");
+          alert("Erreur lors du paiement PayPal : " + err);
         }
       }).render("#paypal-button-container");
     }
+  },
 
+  mounted() {
+    if (this.paymentMethod === "paypal") this.renderPayPalButtons();
+  },
+
+  watch: {
+    paymentMethod(newMethod) {
+      if (newMethod === "paypal") {
+        nextTick(() => {
+          this.renderPayPalButtons();
+        });
+      }
+    }
   }
 };
 </script>
 
 <style scoped>
-img {
-  object-fit: cover;
-}
+img { object-fit: cover; }
 </style>
