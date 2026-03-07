@@ -1,5 +1,6 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
+
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
     <!-- Panier vide -->
@@ -41,7 +42,7 @@
       <!-- Total -->
       <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
 
-      <!-- Choix du paiement -->
+      <!-- Choix paiement -->
       <div class="mt-4">
         <label class="font-semibold block mb-2">Mode de paiement</label>
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
@@ -50,7 +51,7 @@
         </select>
       </div>
 
-      <!-- Bouton Stripe -->
+      <!-- Bouton payer Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -59,30 +60,28 @@
         💳 Payer avec Stripe
       </button>
 
-      <!-- Conteneur PayPal -->
-      <div v-if="paymentMethod === 'paypal'" id="paypal-button-container" class="mt-4"></div>
+      <!-- Container PayPal -->
+      <div v-if="paymentMethod === 'paypal'" class="mt-4" id="paypal-button-container"></div>
     </div>
   </div>
 </template>
 
 <script>
+import { mapState } from "vuex";
+
 export default {
-  props: {
-    cart: { type: Array, required: true },
-    userEmail: { type: String, required: true }
-  },
   data() {
     return {
       paymentMethod: "stripe"
     };
   },
   computed: {
+    ...mapState(["cart", "user"]),
     total() {
       return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0).toFixed(2);
     }
   },
   watch: {
-    // Lorsque l'utilisateur choisit PayPal, on affiche les boutons
     paymentMethod(newMethod) {
       if (newMethod === "paypal") {
         this.renderPaypalButton();
@@ -91,21 +90,35 @@ export default {
   },
   methods: {
     remove(id) {
-      this.$emit("remove-item", id);
+      this.$store.dispatch("removeItem", id);
     },
     updateQuantity(item) {
-      this.$emit("update-quantity", item);
+      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
     },
-
     // Stripe
     async payerStripe() {
+      if (!this.user) {
+        alert("Veuillez vous connecter avant de payer");
+        this.$router.push("/login");
+        return;
+      }
+      if (!this.cart.length) return alert("Panier vide");
+
+      const itemsPourCommande = this.cart.map(p => ({
+        id: p.id,
+        nom: p.nom,
+        prix: p.prix,
+        quantity: p.quantity,
+        image: p.images?.[0] || p.image || '/placeholder.png'
+      }));
+
       try {
         const response = await fetch(
           "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: this.cart, email: this.userEmail })
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
           }
         );
         const data = await response.json();
@@ -115,42 +128,64 @@ export default {
         alert("Erreur Stripe : " + err.message);
       }
     },
-
     // PayPal
     renderPaypalButton() {
-      if (!window.paypal) {
-        console.error("Le SDK PayPal n'est pas chargé !");
-        return;
-      }
+      if (!this.user || !this.cart.length) return;
 
-      // Supprime les boutons précédents si présents
+      // Supprime bouton précédent si existe
       const container = document.getElementById("paypal-button-container");
       container.innerHTML = "";
 
-      window.paypal.Buttons({
+      const itemsPourCommande = this.cart.map(p => ({
+        id: p.id,
+        nom: p.nom,
+        prix: p.prix,
+        quantity: p.quantity
+      }));
+      const total = this.total;
+
+      // eslint-disable-next-line no-undef
+      paypal.Buttons({
         createOrder: (data, actions) => {
-          return actions.order.create({
-            purchase_units: [{
-              amount: { value: this.total },
-              description: "Panier Mon Projet"
-            }]
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
+          })
+          .then(res => res.json())
+          .then(order => order.id);
+        },
+        onApprove: (data, actions) => {
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: data.orderID,
+              items: itemsPourCommande,
+              user: { email: this.user.email }
+            })
+          })
+          .then(res => res.json())
+          .then(result => {
+            alert("Paiement PayPal réussi !");
+            this.$store.dispatch("clearCart");
           });
         },
-        onApprove: async (data, actions) => {
-          const capture = await actions.order.capture();
-          alert("Paiement PayPal réussi ! Montant : " + capture.purchase_units[0].payments.captures[0].amount.value + " €");
-          // Ici tu peux appeler ton backend pour enregistrer la commande dans Firestore
-        },
-        onError: (err) => {
-          console.error("Erreur PayPal :", err);
-          alert("Erreur PayPal : " + err);
+        onError: err => {
+          console.error("Erreur PayPal:", err);
+          alert("Erreur PayPal : " + err.message);
         }
       }).render("#paypal-button-container");
     }
+  },
+  mounted() {
+    if (this.paymentMethod === "paypal") this.renderPaypalButton();
   }
 };
 </script>
 
 <style scoped>
-img { object-fit: cover; }
+img {
+  object-fit: cover;
+}
 </style>
