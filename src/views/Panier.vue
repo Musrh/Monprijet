@@ -1,13 +1,12 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
+
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
-    <!-- Panier vide -->
     <div v-if="cart.length === 0">
       <p class="text-gray-500">Votre panier est vide.</p>
     </div>
 
-    <!-- Panier rempli -->
     <div v-else>
       <div
         v-for="item in cart"
@@ -38,7 +37,6 @@
         </button>
       </div>
 
-      <!-- Total -->
       <h3 class="text-lg font-bold mt-4">Total : {{ total.toFixed(2) }} €</h3>
 
       <!-- Choix paiement -->
@@ -50,7 +48,7 @@
         </select>
       </div>
 
-      <!-- Bouton Stripe -->
+      <!-- Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -59,10 +57,11 @@
         💳 Payer avec Stripe
       </button>
 
-      <!-- Bouton PayPal -->
+      <!-- PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
+
     </div>
   </div>
 </template>
@@ -72,134 +71,102 @@ import { mapState } from "vuex";
 
 export default {
   data() {
-    return {
-      paymentMethod: "stripe"
-    };
+    return { paymentMethod: "stripe" };
   },
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart.reduce(
-        (sum, item) => sum + item.prix * item.quantity,
-        0
-      );
+      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
     }
   },
   watch: {
-    paymentMethod: {
-      immediate: true,
-      handler(newVal) {
-        if (newVal === "paypal" && this.cart.length && this.user) {
-          this.renderPayPalButton();
-        }
-      }
+    paymentMethod(newMethod) {
+      if (newMethod === "paypal") this.$nextTick(() => this.renderPaypalButton());
+    },
+    cart() {
+      if (this.paymentMethod === "paypal") this.$nextTick(() => this.renderPaypalButton());
     }
   },
   methods: {
-    remove(id) {
-      this.$store.dispatch("removeItem", id);
-    },
-    updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
-    },
-    async payerStripe() {
-      if (!this.user) {
-        alert("Veuillez vous connecter avant de payer");
-        this.$router.push("/login");
-        return;
-      }
-      if (!this.cart.length) {
-        alert("Panier vide");
-        return;
-      }
+    remove(id) { this.$store.dispatch("removeItem", id); },
+    updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
 
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity,
-        image: p.images?.[0] || p.image || '/placeholder.png'
+    // ---------------- STRIPE ----------------
+    async payerStripe() {
+      if (!this.user) { alert("Veuillez vous connecter"); return; }
+      if (!this.cart.length) { alert("Panier vide"); return; }
+
+      const items = this.cart.map(p => ({
+        id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity,
+        image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
       try {
-        const response = await fetch(
-          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-          }
-        );
-        const data = await response.json();
+        const res = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items, email: this.user.email })
+        });
+        const data = await res.json();
         if (data.url) window.location.href = data.url;
       } catch (err) {
-        console.error("Erreur paiement Stripe:", err);
-        alert("Erreur lors du paiement Stripe : " + err.message);
+        console.error("Stripe error:", err);
+        alert("Erreur Stripe : " + err.message);
       }
     },
-    renderPayPalButton() {
-      if (!window.paypal || !this.user) return;
 
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity,
-        image: p.images?.[0] || p.image || '/placeholder.png'
-      }));
+    // ---------------- PAYPAL ----------------
+    async loadPaypalScript() {
+      return new Promise((resolve, reject) => {
+        if (window.paypal) return resolve(window.paypal);
+        const script = document.createElement("script");
+        script.src = "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
+        script.onload = () => resolve(window.paypal);
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    },
 
-      // Supprime l'ancien bouton si nécessaire
+    async renderPaypalButton() {
+      if (!this.cart.length || !this.user) return;
+      const paypalSdk = await this.loadPaypalScript();
+      const items = this.cart.map(p => ({ id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity }));
+
       const container = document.getElementById("paypal-button-container");
-      container.innerHTML = "";
+      container.innerHTML = ""; // vider le conteneur avant de rendre le bouton
 
-      window.paypal.Buttons({
-        createOrder: (data, actions) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-            }
-          )
+      paypalSdk.Buttons({
+        createOrder: () => {
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items, email: this.user.email })
+          })
           .then(res => res.json())
           .then(order => {
             if (!order.id) throw new Error("Aucun order ID reçu du backend");
             return order.id;
           });
         },
-        onApprove: (data, actions) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: data.orderID,
-                user: this.user,
-                items: itemsPourCommande
-              })
-            }
-          )
+        onApprove: (data) => {
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: data.orderID, items, user: { email: this.user.email } })
+          })
           .then(res => res.json())
-          .then(capture => {
+          .then(() => {
             alert("Paiement PayPal réussi !");
-            // Reset panier si nécessaire
-            this.cart.forEach(item => this.remove(item.id));
+            this.$store.dispatch("clearCart");
           });
         },
-        onError: (err) => {
-          console.error("Erreur PayPal:", err);
-          alert("Erreur lors du paiement PayPal : " + err.message);
-        }
-      }).render("#paypal-button-container");
+        onError: (err) => { console.error("PayPal error:", err); alert("Erreur PayPal : " + err.message); }
+      }).render(container);
     }
   }
 };
 </script>
 
 <style scoped>
-img {
-  object-fit: cover;
-}
+img { object-fit: cover; }
 </style>
