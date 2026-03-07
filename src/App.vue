@@ -6,7 +6,8 @@
 
     <!-- Barre mobile : Menu + Login/Logout -->
     <div class="md:hidden bg-gray-800 p-3 flex justify-between items-center text-white">
-      <div class="flex items-center gap-4">
+
+      <div class="flex items-center gap-3">
         <span class="font-bold text-lg">Menu</span>
 
         <!-- Login -->
@@ -31,6 +32,7 @@
       <button @click="toggleMenu" class="text-2xl">
         ☰
       </button>
+
     </div>
 
     <!-- Menu principal -->
@@ -40,7 +42,7 @@
     >
 
       <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
-      <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
+      <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>   
       <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
 
       <!-- Admin dropdown -->
@@ -72,46 +74,23 @@
           v-if="adminDropdown"
           class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border py-2 z-50"
         >
-          <router-link
-            @click="adminDropdown=false"
-            to="/admin"
-            class="block px-4 py-2 hover:bg-gray-100"
-          >
+          <router-link @click="adminDropdown=false" to="/admin" class="block px-4 py-2 hover:bg-gray-100">
             Admin (Utilisateurs)
           </router-link>
-
-          <router-link
-            @click="adminDropdown=false"
-            to="/adminproduits"
-            class="block px-4 py-2 hover:bg-gray-100"
-          >
+          <router-link @click="adminDropdown=false" to="/adminproduits" class="block px-4 py-2 hover:bg-gray-100">
             Admin-Produits
           </router-link>
-
-          <router-link
-            @click="adminDropdown=false"
-            to="/admin-commandes"
-            class="block px-4 py-2 hover:bg-gray-100"
-          >
+          <router-link @click="adminDropdown=false" to="/admin-commandes" class="block px-4 py-2 hover:bg-gray-100">
             Admin-Commandes
           </router-link>
-
-          <router-link
-            @click="adminDropdown=false"
-            to="/upload"
-            class="block px-4 py-2 hover:bg-gray-100"
-          >
+          <router-link @click="adminDropdown=false" to="/upload" class="block px-4 py-2 hover:bg-gray-100">
             UploadProduit
           </router-link>
         </div>
       </div>
 
       <!-- Panier -->
-      <router-link
-        @click="closeMenu"
-        to="/panier"
-        class="menu-btn relative"
-      >
+      <router-link @click="closeMenu" to="/panier" class="menu-btn relative">
         🛒
         <span
           v-if="cartItemCount > 0"
@@ -164,18 +143,17 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"])
+    ...mapGetters([
+      "isAuthenticated",
+      "userEmail",
+      "isAdmin",
+      "cartItemCount"
+    ])
   },
 
   methods: {
-    toggleMenu() {
-      this.menuOpen = !this.menuOpen;
-    },
-
-    closeMenu() {
-      this.menuOpen = false;
-    },
-
+    toggleMenu() { this.menuOpen = !this.menuOpen; },
+    closeMenu() { this.menuOpen = false; },
     logout() {
       this.adminDropdown = false;
       this.$store.dispatch("logout");
@@ -189,14 +167,14 @@ export default {
 .menu-btn {
   background: #16a34a;
   color: #fff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 14px;
+  padding: 4px 8px;       /* plus compact */
+  border-radius: 6px;
+  font-size: 13px;
   transition: all 0.2s;
   display: inline-flex;
   justify-content: center;
-  min-width: 100px;
-  max-width: 140px;
+  min-width: 70px;
+  max-width: 110px;
   text-align: center;
 }
 
@@ -208,42 +186,38 @@ export default {
 .user-badge {
   background: #22c55e;
   color: #fff;
-  padding: 6px 10px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
 }
 
 .logout-btn {
   background: #ef4444;
   color: #fff;
-  padding: 6px 10px;
-  border-radius: 8px;
-}
-
-.logout-btn:hover {
-  background: #dc2626;
-}
-
-/* Mobile auth buttons */
-.mobile-auth {
-  background: #16a34a;
   padding: 4px 8px;
   border-radius: 6px;
   font-size: 13px;
 }
 
-.mobile-auth.logout {
-  background: #ef4444;
+.logout-btn:hover { background: #dc2626; }
+
+.mobile-auth {
+  background: #16a34a;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 12px;
 }
 
-/* Mobile layout */
+.mobile-auth.logout { background: #ef4444; }
+
+/* Mobile */
 @media (max-width: 768px) {
   .menu-btn {
     width: 100%;
     min-width: unset;
     max-width: unset;
     text-align: left;
-    padding: 6px 10px;
+    padding: 4px 8px;
   }
 }
 </style>
