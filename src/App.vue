@@ -16,7 +16,7 @@
         
         
         <!-- Contact-->
-        <router-link v-if="!isAuthenticated" to="/contact" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Login</router-link>
+        <router-link v-if="!isAuthenticated" to="/contact" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Contact</router-link>
 
 
         <!-- Email affiché si connecté -->
