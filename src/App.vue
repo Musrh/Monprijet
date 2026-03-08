@@ -14,8 +14,7 @@
         <!-- Email affiché si connecté -->
         <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
 
-        <!-- Login -->
-        <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth">Login</router-link>
+        
 
         <!-- Logout -->
         <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
