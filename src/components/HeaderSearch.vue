@@ -1,85 +1,79 @@
-<!-- /components/ThemeSwitcher.vue -->
+//HeaderSearch bon
 <template>
-  <div class="relative inline-block text-left" ref="dropdownRef">
-    
-    <!-- Bouton pour ouvrir le menu -->
-    <button
-      @click="toggleDropdown"
-      class="bg-gray-700 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-gray-600 transition"
-    >
-      {{ currentTheme }}
-      <svg
-        class="w-4 h-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M19 9l-7 7-7-7" />
-      </svg>
-    </button>
+  <header class="bg-white border-b shadow-md relative z-20">
 
-    <!-- Liste déroulante -->
-    <ul
-      v-show="isOpen"
-      class="absolute right-0 mt-2 w-32 bg-white border rounded shadow-lg z-50"
-    >
-      <li
-        v-for="theme in themes"
-        :key="theme"
-        @click="setTheme(theme)"
-        class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-      >
-        {{ theme }}
-      </li>
-    </ul>
+    <!-- Logo + ThemeSwitcher -->
+    <div class="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
+      <div class="flex items-center gap-3">
+        <img src="../assets/hero.png" alt="logo" class="h-10" />
+        <span class="font-bold text-lg">EasyShoping</span>
+      </div>
 
-  </div>
+      <!-- ThemeSwitcher -->
+      <div>
+        <ThemeSwitcher />
+      </div>
+    </div>
+
+    <!-- Barre catégories + recherche -->
+    <div class="bg-gray-100 py-2">
+      <div class="max-w-7xl mx-auto flex flex-col md:flex-nowrap gap-2 px-4">
+
+        <!-- Catégories sur la première ligne -->
+        <div class="flex gap-2 flex-wrap">
+          <select v-model="categorie" @change="filterCategorie" class="border rounded px-3 py-2 bg-white flex-shrink-0">
+            <option value="">Toutes catégories</option>
+            <option value="phones">Téléphones</option>
+            <option value="pc">PC</option>
+            <option value="accessoires">Accessoires</option>
+          </select>
+        </div>
+
+        <!-- Zone recherche + bouton sur la deuxième ligne -->
+        <div class="flex gap-2 flex-wrap mt-1">
+          <input v-model="search" type="text" placeholder="Vous cherchez quoi ?..." class="flex-1 min-w-0 border rounded px-3 py-2" />
+          <button @click="rechercher" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex-shrink-0">
+            🔍
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  </header>
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { mapGetters } from "vuex";
+import { useRouter } from "vue-router";
+import ThemeSwitcher from './ThemeSwitcher.vue';
 
 export default {
+  name: "HeaderSearch",
+  components: { ThemeSwitcher },
+  data() {
+    return {
+      search: "",
+      categorie: ""
+    };
+  },
   setup() {
-
-    const themes = ["dark", "pastel"];
-    const currentTheme = ref("dark");
-    const isOpen = ref(false);
-    const dropdownRef = ref(null);
-
-    const toggleDropdown = () => {
-      isOpen.value = !isOpen.value;
-    };
-
-    const setTheme = (theme) => {
-      currentTheme.value = theme;
-      document.documentElement.setAttribute("data-theme", theme);
-      localStorage.setItem("theme", theme);
-      isOpen.value = false;
-    };
-
-    const handleClickOutside = (event) => {
-      if (dropdownRef.value && !dropdownRef.value.contains(event.target)) {
-        isOpen.value = false;
-      }
-    };
-
-    onMounted(() => {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme) {
-        currentTheme.value = savedTheme;
-        document.documentElement.setAttribute("data-theme", savedTheme);
-      }
-
-      document.addEventListener("click", handleClickOutside);
-    });
-
-    onBeforeUnmount(() => {
-      document.removeEventListener("click", handleClickOutside);
-    });
-
-    return { themes, currentTheme, isOpen, toggleDropdown, setTheme, dropdownRef };
+    const router = useRouter();
+    return { router };
+  },
+  computed: { ...mapGetters(["cartItemCount"]) },
+  methods: {
+    rechercher() {
+      this.router.push({ path:"/", query:{ search:this.search } });
+    },
+    filterCategorie() {
+      this.router.push({ path:"/", query:{ categorie:this.categorie, search:this.search } });
+    }
   }
 };
 </script>
+
+<style scoped>
+input { min-width: 0; }
+.flex-shrink-0 { flex-shrink: 0; }
+</style>
