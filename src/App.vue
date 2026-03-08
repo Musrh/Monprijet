@@ -10,7 +10,14 @@
 
         <!-- Accueil -->
         <router-link  to="/" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Home</router-link>
+
+        <!-- Minishop-->
+        <router-link to="/minishop" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Minishop</router-link>
         
+        
+        <!-- Contact-->
+        <router-link v-if="!isAuthenticated" to="/contact" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Login</router-link>
+
 
         <!-- Email affiché si connecté -->
         <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
