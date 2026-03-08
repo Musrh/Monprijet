@@ -4,24 +4,19 @@
     <!-- Header -->
     <HeaderSearch />
 
-    <!-- Barre mobile : Menu + Login/Logout + Email -->
-    <div class="md:hidden bg-gray-800 p-4 flex justify-between items-center text-white">
-      <div class="flex items-center gap-3">
+    <!-- Barre mobile simplifiée -->
+    <div class="md:hidden bg-gray-800 p-4 flex justify-end items-center text-white">
+      <!-- Email affiché si connecté -->
+      <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
 
-        <span class="font-bold text-lg">Menu</span>
+      <!-- Login mobile -->
+      <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth ml-2">Login</router-link>
 
-        <!-- Email affiché si connecté -->
-        <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
-
-        <!-- Login -->
-        <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth">Login</router-link>
-
-        <!-- Logout -->
-        <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
-      </div>
+      <!-- Logout mobile -->
+      <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout ml-2">Logout</button>
     </div>
 
-    <!-- Menu principal (toujours visible) -->
+    <!-- Menu principal -->
     <nav class="bg-gray-800 p-4 flex flex-wrap items-center gap-2">
 
       <router-link to="/" class="menu-btn">Home</router-link>
@@ -59,9 +54,6 @@
         <button @click="logout" class="logout-btn hidden md:block">Logout</button>
       </template>
 
-      <!-- Theme -->
-      <ThemeSwitcher />
-
     </nav>
 
     <!-- Contenu principal -->
@@ -72,16 +64,12 @@
 <script>
 import { mapGetters } from "vuex";
 import HeaderSearch from "./components/HeaderSearch.vue";
-import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 
 export default {
-  components: { HeaderSearch, ThemeSwitcher },
+  components: { HeaderSearch },
   computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
   methods: {
-    logout() { 
-      this.$store.dispatch("logout"); 
-      this.$router.push("/"); 
-    }
+    logout() { this.$store.dispatch("logout"); this.$router.push("/"); }
   }
 };
 </script>
