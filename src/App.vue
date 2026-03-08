@@ -1,39 +1,31 @@
-//App.vue R
-
 <template>
   <div class="min-h-screen bg-gray-100">
 
     <!-- Header -->
     <HeaderSearch />
 
-    <!-- Barre mobile : Menu + Login/Logout + Email -->
+    <!-- Barre mobile : Login/Logout + Email -->
     <div class="md:hidden bg-gray-800 p-4 flex justify-between items-center text-white">
       <div class="flex items-center gap-3">
-
-
         <!-- Email affiché si connecté -->
         <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
 
-        
-
         <!-- Logout -->
         <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
-      </div>
 
-      <button @click="toggleMenu" class="text-3xl">☰</button>
+        <!-- Login -->
+        <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth">Login</router-link>
+      </div>
     </div>
 
     <!-- Menu principal -->
-    <nav
-      class="bg-gray-800 p-4 flex flex-wrap items-center gap-2"
-      :class="{'hidden md:flex': !menuOpen, 'flex flex-col md:flex': menuOpen}"
-    >
+    <nav class="bg-gray-800 p-4 flex flex-wrap items-center gap-2">
 
       <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
       <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
       <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
 
-      <!-- Admin dropdown -->
+      <!-- Admin menu visible uniquement si admin -->
       <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
         <button class="menu-btn flex items-center justify-center gap-1">
           Admin
@@ -55,17 +47,12 @@
         <span v-if="cartItemCount > 0" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ cartItemCount }}</span>
       </router-link>
 
-      <!-- Login desktop -->
+      <!-- Login/Logout desktop -->
       <router-link v-if="!isAuthenticated" @click="closeMenu" to="/login" class="menu-btn hidden md:block">Login</router-link>
-
-      <!-- Email et Logout desktop -->
       <template v-if="isAuthenticated">
         <span class="user-badge hidden md:block">{{ userEmail }}</span>
         <button @click="logout" class="logout-btn hidden md:block">Logout</button>
       </template>
-
-      <!-- Theme -->
-      <ThemeSwitcher />
 
     </nav>
 
@@ -77,15 +64,13 @@
 <script>
 import { mapGetters } from "vuex";
 import HeaderSearch from "./components/HeaderSearch.vue";
-import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 
 export default {
-  components: { HeaderSearch, ThemeSwitcher },
-  data() { return { adminDropdown: false, menuOpen: false }; },
+  components: { HeaderSearch },
+  data() { return { adminDropdown: false }; },
   computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
   methods: {
-    toggleMenu() { this.menuOpen = !this.menuOpen; },
-    closeMenu() { this.menuOpen = false; },
+    closeMenu() { },
     logout() { this.adminDropdown = false; this.$store.dispatch("logout"); this.$router.push("/"); }
   }
 };
@@ -117,15 +102,11 @@ export default {
 
 @media (max-width: 768px){
   .menu-btn{
-    width:100%;
-    padding:10px 12px;
+    width:auto;
+    padding:8px 12px;
     font-size:15px;
-    text-align:center;
   }
   .user-badge{ padding:3px 6px; font-size:12px; }
   .logout-btn{ padding:3px 6px; font-size:13px; }
 }
 </style>
-
-
-
