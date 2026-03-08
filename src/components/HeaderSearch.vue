@@ -1,14 +1,14 @@
 <template>
   <header class="bg-white border-b shadow-md relative z-20">
 
-    <!-- Logo + Panier -->
+    <!-- Logo + Mini-Panier -->
     <div class="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
       <div class="flex items-center gap-3">
         <img src="../assets/hero.png" alt="logo" class="h-10" />
         <span class="font-bold text-lg">EasyShoping</span>
       </div>
 
-      <!-- Mini-panier -->
+      <!-- Mini-Panier -->
       <div class="relative">
         <button @click="toggleCartDropdown" class="flex items-center gap-2 text-purple-700 font-semibold">
           🛒
@@ -18,44 +18,21 @@
           </span>
         </button>
 
-        <!-- Dropdown panier -->
-        <div
-          v-if="cartDropdownOpen"
-          class="absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow-lg p-4 z-50"
-        >
-          <!-- Panier vide -->
+        <!-- Dropdown Panier -->
+        <div v-if="cartDropdownOpen" class="absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow-lg p-4 z-50">
           <div v-if="cartItemCount === 0" class="text-gray-500">Votre panier est vide.</div>
 
-          <!-- Panier rempli -->
           <div v-else>
-            <div
-              v-for="item in cartItems"
-              :key="item.id"
-              class="flex items-center mb-2 border-b pb-2"
-            >
-              <img
-                :src="item.images?.[0] || item.image || '/placeholder.png'"
-                :alt="item.nom"
-                class="w-12 h-12 object-cover rounded mr-2"
-              />
+            <div v-for="item in cartItems" :key="item.id" class="flex items-center mb-2 border-b pb-2">
+              <img :src="item.images?.[0] || item.image || '/placeholder.png'" :alt="item.nom" class="w-12 h-12 object-cover rounded mr-2" />
               <div class="flex-1">
                 <h3 class="font-semibold">{{ item.nom }}</h3>
                 <p>{{ item.prix }} €</p>
-                <input
-                  type="number"
-                  min="1"
-                  v-model.number="item.quantity"
-                  @change="updateQuantity(item)"
-                  class="border w-16 p-1 mt-1"
-                />
+                <input type="number" min="1" v-model.number="item.quantity" @change="updateQuantity(item)" class="border w-16 p-1 mt-1" />
               </div>
-              <button
-                @click="remove(item.id)"
-                class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
-              >❌</button>
+              <button @click="remove(item.id)" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded">❌</button>
             </div>
 
-            <!-- Total -->
             <h3 class="text-lg font-bold mt-2">Total : {{ total }} €</h3>
 
             <!-- Choix paiement -->
@@ -66,18 +43,15 @@
               </select>
             </div>
 
-            <!-- Bouton Stripe -->
-            <button
-              v-if="paymentMethod === 'stripe'"
-              @click="payerStripe"
-              class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-2 w-full"
-            >💳 Payer avec Stripe</button>
+            <!-- Stripe -->
+            <button v-if="paymentMethod === 'stripe'" @click="payerStripe" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-2 w-full">
+              💳 Payer avec Stripe
+            </button>
 
-            <!-- Conteneur PayPal -->
+            <!-- PayPal -->
             <div v-if="paymentMethod === 'paypal'" class="mt-2">
               <div id="paypal-button-container"></div>
             </div>
-
           </div>
         </div>
       </div>
@@ -86,7 +60,6 @@
     <!-- Barre de recherche -->
     <div class="bg-gray-100 py-3">
       <div class="max-w-7xl mx-auto flex flex-wrap md:flex-nowrap items-center gap-2 px-4">
-
         <!-- Catégories -->
         <select v-model="categorie" @change="filterCategorie" class="border rounded px-3 py-2 bg-white flex-shrink-0">
           <option value="">Toutes catégories</option>
@@ -96,12 +69,7 @@
         </select>
 
         <!-- Champ de recherche -->
-        <input
-          v-model="search"
-          type="text"
-          placeholder="Vous cherchez quoi ?..."
-          class="flex-1 min-w-0 border rounded px-3 py-2"
-        />
+        <input v-model="search" type="text" placeholder="Vous cherchez quoi ?..." class="flex-1 min-w-0 border rounded px-3 py-2" />
 
         <!-- Bouton recherche -->
         <button @click="rechercher" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex-shrink-0">
@@ -112,7 +80,6 @@
         <div class="ml-2 flex-shrink-0">
           <ThemeSwitcher />
         </div>
-
       </div>
     </div>
 
@@ -120,7 +87,7 @@
 </template>
 
 <script>
-import { mapState, mapGetters } from "vuex";
+import { mapGetters, mapState } from "vuex";
 import { useRouter } from "vue-router";
 import ThemeSwitcher from './ThemeSwitcher.vue';
 
@@ -141,13 +108,9 @@ export default {
     cartItems() { return this.cart; },
     total() { return this.cart.reduce((sum, i) => sum + i.prix * i.quantity, 0); }
   },
-  setup() { const router = useRouter(); return { router }; },
-  watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal" && this.cartDropdownOpen) {
-        this.$nextTick(() => this.renderPaypalButton());
-      }
-    }
+  setup() {
+    const router = useRouter();
+    return { router };
   },
   methods: {
     toggleCartDropdown() {
@@ -163,63 +126,75 @@ export default {
     remove(id) { this.$store.dispatch("removeItem", id); },
     updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
 
-    // STRIPE
+    // Stripe
     async payerStripe() {
-      if (!this.user) return alert("Connectez-vous d'abord");
-      if (!this.cart.length) return alert("Panier vide");
+      if (!this.user) { alert("Veuillez vous connecter avant de payer"); return; }
+      if (!this.cart.length) { alert("Panier vide"); return; }
 
-      const items = this.cart.map(i => ({ id: i.id, nom: i.nom, prix: i.prix, quantity: i.quantity }));
+      const itemsPourCommande = this.cart.map(p => ({
+        id: p.id,
+        nom: p.nom,
+        prix: p.prix,
+        quantity: p.quantity,
+        image: p.images?.[0] || p.image || "/placeholder.png"
+      }));
+
       try {
         const res = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ items, email: this.user.email })
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
         });
         const data = await res.json();
-        if(data.url) window.location.href = data.url;
-      } catch(err){ console.error(err); alert("Erreur Stripe : "+err.message); }
+        if (data.url) window.location.href = data.url;
+      } catch(err) { console.error("Stripe error:", err); alert("Erreur Stripe : " + err.message); }
     },
 
-    // PAYPAL
+    // PayPal
     async loadPaypalScript() {
       return new Promise((resolve, reject) => {
-        if(window.paypal) return resolve(window.paypal);
+        if (window.paypal) return resolve(window.paypal);
         const script = document.createElement("script");
-        script.src = "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
+        script.src = "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e¤cy=EUR";
         script.onload = () => resolve(window.paypal);
         script.onerror = reject;
         document.body.appendChild(script);
       });
     },
     async renderPaypalButton() {
-      if(!this.cart.length || !this.user) return;
+      if (!this.cart.length || !this.user) return;
 
       const paypalSdk = await this.loadPaypalScript();
-      const items = this.cart.map(i => ({ id: i.id, nom: i.nom, prix: i.prix, quantity: i.quantity }));
+      const itemsPourCommande = this.cart.map(p => ({
+        id: p.id,
+        nom: p.nom,
+        prix: p.prix,
+        quantity: p.quantity
+      }));
 
       paypalSdk.Buttons({
         createOrder: (data, actions) => {
           return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ items, email: this.user.email })
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
           })
           .then(res => res.json())
           .then(order => order.id);
         },
         onApprove: (data) => {
           return fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body: JSON.stringify({ orderId: data.orderID, items, user: { email: this.user.email } })
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email } })
           })
           .then(res => res.json())
-          .then(()=> { alert("Paiement PayPal réussi !"); this.$store.dispatch("clearCart"); });
+          .then(() => { alert("Paiement PayPal réussi !"); this.$store.dispatch("clearCart"); });
         },
-        onError: (err) => { console.error("PayPal error:", err); alert("Erreur PayPal : "+err.message); }
+        onError: (err) => { console.error("PayPal error:", err); alert("Erreur PayPal : " + err.message); }
       }).render("#paypal-button-container");
     },
 
-    // Recherche
     rechercher() { this.router.push({ path:"/", query:{ search:this.search } }); },
     filterCategorie() { this.router.push({ path:"/", query:{ categorie:this.categorie, search:this.search } }); }
   }
