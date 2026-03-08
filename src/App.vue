@@ -1,219 +1,133 @@
+//App.vue R
+
 <template>
-  <div class="p-4 max-w-3xl mx-auto">
+  <div class="min-h-screen bg-gray-100">
 
-    <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
+    <!-- Header -->
+    <HeaderSearch />
 
-    <!-- Panier vide -->
-    <div v-if="cart.length === 0">
-      <p class="text-gray-500">Votre panier est vide.</p>
+    <!-- Barre mobile : Menu + Login/Logout + Email -->
+    <div class="md:hidden bg-gray-800 p-4 flex justify-between items-center text-white">
+      <div class="flex items-center gap-3">
+
+        <span class="font-bold text-lg">Menu</span>
+
+        <!-- Email affiché si connecté -->
+        <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
+
+        <!-- Login -->
+        <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth">Login</router-link>
+
+        <!-- Logout -->
+        <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
+      </div>
+
+      <button @click="toggleMenu" class="text-3xl">☰</button>
     </div>
 
-    <!-- Panier rempli -->
-    <div v-else>
-      <div
-        v-for="item in cart"
-        :key="item.id"
-        class="flex items-center mb-4 border-b pb-2"
-      >
-        <img
-          :src="item.images?.[0] || item.image || '/placeholder.png'"
-          :alt="item.nom"
-          class="w-20 h-20 object-cover rounded mr-4"
-        />
-        <div class="flex-1">
-          <h3 class="font-semibold">{{ item.nom }}</h3>
-          <p>{{ item.prix }} €</p>
-          <input
-            type="number"
-            min="1"
-            v-model.number="item.quantity"
-            @change="updateQuantity(item)"
-            class="border w-20 p-1 mt-1"
-          />
-        </div>
-        <button
-          @click="remove(item.id)"
-          class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
-        >
-          ❌
+    <!-- Menu principal -->
+    <nav
+      class="bg-gray-800 p-4 flex flex-wrap items-center gap-2"
+      :class="{'hidden md:flex': !menuOpen, 'flex flex-col md:flex': menuOpen}"
+    >
+
+      <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
+      <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
+      <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
+
+      <!-- Admin dropdown -->
+      <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
+        <button class="menu-btn flex items-center justify-center gap-1">
+          Admin
+          <svg class="w-4 h-4 opacity-60 transition-transform" :class="{'rotate-180': adminDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
         </button>
+        <div v-if="adminDropdown" class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border py-2 z-50">
+          <router-link @click="adminDropdown=false" to="/admin" class="block px-4 py-2 hover:bg-gray-100">Admin (Utilisateurs)</router-link>
+          <router-link @click="adminDropdown=false" to="/adminproduits" class="block px-4 py-2 hover:bg-gray-100">Admin-Produits</router-link>
+          <router-link @click="adminDropdown=false" to="/admin-commandes" class="block px-4 py-2 hover:bg-gray-100">Admin-Commandes</router-link>
+          <router-link @click="adminDropdown=false" to="/upload" class="block px-4 py-2 hover:bg-gray-100">UploadProduit</router-link>
+        </div>
       </div>
 
-      <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
+      <!-- Panier -->
+      <router-link @click="closeMenu" to="/panier" class="menu-btn relative">
+        🛒
+        <span v-if="cartItemCount > 0" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ cartItemCount }}</span>
+      </router-link>
 
-      <!-- Choix paiement -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-2">Mode de paiement</label>
+      <!-- Login desktop -->
+      <router-link v-if="!isAuthenticated" @click="closeMenu" to="/login" class="menu-btn hidden md:block">Login</router-link>
 
-        <select v-model="paymentMethod" class="border p-2 rounded w-full">
-          <option value="stripe">💳 Carte bancaire (Stripe)</option>
-          <option value="paypal">🅿️ PayPal</option>
-        </select>
-      </div>
+      <!-- Email et Logout desktop -->
+      <template v-if="isAuthenticated">
+        <span class="user-badge hidden md:block">{{ userEmail }}</span>
+        <button @click="logout" class="logout-btn hidden md:block">Logout</button>
+      </template>
 
-      <!-- Bouton Payer uniquement pour Stripe -->
-      <button
-        v-if="paymentMethod === 'stripe'"
-        @click="payerStripe"
-        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
-      >
-        Payer
-      </button>
+      <!-- Theme -->
+      <ThemeSwitcher />
 
-      <!-- Conteneur bouton PayPal -->
-      <div v-if="paymentMethod === 'paypal'" class="mt-4">
-        <div id="paypal-button-container"></div>
-      </div>
-    </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <router-view />
   </div>
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapGetters } from "vuex";
+import HeaderSearch from "./components/HeaderSearch.vue";
+import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 
 export default {
-  data() {
-    return {
-      paymentMethod: "stripe"
-    };
-  },
-  computed: {
-    ...mapState(["cart", "user"]),
-    total() {
-      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0).toFixed(2);
-    }
-  },
-  watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
-        this.$nextTick(() => {
-          if (!this.user) {
-            alert("Veuillez vous connecter avant de payer");
-            this.$router.push("/login");
-            return;
-          }
-          this.renderPaypalButton();
-        });
-      }
-    }
-  },
+  components: { HeaderSearch, ThemeSwitcher },
+  data() { return { adminDropdown: false, menuOpen: false }; },
+  computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
   methods: {
-    remove(id) {
-      this.$store.dispatch("removeItem", id);
-    },
-    updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
-    },
-
-    // ---------------- STRIPE ----------------
-    async payerStripe() {
-      if (!this.user) {
-        alert("Veuillez vous connecter avant de payer");
-        this.$router.push("/login");
-        return;
-      }
-
-      if (!this.cart.length) {
-        alert("Panier vide");
-        return;
-      }
-
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity,
-        image: p.images?.[0] || p.image || "/placeholder.png"
-      }));
-
-      try {
-        const response = await fetch(
-          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-          }
-        );
-        const data = await response.json();
-        if (data.url) window.location.href = data.url;
-      } catch (err) {
-        console.error("Stripe error:", err);
-        alert("Erreur lors du paiement Stripe : " + err.message);
-      }
-    },
-
-    // ---------------- PAYPAL ----------------
-    async loadPaypalScript() {
-      return new Promise((resolve, reject) => {
-        if (window.paypal) return resolve(window.paypal);
-        const script = document.createElement("script");
-        script.src =
-          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
-        script.onload = () => resolve(window.paypal);
-        script.onerror = reject;
-        document.body.appendChild(script);
-      });
-    },
-
-    async renderPaypalButton() {
-      if (!this.cart.length) return;
-
-      const paypalSdk = await this.loadPaypalScript();
-
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity
-      }));
-
-      paypalSdk.Buttons({
-        createOrder: (data, actions) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-            }
-          )
-            .then(res => res.json())
-            .then(order => {
-              if (!order.id) throw new Error("Aucun order id reçu du Backend");
-              return order.id;
-            });
-        },
-
-        onApprove: (data) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email } })
-            }
-          )
-            .then(res => res.json())
-            .then(() => {
-              alert("Paiement PayPal réussi !");
-              this.$store.dispatch("clearCart");
-            });
-        },
-
-        onError: (err) => {
-          console.error("Erreur PayPal:", err);
-          alert("Erreur PayPal : " + err.message);
-        }
-      }).render("#paypal-button-container");
-    }
+    toggleMenu() { this.menuOpen = !this.menuOpen; },
+    closeMenu() { this.menuOpen = false; },
+    logout() { this.adminDropdown = false; this.$store.dispatch("logout"); this.$router.push("/"); }
   }
 };
 </script>
 
 <style scoped>
-img {
-  object-fit: cover;
+.menu-btn{
+  background:#16a34a;
+  color:#fff;
+  padding:12px 18px;
+  border-radius:10px;
+  font-size:16px;
+  transition:all 0.2s;
+  display:inline-flex;
+  justify-content:center;
+  min-width:100px;
+  max-width:140px;
+  text-align:center;
+}
+.menu-btn:hover{ background:#15803d; transform:translateY(-1px); }
+
+.user-badge{ background:#22c55e; color:#fff; padding:4px 8px; border-radius:6px; font-size:12px; }
+.logout-btn{ background:#ef4444; color:#fff; padding:4px 8px; border-radius:6px; font-size:13px; }
+.logout-btn:hover{ background:#dc2626; }
+
+.mobile-auth{ background:#16a34a; padding:4px 8px; border-radius:6px; font-size:13px; }
+.mobile-auth.logout{ background:#ef4444; }
+.mobile-email{ background:#22c55e; padding:3px 6px; border-radius:6px; font-size:13px; color:#fff; }
+
+@media (max-width: 768px){
+  .menu-btn{
+    width:100%;
+    padding:10px 12px;
+    font-size:15px;
+    text-align:center;
+  }
+  .user-badge{ padding:3px 6px; font-size:12px; }
+  .logout-btn{ padding:3px 6px; font-size:13px; }
 }
 </style>
+
+
+
