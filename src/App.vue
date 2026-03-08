@@ -10,7 +10,6 @@
     <div class="md:hidden bg-gray-800 p-4 flex justify-between items-center text-white">
       <div class="flex items-center gap-3">
 
-        <span class="font-bold text-lg">Menu</span>
 
         <!-- Email affiché si connecté -->
         <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
