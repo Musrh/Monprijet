@@ -29,7 +29,7 @@
           </select>
         </div>
 
-        <!-- Recherche (ligne en dessous + largeur réduite) -->
+        <!-- Recherche -->
         <div class="flex justify-center mt-1">
           <div class="flex gap-2 w-full max-w-md">
 
@@ -55,3 +55,60 @@
 
   </header>
 </template>
+
+<script>
+import { useRouter, useRoute } from "vue-router";
+import ThemeSwitcher from "./ThemeSwitcher.vue";
+
+export default {
+  name: "HeaderSearch",
+  components: { ThemeSwitcher },
+
+  data() {
+    return {
+      search: "",
+      categorie: ""
+    };
+  },
+
+  setup() {
+    const router = useRouter();
+    const route = useRoute();
+    return { router, route };
+  },
+
+  mounted() {
+    // récupérer les critères depuis l'URL
+    this.search = this.route.query.search || "";
+    this.categorie = this.route.query.categorie || "";
+  },
+
+  methods: {
+
+    rechercher() {
+      this.router.push({
+        path: "/",
+        query: {
+          search: this.search,
+          categorie: this.categorie
+        }
+      });
+    },
+
+    filterCategorie() {
+      this.router.push({
+        path: "/",
+        query: {
+          search: this.search,
+          categorie: this.categorie
+        }
+      });
+    }
+
+  }
+};
+</script>
+
+<style scoped>
+input { min-width: 0; }
+</style>
