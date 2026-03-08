@@ -5,64 +5,54 @@
     <HeaderSearch />
 
     <!-- Navigation -->
-    <nav class="bg-gray-800 p-3 flex flex-wrap items-center justify-between gap-2">
+    <nav class="bg-gray-800 p-3 flex items-center justify-center gap-3 overflow-x-auto whitespace-nowrap">
 
-      <!-- Menu gauche -->
-      <div class="flex flex-wrap gap-2">
+      <router-link to="/" class="menu-btn">
+        Home
+      </router-link>
 
-        <router-link to="/" class="menu-btn">
-          Home
-        </router-link>
+      <router-link to="/minishop" class="menu-btn">
+        Minishop
+      </router-link>
 
-        <router-link to="/minishop" class="menu-btn">
-          Minishop
-        </router-link>
+      <router-link to="/contact" class="menu-btn">
+        Contact
+      </router-link>
 
-        <router-link to="/contact" class="menu-btn">
-          Contact
-        </router-link>
+      <!-- Admin -->
+      <router-link
+        v-if="isAdmin"
+        to="/admin"
+        class="admin-btn"
+      >
+        Admin
+      </router-link>
 
-      </div>
+      <!-- Login -->
+      <router-link
+        v-if="!isAuthenticated"
+        to="/login"
+        class="login-btn"
+      >
+        Login
+      </router-link>
 
-      <!-- Menu droite -->
-      <div class="flex items-center gap-3">
+      <!-- Email -->
+      <span
+        v-if="isAuthenticated"
+        class="user-badge"
+      >
+        {{ userEmail }}
+      </span>
 
-        <!-- Admin -->
-        <router-link
-          v-if="isAdmin"
-          to="/admin"
-          class="admin-btn"
-        >
-          Admin
-        </router-link>
-
-        <!-- Login -->
-        <router-link
-          v-if="!isAuthenticated"
-          to="/login"
-          class="login-btn"
-        >
-          Login
-        </router-link>
-
-        <!-- Email utilisateur -->
-        <span
-          v-if="isAuthenticated"
-          class="user-badge"
-        >
-          {{ userEmail }}
-        </span>
-
-        <!-- Logout -->
-        <button
-          v-if="isAuthenticated"
-          @click="logout"
-          class="logout-btn"
-        >
-          Logout
-        </button>
-
-      </div>
+      <!-- Logout -->
+      <button
+        v-if="isAuthenticated"
+        @click="logout"
+        class="logout-btn"
+      >
+        Logout
+      </button>
 
     </nav>
 
@@ -108,11 +98,12 @@ export default {
 
 .menu-btn{
   background:#16a34a;
-  color:#fff;
-  padding:10px 18px;
+  color:white;
+  padding:10px 20px;
   border-radius:10px;
   font-size:15px;
   transition:all 0.2s;
+  white-space:nowrap;
 }
 
 .menu-btn:hover{
@@ -125,7 +116,7 @@ export default {
 .login-btn{
   background:#22c55e;
   color:white;
-  padding:10px 18px;
+  padding:10px 20px;
   border-radius:10px;
 }
 
@@ -138,7 +129,7 @@ export default {
 .admin-btn{
   background:#3b82f6;
   color:white;
-  padding:10px 16px;
+  padding:10px 18px;
   border-radius:10px;
 }
 
@@ -146,14 +137,14 @@ export default {
   background:#2563eb;
 }
 
-/* badge email */
+/* email */
 
 .user-badge{
   background:#22c55e;
   color:white;
-  padding:4px 8px;
+  padding:6px 10px;
   border-radius:6px;
-  font-size:12px;
+  font-size:13px;
 }
 
 /* logout */
@@ -161,23 +152,12 @@ export default {
 .logout-btn{
   background:#ef4444;
   color:white;
-  padding:6px 10px;
-  border-radius:6px;
+  padding:8px 12px;
+  border-radius:8px;
 }
 
 .logout-btn:hover{
   background:#dc2626;
-}
-
-/* responsive mobile */
-
-@media (max-width:768px){
-
-  nav{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-
 }
 
 </style>
