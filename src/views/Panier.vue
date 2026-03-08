@@ -52,9 +52,10 @@
         </select>
       </div>
 
-      <!-- Bouton Payer -->
+      <!-- Bouton Payer uniquement pour Stripe -->
       <button
-        @click="payer"
+        v-if="paymentMethod === 'stripe'"
+        @click="payerStripe"
         class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
       >
         Payer
@@ -105,22 +106,14 @@ export default {
       this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
     },
 
-    // ---------------- PAYER ----------------
-    payer() {
+    // ---------------- STRIPE ----------------
+    async payerStripe() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
         this.$router.push("/login");
         return;
       }
 
-      if (this.paymentMethod === "stripe") {
-        this.payerStripe();
-      } else if (this.paymentMethod === "paypal") {
-        this.renderPaypalButton();
-      }
-    },
-
-    async payerStripe() {
       if (!this.cart.length) {
         alert("Panier vide");
         return;
@@ -151,6 +144,7 @@ export default {
       }
     },
 
+    // ---------------- PAYPAL ----------------
     async loadPaypalScript() {
       return new Promise((resolve, reject) => {
         if (window.paypal) return resolve(window.paypal);
