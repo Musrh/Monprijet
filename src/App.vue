@@ -9,7 +9,7 @@
       <div class="flex items-center gap-3">
         <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
         <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
-        <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth">Login</router-link>
+        <!-- Le premier Login est supprimé ici -->
       </div>
     </div>
 
@@ -34,11 +34,11 @@
         <span v-if="cartItemCount > 0" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ cartItemCount }}</span>
       </router-link>
 
-      <!-- Login/Logout desktop -->
-      <router-link v-if="!isAuthenticated" @click="closeMenu" to="/login" class="menu-btn hidden md:block">Login</router-link>
+      <!-- Login/Logout desktop (visible aussi en mobile grâce à md:block) -->
+      <router-link v-if="!isAuthenticated" @click="closeMenu" to="/login" class="menu-btn md:block">Login</router-link>
       <template v-if="isAuthenticated">
-        <span class="user-badge hidden md:block">{{ userEmail }}</span>
-        <button @click="logout" class="logout-btn hidden md:block">Logout</button>
+        <span class="user-badge md:block">{{ userEmail }}</span>
+        <button @click="logout" class="logout-btn md:block">Logout</button>
       </template>
 
     </nav>
@@ -54,7 +54,6 @@ import HeaderSearch from "./components/HeaderSearch.vue";
 
 export default {
   components: { HeaderSearch },
-  data() { return {}; },
   computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
   methods: {
     closeMenu() {},
@@ -74,7 +73,7 @@ export default {
   display:inline-flex;
   justify-content:center;
   width:auto;
-  white-space:nowrap; /* empêche le retour à la ligne */
+  white-space:nowrap;
 }
 .menu-btn:hover{ background:#15803d; transform:translateY(-1px); }
 
@@ -88,7 +87,7 @@ export default {
 
 @media (max-width: 768px){
   nav{
-    flex-wrap: nowrap; /* toujours sur la même ligne */
+    flex-wrap: nowrap;
   }
   .menu-btn{
     font-size:14px;
