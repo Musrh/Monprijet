@@ -36,20 +36,6 @@
           Admin
         </router-link>
 
-        <!-- Panier -->
-        <router-link to="/panier" class="menu-btn relative">
-
-          🛒
-
-          <span
-            v-if="cartItemCount > 0"
-            class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full"
-          >
-            {{ cartItemCount }}
-          </span>
-
-        </router-link>
-
         <!-- Login -->
         <router-link
           v-if="!isAuthenticated"
@@ -76,8 +62,6 @@
           Logout
         </button>
 
-        <ThemeSwitcher />
-
       </div>
 
     </nav>
@@ -91,21 +75,18 @@
 <script>
 import { mapGetters } from "vuex";
 import HeaderSearch from "./components/HeaderSearch.vue";
-import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 
 export default {
 
   components: {
-    HeaderSearch,
-    ThemeSwitcher
+    HeaderSearch
   },
 
   computed: {
     ...mapGetters([
       "isAuthenticated",
       "userEmail",
-      "isAdmin",
-      "cartItemCount"
+      "isAdmin"
     ])
   },
 
@@ -188,7 +169,7 @@ export default {
   background:#dc2626;
 }
 
-/* mobile */
+/* responsive mobile */
 
 @media (max-width:768px){
 
