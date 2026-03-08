@@ -7,36 +7,25 @@
     <!-- Barre mobile : Login/Logout + Email -->
     <div class="md:hidden bg-gray-800 p-4 flex justify-between items-center text-white">
       <div class="flex items-center gap-3">
-        <!-- Email affiché si connecté -->
         <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
-
-        <!-- Logout -->
         <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
-
-        </div>
+        <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth">Login</router-link>
+      </div>
     </div>
 
     <!-- Menu principal -->
-    <nav class="bg-gray-800 p-4 flex flex-wrap items-center gap-2">
+    <nav class="bg-gray-800 p-4 flex items-center gap-2 flex-nowrap overflow-x-auto">
 
       <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
       <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
       <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
 
       <!-- Admin menu visible uniquement si admin -->
-      <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
-        <button class="menu-btn flex items-center justify-center gap-1">
-          Admin
-          <svg class="w-4 h-4 opacity-60 transition-transform" :class="{'rotate-180': adminDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div v-if="adminDropdown" class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border py-2 z-50">
-          <router-link @click="adminDropdown=false" to="/admin" class="block px-4 py-2 hover:bg-gray-100">Admin (Utilisateurs)</router-link>
-          <router-link @click="adminDropdown=false" to="/adminproduits" class="block px-4 py-2 hover:bg-gray-100">Admin-Produits</router-link>
-          <router-link @click="adminDropdown=false" to="/admin-commandes" class="block px-4 py-2 hover:bg-gray-100">Admin-Commandes</router-link>
-          <router-link @click="adminDropdown=false" to="/upload" class="block px-4 py-2 hover:bg-gray-100">UploadProduit</router-link>
-        </div>
+      <div v-if="isAdmin" class="relative">
+        <router-link @click="closeMenu" to="/admin" class="menu-btn">Admin</router-link>
+        <router-link @click="closeMenu" to="/adminproduits" class="menu-btn">Admin-Produits</router-link>
+        <router-link @click="closeMenu" to="/admin-commandes" class="menu-btn">Admin-Commandes</router-link>
+        <router-link @click="closeMenu" to="/upload" class="menu-btn">UploadProduit</router-link>
       </div>
 
       <!-- Panier -->
@@ -65,11 +54,11 @@ import HeaderSearch from "./components/HeaderSearch.vue";
 
 export default {
   components: { HeaderSearch },
-  data() { return { adminDropdown: false }; },
+  data() { return {}; },
   computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
   methods: {
-    closeMenu() { },
-    logout() { this.adminDropdown = false; this.$store.dispatch("logout"); this.$router.push("/"); }
+    closeMenu() {},
+    logout() { this.$store.dispatch("logout"); this.$router.push("/"); }
   }
 };
 </script>
@@ -78,15 +67,14 @@ export default {
 .menu-btn{
   background:#16a34a;
   color:#fff;
-  padding:12px 18px;
+  padding:8px 12px;
   border-radius:10px;
   font-size:16px;
   transition:all 0.2s;
   display:inline-flex;
   justify-content:center;
-  min-width:100px;
-  max-width:140px;
-  text-align:center;
+  width:auto;
+  white-space:nowrap; /* empêche le retour à la ligne */
 }
 .menu-btn:hover{ background:#15803d; transform:translateY(-1px); }
 
@@ -99,10 +87,12 @@ export default {
 .mobile-email{ background:#22c55e; padding:3px 6px; border-radius:6px; font-size:13px; color:#fff; }
 
 @media (max-width: 768px){
+  nav{
+    flex-wrap: nowrap; /* toujours sur la même ligne */
+  }
   .menu-btn{
-    width:auto;
-    padding:8px 12px;
-    font-size:15px;
+    font-size:14px;
+    padding:6px 10px;
   }
   .user-badge{ padding:3px 6px; font-size:12px; }
   .logout-btn{ padding:3px 6px; font-size:13px; }
