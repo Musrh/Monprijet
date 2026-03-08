@@ -8,7 +8,9 @@
     <div class="md:hidden bg-gray-800 p-4 flex justify-between items-center text-white">
       <div class="flex items-center gap-3">
 
-        <span class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 cursor-pointer">Menu</span>
+        <!-- Accueil -->
+        <router-link  to="/" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Home</router-link>
+        
 
         <!-- Email affiché si connecté -->
         <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
