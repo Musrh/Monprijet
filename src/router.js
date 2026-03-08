@@ -29,19 +29,18 @@ const routes = [
   {
     path: "/admin-commandes",
     component: AdminCommandes,
-    meta: { requiresAdmin: true },
+    meta: { requiresAdmin: true }
   },
   {
-  path: "/upload/:id?",
-  component: Upload,
-  meta: { requiresAdmin: true }
-},
+    path: "/upload/:id?",
+    component: Upload,
+    meta: { requiresAdmin: true }
+  },
   {
-  path: "/adminproduits",
-  component: AdminProduits,
-  meta: { requiresAdmin: true }
+    path: "/adminproduits",
+    component: AdminProduits,
+    meta: { requiresAdmin: true }
   }
- 
 ];
 
 const router = createRouter({
@@ -50,9 +49,13 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+
+  // 🔒 protection admin
   if (to.meta.requiresAdmin && !store.getters.isAdmin) {
+    alert("Accès réservé à l'administrateur");
     return next("/");
   }
+
   next();
 });
 
