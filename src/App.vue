@@ -14,43 +14,28 @@
         <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth">Login</router-link>
         <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
       </div>
-
-      <button @click="toggleMenu" class="text-3xl">☰</button>
     </div>
 
-    <!-- Menu principal -->
-    <nav
-      class="bg-gray-800 p-4 flex flex-wrap items-center gap-2"
-      :class="{'hidden md:flex': !menuOpen, 'flex flex-col md:flex': menuOpen}"
-    >
-      <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
-      <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
-      <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
+    <!-- Menu principal plat -->
+    <nav class="bg-gray-800 p-4 flex flex-wrap items-center gap-2 justify-start">
+      <router-link to="/" class="menu-btn">Home</router-link>
+      <router-link to="/minishop" class="menu-btn">Minishop</router-link>
+      <router-link to="/contact" class="menu-btn">Contact</router-link>
 
-      <!-- Admin dropdown -->
-      <div v-if="isAdmin" class="relative" @mouseenter="adminDropdown=true" @mouseleave="adminDropdown=false">
-        <button class="menu-btn flex items-center justify-center gap-1">
-          Admin
-          <svg class="w-4 h-4 opacity-60 transition-transform" :class="{'rotate-180': adminDropdown}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-        <div v-if="adminDropdown" class="absolute left-0 mt-2 w-48 bg-white text-gray-800 rounded-xl shadow-lg border py-2 z-50">
-          <router-link @click="adminDropdown=false" to="/admin" class="block px-4 py-2 hover:bg-gray-100">Admin (Utilisateurs)</router-link>
-          <router-link @click="adminDropdown=false" to="/adminproduits" class="block px-4 py-2 hover:bg-gray-100">Admin-Produits</router-link>
-          <router-link @click="adminDropdown=false" to="/admin-commandes" class="block px-4 py-2 hover:bg-gray-100">Admin-Commandes</router-link>
-          <router-link @click="adminDropdown=false" to="/upload" class="block px-4 py-2 hover:bg-gray-100">UploadProduit</router-link>
-        </div>
-      </div>
+      <!-- Admin liens visibles directement si admin -->
+      <router-link v-if="isAdmin" to="/admin" class="menu-btn">Admin (Utilisateurs)</router-link>
+      <router-link v-if="isAdmin" to="/adminproduits" class="menu-btn">Admin-Produits</router-link>
+      <router-link v-if="isAdmin" to="/admin-commandes" class="menu-btn">Admin-Commandes</router-link>
+      <router-link v-if="isAdmin" to="/upload" class="menu-btn">UploadProduit</router-link>
 
       <!-- Panier -->
-      <router-link @click="closeMenu" to="/panier" class="menu-btn relative">
+      <router-link to="/panier" class="menu-btn relative">
         🛒
         <span v-if="cartItemCount > 0" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ cartItemCount }}</span>
       </router-link>
 
       <!-- Login desktop -->
-      <router-link v-if="!isAuthenticated" @click="closeMenu" to="/login" class="menu-btn hidden md:block">Login</router-link>
+      <router-link v-if="!isAuthenticated" to="/login" class="menu-btn hidden md:block">Login</router-link>
 
       <!-- Email et Logout desktop -->
       <template v-if="isAuthenticated">
@@ -70,17 +55,9 @@ import HeaderSearch from "./components/HeaderSearch.vue";
 
 export default {
   components: { HeaderSearch },
-  data() { 
-    return { adminDropdown: false, menuOpen: false }; 
-  },
-  computed: { 
-    ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) 
-  },
+  computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
   methods: {
-    toggleMenu() { this.menuOpen = !this.menuOpen; },
-    closeMenu() { this.menuOpen = false; },
     logout() { 
-      this.adminDropdown = false; 
       this.$store.dispatch("logout"); 
       this.$router.push("/"); 
     }
@@ -92,20 +69,16 @@ export default {
 .menu-btn {
   background: #16a34a;
   color: #fff;
-  padding: 8px 14px; /* largeur flexible selon texte */
+  padding: 8px 14px;
   border-radius: 10px;
   font-size: 16px;
   transition: all 0.2s;
   display: inline-flex;
   justify-content: center;
   text-align: center;
-  white-space: nowrap; /* empêche le texte de passer à la ligne */
+  white-space: nowrap;
 }
-
-.menu-btn:hover {
-  background: #15803d;
-  transform: translateY(-1px);
-}
+.menu-btn:hover { background: #15803d; transform: translateY(-1px); }
 
 .user-badge {
   background: #22c55e;
@@ -122,10 +95,7 @@ export default {
   border-radius: 6px;
   font-size: 13px;
 }
-
-.logout-btn:hover {
-  background: #dc2626;
-}
+.logout-btn:hover { background: #dc2626; }
 
 .mobile-auth {
   background: #16a34a;
@@ -133,10 +103,7 @@ export default {
   border-radius: 6px;
   font-size: 13px;
 }
-
-.mobile-auth.logout {
-  background: #ef4444;
-}
+.mobile-auth.logout { background: #ef4444; }
 
 .mobile-email {
   background: #22c55e;
@@ -146,24 +113,12 @@ export default {
   color: #fff;
 }
 
-nav {
-  display: flex;
-  flex-wrap: wrap; /* permet aux éléments de passer à la ligne si trop étroits */
-  gap: 8px; /* espace entre les boutons */
-}
-
 @media (max-width: 768px) {
   .menu-btn {
     padding: 6px 10px;
     font-size: 14px;
   }
-  .user-badge {
-    padding: 3px 6px;
-    font-size: 12px;
-  }
-  .logout-btn {
-    padding: 3px 6px;
-    font-size: 12px;
-  }
+  .user-badge { padding: 3px 6px; font-size: 12px; }
+  .logout-btn { padding: 3px 6px; font-size: 12px; }
 }
 </style>
