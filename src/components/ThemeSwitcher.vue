@@ -6,7 +6,7 @@
       @click="toggleDropdown"
       class="bg-gray-700 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-gray-600 transition"
     >
-      Thème : {{ currentTheme }}
+      {{ currentTheme }}
       <svg
         class="w-4 h-4"
         fill="none"
