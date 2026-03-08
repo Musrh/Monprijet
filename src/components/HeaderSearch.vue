@@ -8,7 +8,7 @@
         <span class="font-bold text-lg">EasyShoping</span>
       </div>
 
-      <!-- Panier déroulant -->
+      <!-- Mini-panier -->
       <div class="relative">
         <button @click="toggleCartDropdown" class="flex items-center gap-2 text-purple-700 font-semibold">
           🛒
@@ -19,37 +19,65 @@
         </button>
 
         <!-- Dropdown panier -->
-        <div v-if="cartDropdownOpen" class="absolute right-0 mt-2 w-80 bg-white shadow-lg border rounded-lg p-4 z-50 max-h-96 overflow-y-auto">
-          <div v-if="cartItemCount === 0">
-            <p class="text-gray-500">Votre panier est vide.</p>
-          </div>
+        <div
+          v-if="cartDropdownOpen"
+          class="absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow-lg p-4 z-50"
+        >
+          <!-- Panier vide -->
+          <div v-if="cartItemCount === 0" class="text-gray-500">Votre panier est vide.</div>
+
+          <!-- Panier rempli -->
           <div v-else>
-            <div v-for="item in cart" :key="item.id" class="flex items-center mb-3 border-b pb-2">
-              <img :src="item.images?.[0] || item.image || '/placeholder.png'" alt="" class="w-12 h-12 object-cover rounded mr-3" />
+            <div
+              v-for="item in cartItems"
+              :key="item.id"
+              class="flex items-center mb-2 border-b pb-2"
+            >
+              <img
+                :src="item.images?.[0] || item.image || '/placeholder.png'"
+                :alt="item.nom"
+                class="w-12 h-12 object-cover rounded mr-2"
+              />
               <div class="flex-1">
-                <p class="font-semibold">{{ item.nom }}</p>
-                <p>{{ item.prix }} € x {{ item.quantity }}</p>
+                <h3 class="font-semibold">{{ item.nom }}</h3>
+                <p>{{ item.prix }} €</p>
+                <input
+                  type="number"
+                  min="1"
+                  v-model.number="item.quantity"
+                  @change="updateQuantity(item)"
+                  class="border w-16 p-1 mt-1"
+                />
               </div>
-              <button @click="remove(item.id)" class="text-red-500 font-bold">❌</button>
+              <button
+                @click="remove(item.id)"
+                class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+              >❌</button>
             </div>
 
-            <div class="mt-2 font-bold text-lg">Total: {{ total }} €</div>
+            <!-- Total -->
+            <h3 class="text-lg font-bold mt-2">Total : {{ total }} €</h3>
 
             <!-- Choix paiement -->
-            <select v-model="paymentMethod" class="border p-2 rounded w-full mt-2">
-              <option value="stripe">💳 Carte bancaire (Stripe)</option>
-              <option value="paypal">🅿️ PayPal</option>
-            </select>
+            <div class="mt-2">
+              <select v-model="paymentMethod" class="border p-2 rounded w-full">
+                <option value="stripe">💳 Carte bancaire (Stripe)</option>
+                <option value="paypal">🅿️ PayPal</option>
+              </select>
+            </div>
 
             <!-- Bouton Stripe -->
-            <button v-if="paymentMethod==='stripe'" @click="payerStripe" class="bg-green-500 text-white w-full py-2 rounded mt-2 hover:bg-green-600">
-              💳 Payer avec Stripe
-            </button>
+            <button
+              v-if="paymentMethod === 'stripe'"
+              @click="payerStripe"
+              class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-2 w-full"
+            >💳 Payer avec Stripe</button>
 
-            <!-- Bouton PayPal -->
-            <div v-if="paymentMethod==='paypal'" class="mt-2">
+            <!-- Conteneur PayPal -->
+            <div v-if="paymentMethod === 'paypal'" class="mt-2">
               <div id="paypal-button-container"></div>
             </div>
+
           </div>
         </div>
       </div>
@@ -68,7 +96,12 @@
         </select>
 
         <!-- Champ de recherche -->
-        <input v-model="search" type="text" placeholder="Vous cherchez quoi ?..." class="flex-1 min-w-0 border rounded px-3 py-2"/>
+        <input
+          v-model="search"
+          type="text"
+          placeholder="Vous cherchez quoi ?..."
+          class="flex-1 min-w-0 border rounded px-3 py-2"
+        />
 
         <!-- Bouton recherche -->
         <button @click="rechercher" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 flex-shrink-0">
@@ -79,6 +112,7 @@
         <div class="ml-2 flex-shrink-0">
           <ThemeSwitcher />
         </div>
+
       </div>
     </div>
 
@@ -87,9 +121,11 @@
 
 <script>
 import { mapState, mapGetters } from "vuex";
+import { useRouter } from "vue-router";
 import ThemeSwitcher from './ThemeSwitcher.vue';
 
 export default {
+  name: "HeaderSearch",
   components: { ThemeSwitcher },
   data() {
     return {
@@ -102,69 +138,95 @@ export default {
   computed: {
     ...mapGetters(["cartItemCount"]),
     ...mapState(["cart", "user"]),
-    total() {
-      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0);
+    cartItems() { return this.cart; },
+    total() { return this.cart.reduce((sum, i) => sum + i.prix * i.quantity, 0); }
+  },
+  setup() { const router = useRouter(); return { router }; },
+  watch: {
+    paymentMethod(newMethod) {
+      if (newMethod === "paypal" && this.cartDropdownOpen) {
+        this.$nextTick(() => this.renderPaypalButton());
+      }
     }
   },
   methods: {
     toggleCartDropdown() {
       this.cartDropdownOpen = !this.cartDropdownOpen;
-      if(this.cartDropdownOpen && this.paymentMethod==='paypal'){
-        this.$nextTick(() => this.renderPaypalButton());
+      if (this.cartDropdownOpen && this.paymentMethod === "paypal") {
+        this.$nextTick(() => {
+          const container = document.getElementById("paypal-button-container");
+          if(container) container.innerHTML = "";
+          this.renderPaypalButton();
+        });
       }
     },
     remove(id) { this.$store.dispatch("removeItem", id); },
+    updateQuantity(item) { this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity }); },
+
+    // STRIPE
+    async payerStripe() {
+      if (!this.user) return alert("Connectez-vous d'abord");
+      if (!this.cart.length) return alert("Panier vide");
+
+      const items = this.cart.map(i => ({ id: i.id, nom: i.nom, prix: i.prix, quantity: i.quantity }));
+      try {
+        const res = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items, email: this.user.email })
+        });
+        const data = await res.json();
+        if(data.url) window.location.href = data.url;
+      } catch(err){ console.error(err); alert("Erreur Stripe : "+err.message); }
+    },
+
+    // PAYPAL
+    async loadPaypalScript() {
+      return new Promise((resolve, reject) => {
+        if(window.paypal) return resolve(window.paypal);
+        const script = document.createElement("script");
+        script.src = "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
+        script.onload = () => resolve(window.paypal);
+        script.onerror = reject;
+        document.body.appendChild(script);
+      });
+    },
+    async renderPaypalButton() {
+      if(!this.cart.length || !this.user) return;
+
+      const paypalSdk = await this.loadPaypalScript();
+      const items = this.cart.map(i => ({ id: i.id, nom: i.nom, prix: i.prix, quantity: i.quantity }));
+
+      paypalSdk.Buttons({
+        createOrder: (data, actions) => {
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ items, email: this.user.email })
+          })
+          .then(res => res.json())
+          .then(order => order.id);
+        },
+        onApprove: (data) => {
+          return fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body: JSON.stringify({ orderId: data.orderID, items, user: { email: this.user.email } })
+          })
+          .then(res => res.json())
+          .then(()=> { alert("Paiement PayPal réussi !"); this.$store.dispatch("clearCart"); });
+        },
+        onError: (err) => { console.error("PayPal error:", err); alert("Erreur PayPal : "+err.message); }
+      }).render("#paypal-button-container");
+    },
 
     // Recherche
-    rechercher() {
-      this.$router.push({ path:"/", query:{ search: this.search }});
-    },
-    filterCategorie() {
-      this.$router.push({ path:"/", query:{ categorie:this.categorie, search:this.search }});
-    },
-
-    // Stripe paiement
-    async payerStripe() {
-      if(!this.user){ alert("Veuillez vous connecter avant de payer"); this.$router.push("/login"); return; }
-      if(!this.cart.length){ alert("Panier vide"); return; }
-      const items = this.cart.map(p=>({ id:p.id, nom:p.nom, prix:p.prix, quantity:p.quantity, image:p.images?.[0]||p.image||'/placeholder.png' }));
-      const res = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",{
-        method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({items, email:this.user.email})
-      });
-      const data = await res.json();
-      if(data.url) window.location.href = data.url;
-    },
-
-    // PayPal paiement
-    async loadPaypalScript(){
-      return new Promise((resolve,reject)=>{
-        if(window.paypal) return resolve(window.paypal);
-        const s=document.createElement("script");
-        s.src="https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
-        s.onload=()=>resolve(window.paypal); s.onerror=reject; document.body.appendChild(s);
-      });
-    },
-    async renderPaypalButton(){
-      if(!this.user || !this.cart.length) return;
-      const paypalSdk = await this.loadPaypalScript();
-      const items = this.cart.map(p=>({ id:p.id, nom:p.nom, prix:p.prix, quantity:p.quantity }));
-      paypalSdk.Buttons({
-        createOrder:(data,actions)=>{
-          return fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",{
-            method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({items,email:this.user.email})
-          }).then(r=>r.json()).then(order=>order.id);
-        },
-        onApprove:(data)=>fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",{
-          method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({orderId:data.orderID,items,user:{email:this.user.email}})
-        }).then(r=>r.json()).then(()=>{ alert("Paiement PayPal réussi !"); this.$store.dispatch("clearCart"); }),
-        onError:(err)=>{ console.error("PayPal error:",err); alert("Erreur PayPal: "+err.message); }
-      }).render("#paypal-button-container");
-    }
+    rechercher() { this.router.push({ path:"/", query:{ search:this.search } }); },
+    filterCategorie() { this.router.push({ path:"/", query:{ categorie:this.categorie, search:this.search } }); }
   }
-}
+};
 </script>
 
 <style scoped>
-input{ min-width:0; }
-.flex-shrink-0{ flex-shrink:0; }
+input { min-width: 0; }
+.flex-shrink-0 { flex-shrink: 0; }
 </style>
