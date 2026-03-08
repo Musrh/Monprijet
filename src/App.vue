@@ -13,9 +13,7 @@
         <!-- Logout -->
         <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
 
-        <!-- Login -->
-        <router-link v-if="!isAuthenticated" to="/login" class="mobile-auth">Login</router-link>
-      </div>
+        </div>
     </div>
 
     <!-- Menu principal -->
