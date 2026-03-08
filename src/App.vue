@@ -1,4 +1,4 @@
-
+//App.vue R
 
 <template>
   <div class="min-h-screen bg-gray-100">
@@ -131,5 +131,3 @@ export default {
 
 
 
-
-          
