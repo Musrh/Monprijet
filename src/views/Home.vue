@@ -12,7 +12,7 @@
       <!-- Pub -->
       <div class="md:w-1/3 w-full">
         <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
-          <img src="@/assets/hero.png" alt="Logo EasyShoping" class="w-64 h-auto rounded shadow-md" />
+          <img src="./assets/hero.png" alt="Logo EasyShoping" class="w-64 h-auto rounded shadow-md" />
         </div>
       </div>
 
