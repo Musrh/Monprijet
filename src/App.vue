@@ -7,8 +7,10 @@
     <!-- Barre mobile : Login/Logout + Email -->
     <div class="md:hidden bg-gray-800 px-2 py-1 flex justify-between items-center text-white">
       <div class="flex items-center gap-1">
+       <!--
         <span v-if="isAuthenticated" class="mobile-email">{{ userEmail }}</span>
         <button v-if="isAuthenticated" @click="logout" class="mobile-auth logout">Logout</button>
+       -->
         <!-- Premier login supprimé -->
       </div>
     </div>
