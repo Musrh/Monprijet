@@ -12,7 +12,11 @@
       <!-- Pub -->
       <div class="md:w-1/3 w-full">
         <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
-          <img src="../assets/hero.png" alt="Logo EasyShoping" class="w-64 h-auto rounded shadow-md" />
+        <img
+      src="https://res.cloudinary.com/dla18l69k/image/upload/v1772751004/vivaunpzzxb8n1zbatyw.jpg"
+      alt="EasyShoping Image"
+      class="mx-auto rounded shadow-md max-w-full h-auto"
+    />
         </div>
       </div>
 
