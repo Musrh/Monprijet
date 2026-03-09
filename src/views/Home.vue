@@ -12,8 +12,7 @@
       <!-- Pub -->
       <div class="md:w-1/3 w-full">
         <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
-        <img
-      src="https://res.cloudinary.com/dla18l69k/image/upload/v1772751004/vivaunpzzxb8n1zbatyw.jpg"
+        <img src="https://res.cloudinary.com/dla18l69k/image/upload/v1773023706/rcvi8ukn3if9tycui13d.jpg"
       alt="EasyShoping Image"
       class="mx-auto rounded shadow-md max-w-full h-auto"
     />
