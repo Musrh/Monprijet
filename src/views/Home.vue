@@ -30,7 +30,7 @@
 
         
 <!-- Pub2 -->
-<div class="bg-yellow-200 flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
+<div class="bg-white-200 flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
   <img
     src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
     alt="EasyShopping Image"
