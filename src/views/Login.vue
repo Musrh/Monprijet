@@ -65,6 +65,13 @@
       >
         Login
       </button>
+
+<p class="mt-2">
+  Mot de passe oublié ? 
+  <router-link class="text-blue-500 underline" to="/password-reset">Cliquez ici</router-link>
+</p>
+
+      
     </div>
 
     <!-- Message info -->
