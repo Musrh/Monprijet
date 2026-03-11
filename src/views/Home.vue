@@ -35,7 +35,7 @@
             class="mx-auto rounded shadow-md max-w-full h-auto"
           />
         </div>
-      
+      </div>
 
     </section>
 
