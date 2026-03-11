@@ -45,8 +45,7 @@ const routes = [
   },
 {
   path: "/password-reset",
-  name: "PasswordReset",
-  component: PasswordReset.vue")
+  component: PasswordReset
 }
 
  
