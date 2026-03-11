@@ -16,7 +16,7 @@
       alt="EasyShoping Image"
       class="mx-auto rounded shadow-md max-w-full h-auto"
     />
-
+</div>
 <!-- Pub2 -->
       <div class="md:w-1/3 w-full">
         <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
@@ -24,9 +24,9 @@
       alt="EasyShoping Image"
       class="mx-auto rounded shadow-md max-w-full h-auto"
     />
-
+</div>
           
-        </div>
+       // </div>
       </div>
 
     </section>
