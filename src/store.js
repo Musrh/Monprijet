@@ -5,9 +5,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  sendEmailVerification
+  sendEmailVerification,
+  sendPasswordResetEmail
 } from "firebase/auth";
-
 import {
   doc,
   getDoc,
@@ -36,10 +36,8 @@ export default createStore({
     isAdmin: state => state.user?.role === "admin",
     userEmail: state => state.user?.email || "",
     isActive: state => state.user?.isActive,
-
     cartItemCount: state =>
       state.cart.reduce((total, item) => total + item.quantity, 0),
-
     cartTotal: state =>
       state.cart.reduce((total, item) => total + item.prix * item.quantity, 0)
   },
@@ -48,24 +46,18 @@ export default createStore({
     SET_USER(state, user) {
       state.user = user;
     },
-
     ADD_TO_CART(state, produit) {
       const existing = state.cart.find(p => p.id === produit.id);
-
       if (existing) existing.quantity++;
       else state.cart.push({ ...produit, quantity: 1 });
     },
-
     REMOVE_ITEM(state, id) {
       state.cart = state.cart.filter(p => p.id !== id);
     },
-
     SET_QUANTITY(state, { id, quantity }) {
       const item = state.cart.find(p => p.id === id);
-
       if (item && quantity > 0) item.quantity = quantity;
     },
-
     CLEAR_CART(state) {
       state.cart = [];
     }
@@ -76,70 +68,46 @@ export default createStore({
     // 🔥 INITIALISATION
     initAuth({ commit }) {
       return new Promise(resolve => {
-
         onAuthStateChanged(auth, async user => {
-
           if (user) {
-
             const snap = await getDoc(doc(db, "users", user.uid));
-
             if (snap.exists()) {
-
               const data = snap.data();
-
               commit("SET_USER", {
                 uid: user.uid,
                 email: data.email,
                 role: data.role.trim(),
                 isActive: data.isActive
               });
-
             }
-
           } else {
             commit("SET_USER", null);
           }
-
           resolve();
-
         });
-
       });
     },
 
-
     // 🔐 LOGIN
     async login({ commit }, { email, password }) {
-
-      const userCredential =
-        await signInWithEmailAndPassword(auth, email, password);
-
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       // 🔎 vérifier email
       await user.reload();
-
       if (!user.emailVerified) {
-
         await signOut(auth);
-
         throw new Error("Veuillez vérifier votre email avant de vous connecter");
-
       }
 
       const snap = await getDoc(doc(db, "users", user.uid));
-
       if (snap.exists()) {
-
         const data = snap.data();
 
         // 🔒 compte désactivé
         if (!data.isActive) {
-
           await signOut(auth);
-
           throw new Error("Compte désactivé");
-
         }
 
         commit("SET_USER", {
@@ -148,18 +116,12 @@ export default createStore({
           role: data.role.trim(),
           isActive: data.isActive
         });
-
       }
-
     },
-
 
     // 📝 REGISTER
     async register({ commit }, { email, password }) {
-
-      const userCredential =
-        await createUserWithEmailAndPassword(auth, email, password);
-
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       const uid = user.uid;
@@ -169,53 +131,43 @@ export default createStore({
 
       // 🔥 créer document Firestore
       await setDoc(doc(db, "users", uid), {
-
         email: email,
         role: "user",
         isActive: true,
         createdAt: serverTimestamp()
-
       });
 
-      // ❗ on ne connecte pas l'utilisateur
+      // ❗ Déconnecter l'utilisateur après l'inscription
       await signOut(auth);
-
     },
 
+    // 🔑 RESET MOT DE PASSE
+    async resetPassword(_, email) {
+      try {
+        await sendPasswordResetEmail(auth, email);
+      } catch (error) {
+        throw new Error(error.message);
+      }
+    },
 
     // 🚪 LOGOUT
     async logout({ commit }) {
-
       await signOut(auth);
-
       commit("SET_USER", null);
-
     },
-
 
     // 🛒 PANIER
     addToCart({ commit }, produit) {
-
       commit("ADD_TO_CART", produit);
-
     },
-
     removeItem({ commit }, id) {
-
       commit("REMOVE_ITEM", id);
-
     },
-
     updateQuantity({ commit }, payload) {
-
       commit("SET_QUANTITY", payload);
-
     },
-
     clearCart({ commit }) {
-
       commit("CLEAR_CART");
-
     }
 
   }
