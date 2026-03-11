@@ -11,6 +11,8 @@ import AdminCommandes from "./views/AdminCommandes.vue";
 import Upload from "./views/Upload.vue";
 import AdminProduits from "./views/AdminProduits.vue";
 import Minishop from "./views/Minishop.vue";
+import PasswordReset from "./views/PasswordReset.vue";
+
 
 const routes = [
   { path: "/", component: Home },
@@ -40,7 +42,14 @@ const routes = [
     path: "/adminproduits",
     component: AdminProduits,
     meta: { requiresAdmin: true }
-  }
+  },
+{
+  path: "/password-reset",
+  name: "PasswordReset",
+  component: PasswordReset.vue")
+}
+
+ 
 ];
 
 const router = createRouter({
