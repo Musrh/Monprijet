@@ -27,7 +27,7 @@
         </div>
 
         <!-- Pub2 -->
-        <div class="h-64 bg-yellow-200 flex items-center justify-center rounded shadow-md overflow-hidden">
+        <div class="h-96 bg-yellow-200 flex items-center justify-center rounded shadow-md overflow-hidden">
           <img
             src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
             alt="EasyShopping Image"
