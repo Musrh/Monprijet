@@ -9,13 +9,23 @@
         <SliderProducts :produits="produitsPromos" />
       </div>
 
-      <!-- Pub -->
+      <!-- Pub1 -->
       <div class="md:w-1/3 w-full">
         <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
         <img src="https://res.cloudinary.com/dla18l69k/image/upload/v1773023706/rcvi8ukn3if9tycui13d.jpg"
       alt="EasyShoping Image"
       class="mx-auto rounded shadow-md max-w-full h-auto"
     />
+
+<!-- Pub2 -->
+      <div class="md:w-1/3 w-full">
+        <div class="h-full min-h-[320px] bg-yellow-200 flex items-center justify-center">
+        <img src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
+      alt="EasyShoping Image"
+      class="mx-auto rounded shadow-md max-w-full h-auto"
+    />
+
+          
         </div>
       </div>
 
@@ -57,6 +67,8 @@
               :src="produit.images[0]"
               class="h-40 w-full object-cover rounded mb-3"
             />
+
+            
 
             <!-- Nom -->
             <h3 class="font-bold text-lg">
