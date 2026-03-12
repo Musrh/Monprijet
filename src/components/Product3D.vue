@@ -1,31 +1,40 @@
 <template>
-  <div class="p-4 max-w-md mx-auto bg-white rounded-lg shadow-lg">
-    <h2 class="text-xl font-bold mb-2">{{ product.nom }}</h2>
-    <p class="text-gray-700 mb-4">Prix : €{{ product.prix }}</p>
+  <div class="p-4 max-w-md mx-auto bg-white rounded-lg shadow-md">
+    <h2 class="text-2xl font-bold mb-2">{{ product.nom }}</h2>
+
+    <!-- Image classique -->
+    <img
+      v-if="product.image"
+      :src="product.image"
+      :alt="product.nom"
+      class="w-full h-64 object-contain mb-4 rounded-lg"
+    />
 
     <!-- Modèle 3D -->
     <model-viewer
+      v-if="product.modelUrl"
       :src="product.modelUrl"
-      alt="Produit 3D"
+      alt="Modèle 3D du produit"
       auto-rotate
       camera-controls
       ar
       ar-modes="webxr scene-viewer quick-look"
       shadow-intensity="1"
-      class="w-full h-[400px] mb-4 bg-gray-200 rounded-lg"
+      class="w-full h-[400px] bg-gray-200 rounded-lg mb-4"
     ></model-viewer>
 
-    <!-- Boutons -->
-    <div class="flex justify-between">
+    <p class="text-xl font-semibold mb-4">{{ product.prix }} €</p>
+
+    <div class="flex gap-2">
       <button
         @click="addToCart(product)"
-        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+        class="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
       >
         Ajouter au panier
       </button>
       <button
-        @click="checkout(product)"
-        class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+        @click="buyNow(product)"
+        class="flex-1 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition"
       >
         Acheter maintenant
       </button>
@@ -36,23 +45,15 @@
 <script>
 export default {
   name: "Product3D",
-  data() {
-    return {
-      product: {
-        nom: "Astronaute 3D",
-        prix: 49.99,
-        modelUrl: "/models/Astronaut.glb", // chemin dans public/
-      },
-    };
-  },
+  props: { product: Object },
   methods: {
     addToCart(product) {
-      console.log("Produit ajouté au panier:", product.nom);
-      // Ici tu peux appeler ton store Vuex pour gérer le panier
+      alert(`${product.nom} ajouté au panier !`);
+      // ici tu peux faire store.dispatch("addToCart", product)
     },
-    async checkout(product) {
-      console.log("Checkout Stripe ou PayPal pour:", product.nom);
-      // Ici tu peux appeler ton backend pour créer une session Stripe ou PayPal
+    buyNow(product) {
+      alert(`Achat immédiat de ${product.nom}`);
+      // ici tu peux lancer Stripe/PayPal
     },
   },
 };
