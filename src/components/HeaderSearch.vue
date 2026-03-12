@@ -4,7 +4,7 @@
     <!-- Logo + ThemeSwitcher -->
     <div class="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
       <div class="flex items-center gap-3">
-        <img src="../assets/hero.png" alt="logo" class="h-10" />
+        <img src="../assets/logowell.png" alt="logo" class="h-10" />
         <span class="font-bold text-lg">EasyShoping</span>
       </div>
 
