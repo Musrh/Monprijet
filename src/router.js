@@ -13,6 +13,7 @@ import AdminProduits from "./views/AdminProduits.vue";
 import Minishop from "./views/Minishop.vue";
 import PasswordReset from "./views/PasswordReset.vue";
 
+import Test3D from "./views/Test3D.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -22,6 +23,12 @@ const routes = [
   { path: "/contact", component: Contact },
   { path: "/success", component: Success },
   { path: "/minishop", component: Minishop },
+
+  {
+  path: "/test3d",
+  name: "test3d",
+  component: Test3D
+  },
 
   {
     path: "/admin",
