@@ -10,11 +10,11 @@
       ar
       ar-modes="webxr scene-viewer quick-look"
       shadow-intensity="1"
-      class="w-full h-[500px] bg-gray-200 rounded-lg"
+      class="w-full h-[50vh] sm:h-[500px] bg-gray-200 rounded-lg"
     >
     </model-viewer>
 
-    <p class="mt-4 text-gray-600">
+    <p class="mt-4 text-gray-600 text-sm sm:text-base">
       Utilisez votre souris ou vos doigts pour faire pivoter et zoomer sur le modèle.
     </p>
   </div>
@@ -27,8 +27,16 @@ export default {
 </script>
 
 <style scoped>
-/* Optionnel : ajoute une ombre autour du modèle */
+/* Ombre et léger effet sur le modèle */
 model-viewer {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+}
+
+/* Pour s'assurer que ça reste responsive sur mobile */
+@media (max-width: 640px) {
+  model-viewer {
+    height: 60vh;
+  }
 }
 </style>
