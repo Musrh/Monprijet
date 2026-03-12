@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import Product3D from "@/components/Product3D.vue";
+import Product3D from "../components/Product3D.vue";
 
 export default {
   components: { Product3D },
