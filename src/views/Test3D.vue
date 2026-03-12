@@ -3,7 +3,7 @@
     <h2 class="text-2xl font-bold mb-4">🚀 Produit en 3D</h2>
 
     <model-viewer
-      src="/models/astronaut.glb"
+      src="/models/Astronaut.glb"
       alt="Astronaute 3D"
       auto-rotate
       camera-controls
