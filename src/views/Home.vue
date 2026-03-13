@@ -34,16 +34,15 @@
             class="mx-auto rounded shadow-md h-full w-auto"
           />
         </div>
-        
       </div>
 
     </section>
 
     <!-- Résultats filtrés -->
-    <section class="mt-1 w-full">
+    <section class="w-full mt-0">
       <div v-if="hasFilter">
 
-        <h2 class="text-xl font-bold mb-4">Résultats filtrés</h2>
+        <h2 class="text-xl font-bold mb-1">Résultats filtrés</h2>
 
         <!-- Aucun résultat -->
         <div v-if="filteredProducts.length === 0">
@@ -57,23 +56,23 @@
         </div>
 
         <!-- Résultats -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
           <div
             v-for="produit in filteredProducts"
             :key="produit.id"
             class="border rounded-lg p-4 bg-white shadow flex flex-col"
           >
             <!-- Image -->
-            <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-3" />
+            <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-2" />
 
             <!-- Nom -->
             <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
 
             <!-- Description -->
-            <p class="text-gray-600 text-sm mb-2">{{ produit.description }}</p>
+            <p class="text-gray-600 text-sm mb-1">{{ produit.description }}</p>
 
             <!-- Prix -->
-            <p class="text-green-600 font-bold text-lg mb-3">{{ produit.prix }} $</p>
+            <p class="text-green-600 font-bold text-lg mb-2">{{ produit.prix }} $</p>
 
             <!-- Bouton panier -->
             <button
@@ -160,8 +159,8 @@ export default {
 </script>
 
 <style scoped>
-/* réduire l'espace vertical entre sections */
+/* Supprime tout espace vertical entre sections */
 section + section {
-  margin-top: 0.25rem;
+  margin-top: 0;
 }
 </style>
