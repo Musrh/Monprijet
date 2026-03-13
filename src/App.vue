@@ -17,8 +17,7 @@
 
     <!-- Menu principal -->
 
-    <nav class="px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto" 
-     style="background-color: #fcd34d;">
+    <nav class="bg-gray-800 px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto">
 
       
       <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
