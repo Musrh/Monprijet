@@ -12,7 +12,7 @@
 
     <!-- Bouton pour passer en 3D -->
     <button
-      v-if="!show3D && product.modelUrl"
+      v-if="product.modelUrl"
       @click="show3D = true"
       class="mb-4 bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition"
     >
@@ -21,7 +21,7 @@
 
     <!-- Modèle 3D -->
     <model-viewer
-      v-if="show3D && product.modelUrl"
+      v-show="show3D && product.modelUrl"
       :src="product.modelUrl"
       alt="Modèle 3D du produit"
       auto-rotate
@@ -51,7 +51,7 @@ export default {
   props: { product: Object },
   data() {
     return {
-      show3D: false, // contrôle l'affichage 3D
+      show3D: false,
     };
   },
   methods: {
@@ -62,7 +62,6 @@ export default {
 </script>
 
 <style scoped>
-/* Pour les gestes tactiles sur mobile */
 model-viewer {
   touch-action: pan-x pan-y;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
