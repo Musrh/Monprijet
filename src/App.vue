@@ -16,7 +16,11 @@
     </div>
 
     <!-- Menu principal -->
-    <nav class="bg-gray-800 px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto">
+
+    <nav class="px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto" 
+     style="background-color: #fcd34d;">
+
+      
       <router-link @click="closeMenu" to="/" class="menu-btn">Home</router-link>
       <router-link @click="closeMenu" to="/minishop" class="menu-btn">Minishop</router-link>
       <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
