@@ -45,6 +45,10 @@
 
     <!-- Contenu principal -->
     <router-view />
+    
+<!-- Footer visible sur toutes les pages -->
+    <Footer />
+    
   </div>
 </template>
 
