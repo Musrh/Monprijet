@@ -52,6 +52,8 @@
 import { mapGetters } from "vuex";
 import HeaderSearch from "./components/HeaderSearch.vue";
 
+import Footer from "./components/Footer.vue";
+  
 export default {
   components: { HeaderSearch },
   computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
