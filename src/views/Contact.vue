@@ -60,6 +60,9 @@
 </template>
 
 <script>
+import { db } from "../firebase"
+import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+
 export default {
   data() {
     return {
@@ -70,11 +73,37 @@ export default {
       }
     };
   },
+
   methods: {
-    sendMessage() {
-      alert("Message envoyé !");
-      this.form = { name: "", email: "", message: "" };
+
+    async sendMessage() {
+
+      try {
+
+        await addDoc(collection(db, "contacts"), {
+          name: this.form.name,
+          email: this.form.email,
+          message: this.form.message,
+          createdAt: serverTimestamp()
+        })
+
+        alert("Message envoyé avec succès !")
+
+        this.form = {
+          name: "",
+          email: "",
+          message: ""
+        }
+
+      } catch (error) {
+
+        console.error("Erreur Firestore:", error)
+        alert("Erreur lors de l'envoi du message")
+
+      }
+
     }
+
   }
-};
+}
 </script>
