@@ -5,35 +5,52 @@
     <HeaderSearch />
 
     <!-- Barre mobile : Login/Logout + Email -->
-    <div class="md:hidden px-2 py-1 flex justify-between items-center text-black bg-white/90">
+    <div class="md:hidden bg-yellow-200 px-2 py-1 flex justify-between items-center text-black">
       <div class="flex items-center gap-1">
-        <!-- Placeholders pour login/email mobile si nécessaire -->
+        <!-- Login/Logout supprimé ici -->
       </div>
     </div>
 
     <!-- Menu principal -->
-    <nav class="px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto" 
-         style="background-color: rgba(255,255,255,0.9);">
-      <router-link @click="closeMenu" to="/" class="menu-btn">Accueil</router-link>
-      <router-link @click="closeMenu" to="/contact" class="menu-btn">Contact</router-link>
+    <nav class="bg-yellow-100 px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto">
+      <router-link 
+        @click="closeMenu" 
+        to="/" 
+        class="menu-btn" 
+        :class="{ 'active-link': $route.path === '/' }"
+      >
+        Home
+      </router-link>
+
+      <router-link 
+        @click="closeMenu" 
+        to="/contact" 
+        class="menu-btn" 
+        :class="{ 'active-link': $route.path === '/contact' }"
+      >
+        Contact
+      </router-link>
 
       <!-- Admin menu visible uniquement si admin -->
       <div v-if="isAdmin" class="flex gap-1">
-        <router-link @click="closeMenu" to="/admin" class="menu-btn">Admin</router-link>
-        <router-link @click="closeMenu" to="/adminproduits" class="menu-btn">Admin-Produits</router-link>
-        <router-link @click="closeMenu" to="/admin-commandes" class="menu-btn">Admin-Commandes</router-link>
-        <router-link @click="closeMenu" to="/upload" class="menu-btn">UploadProduit</router-link>
+        <router-link @click="closeMenu" to="/admin" class="menu-btn" :class="{ 'active-link': $route.path === '/admin' }">Admin</router-link>
+        <router-link @click="closeMenu" to="/adminproduits" class="menu-btn" :class="{ 'active-link': $route.path === '/adminproduits' }">Admin-Produits</router-link>
+        <router-link @click="closeMenu" to="/admin-commandes" class="menu-btn" :class="{ 'active-link': $route.path === '/admin-commandes' }">Admin-Commandes</router-link>
+        <router-link @click="closeMenu" to="/upload" class="menu-btn" :class="{ 'active-link': $route.path === '/upload' }">UploadProduit</router-link>
       </div>
 
       <!-- Panier -->
-      <router-link @click="closeMenu" to="/panier" class="menu-btn relative">
+      <router-link 
+        @click="closeMenu" 
+        to="/panier" 
+        class="menu-btn relative" 
+        :class="{ 'active-link': $route.path === '/panier' }"
+      >
         🛒
-        <span v-if="cartItemCount > 0" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-          {{ cartItemCount }}
-        </span>
+        <span v-if="cartItemCount > 0" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{{ cartItemCount }}</span>
       </router-link>
 
-      <!-- Login/Logout desktop et mobile -->
+      <!-- Login/Logout desktop -->
       <router-link v-if="!isAuthenticated" @click="closeMenu" to="/login" class="menu-btn md:block">Login</router-link>
       <template v-if="isAuthenticated">
         <span class="user-badge md:block">{{ userEmail }}</span>
@@ -57,7 +74,11 @@ import Footer from "./components/Footer.vue";
 
 export default {
   components: { HeaderSearch, Footer },
-  computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
+
+  computed: { 
+    ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) 
+  },
+  
   methods: {
     closeMenu() {},
     logout() { 
@@ -69,9 +90,10 @@ export default {
 </script>
 
 <style scoped>
-.menu-btn {
-  background-color: #ffffff; /* bouton blanc */
-  color: #000000;            /* texte noir */
+/* Menu principal */
+.menu-btn{
+  background-color: #ffffff;  /* fond blanc */
+  color: #dc2626;            /* texte rouge */
   padding: 5px 8px;
   border-radius: 10px;
   font-size: 16px;
@@ -80,41 +102,41 @@ export default {
   justify-content: center;
   width: auto;
   white-space: nowrap;
+  text-decoration: none;
 }
+
+/* Hover */
 .menu-btn:hover { 
   background-color: #f3f4f6; /* gris clair au hover */
-  transform: translateY(-1px); 
+  color: #b91c1c;             /* rouge foncé au hover */
+  transform: translateY(-1px);
 }
 
-.user-badge { 
-  background: #22c55e; 
-  color: #fff; 
-  padding: 3px 5px; 
-  border-radius: 6px; 
-  font-size: 12px; 
+/* Lien actif (après clic) */
+.active-link {
+  color: #16a34a !important; /* vert pour le lien actif */
+  font-weight: 600;
 }
-.logout-btn { 
-  background: #ef4444; 
-  color: #fff; 
-  padding: 3px 5px; 
-  border-radius: 6px; 
-  font-size: 13px; 
-}
-.logout-btn:hover { background: #dc2626; }
 
-.mobile-auth { background: #16a34a; padding: 3px 5px; border-radius: 6px; font-size: 13px; }
-.mobile-auth.logout { background: #ef4444; }
-.mobile-email { background: #22c55e; padding: 2px 4px; border-radius: 6px; font-size: 12px; color: #fff; }
+/* Badges utilisateur et logout */
+.user-badge{ background:#22c55e; color:#fff; padding:3px 5px; border-radius:6px; font-size:12px; }
+.logout-btn{ background:#ef4444; color:#fff; padding:3px 5px; border-radius:6px; font-size:13px; }
+.logout-btn:hover{ background:#dc2626; }
 
+.mobile-auth{ background:#16a34a; padding:3px 5px; border-radius:6px; font-size:13px; }
+.mobile-auth.logout{ background:#ef4444; }
+.mobile-email{ background:#22c55e; padding:2px 4px; border-radius:6px; font-size:12px; color:#fff; }
+
+/* Responsive mobile */
 @media (max-width: 768px){
-  nav {
+  nav{
     flex-wrap: nowrap;
   }
-  .menu-btn {
-    font-size: 13px;
-    padding: 4px 6px;
+  .menu-btn{
+    font-size:13px;
+    padding:4px 6px;
   }
-  .user-badge { padding: 2px 4px; font-size: 11px; }
-  .logout-btn { padding: 2px 4px; font-size: 12px; }
+  .user-badge{ padding:2px 4px; font-size:11px; }
+  .logout-btn{ padding:2px 4px; font-size:12px; }
 }
 </style>
