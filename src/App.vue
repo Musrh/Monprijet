@@ -59,7 +59,8 @@ import HeaderSearch from "./components/HeaderSearch.vue";
 import Footer from "./components/Footer.vue";
   
 export default {
-  components: { HeaderSearch },
+  components: { HeaderSearch, Footer },
+  
   computed: { ...mapGetters(["isAuthenticated", "userEmail", "isAdmin", "cartItemCount"]) },
   methods: {
     closeMenu() {},
