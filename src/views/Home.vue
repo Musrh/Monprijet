@@ -27,23 +27,20 @@
         </div>
 
         <!-- Pub2 -->
-
-        
-<!-- Pub2 -->
-<div class="bg-white-200 flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
-  <img
-    src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
-    alt="EasyShopping Image"
-    class="mx-auto rounded shadow-md h-full w-auto"
-  />
-</div>
+        <div class="bg-white flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
+          <img
+            src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
+            alt="EasyShopping Image"
+            class="mx-auto rounded shadow-md h-full w-auto"
+          />
+        </div>
         
       </div>
 
     </section>
 
     <!-- Résultats filtrés -->
-    <section class="mt-6 w-full">
+    <section class="mt-1 w-full">
       <div v-if="hasFilter">
 
         <h2 class="text-xl font-bold mb-4">Résultats filtrés</h2>
@@ -163,8 +160,8 @@ export default {
 </script>
 
 <style scoped>
-/* espace vertical léger entre sections */
+/* réduire l'espace vertical entre sections */
 section + section {
-  margin-top: 1rem;
+  margin-top: 0.25rem;
 }
 </style>
