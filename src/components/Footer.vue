@@ -1,6 +1,6 @@
 <!-- Footer.vue -->
 <template>
-  <footer class="bg-white text-center py-4 text-sm">
+  <footer class="bg-white text-left py-4 text-sm">
     <p>
       © 2026 WellShoppings •
       <router-link 
