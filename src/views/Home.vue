@@ -5,7 +5,7 @@
     <section class="flex flex-col md:flex-row w-full gap-4">
 
       <!-- Gauche : Slider et Vitrine -->
-      <div class="md:w-2/3 w-full flex flex-col gap-4">
+      <div class="md:w-2/3 w-full flex flex-col gap-0">
         <!-- Slider -->
         <SliderProducts :produits="produitsPromos" />
 
@@ -56,23 +56,23 @@
         </div>
 
         <!-- Résultats -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-0">
           <div
             v-for="produit in filteredProducts"
             :key="produit.id"
             class="border rounded-lg p-4 bg-white shadow flex flex-col"
           >
             <!-- Image -->
-            <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-2" />
+            <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-1" />
 
             <!-- Nom -->
-            <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
+            <h3 class="font-bold text-lg mb-1">{{ produit.nom }}</h3>
 
             <!-- Description -->
             <p class="text-gray-600 text-sm mb-1">{{ produit.description }}</p>
 
             <!-- Prix -->
-            <p class="text-green-600 font-bold text-lg mb-2">{{ produit.prix }} $</p>
+            <p class="text-green-600 font-bold text-lg mb-1">{{ produit.prix }} $</p>
 
             <!-- Bouton panier -->
             <button
@@ -159,8 +159,16 @@ export default {
 </script>
 
 <style scoped>
-/* Supprime tout espace vertical entre sections */
+/* Supprime tout margin-top entre sections */
 section + section {
   margin-top: 0;
+}
+
+/* Supprime gap dans colonnes et grille pour coller slider et résultats */
+.md\\:flex-col > * {
+  gap: 0 !important;
+}
+.grid {
+  gap: 0 !important;
 }
 </style>
