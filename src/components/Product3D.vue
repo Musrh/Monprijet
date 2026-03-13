@@ -4,15 +4,24 @@
 
     <!-- Image classique -->
     <img
-      v-if="product.image"
+      v-if="!show3D && product.image"
       :src="product.image"
       :alt="product.nom"
       class="w-full h-64 object-contain mb-4 rounded-lg"
     />
 
+    <!-- Bouton pour passer en 3D -->
+    <button
+      v-if="!show3D && product.modelUrl"
+      @click="show3D = true"
+      class="mb-4 bg-indigo-600 text-white py-2 px-4 rounded hover:bg-indigo-700 transition"
+    >
+      Voir en 3D
+    </button>
+
     <!-- Modèle 3D -->
     <model-viewer
-      v-if="product.modelUrl"
+      v-if="show3D && product.modelUrl"
       :src="product.modelUrl"
       alt="Modèle 3D du produit"
       auto-rotate
@@ -26,16 +35,10 @@
     <p class="text-xl font-semibold mb-4">{{ product.prix }} €</p>
 
     <div class="flex gap-2">
-      <button
-        @click="addToCart(product)"
-        class="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition"
-      >
+      <button @click="addToCart(product)" class="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition">
         Ajouter au panier
       </button>
-      <button
-        @click="buyNow(product)"
-        class="flex-1 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition"
-      >
+      <button @click="buyNow(product)" class="flex-1 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition">
         Acheter maintenant
       </button>
     </div>
@@ -46,21 +49,22 @@
 export default {
   name: "Product3D",
   props: { product: Object },
+  data() {
+    return {
+      show3D: false, // contrôle l'affichage 3D
+    };
+  },
   methods: {
-    addToCart(product) {
-      alert(`${product.nom} ajouté au panier !`);
-      // ici tu peux faire store.dispatch("addToCart", product)
-    },
-    buyNow(product) {
-      alert(`Achat immédiat de ${product.nom}`);
-      // ici tu peux lancer Stripe/PayPal
-    },
+    addToCart(product) { alert(`${product.nom} ajouté au panier !`); },
+    buyNow(product) { alert(`Achat immédiat de ${product.nom}`); },
   },
 };
 </script>
 
 <style scoped>
+/* Pour les gestes tactiles sur mobile */
 model-viewer {
+  touch-action: pan-x pan-y;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
 }
 </style>
