@@ -73,27 +73,66 @@ export default {
 </script>
 
 <style scoped>
+/* Boutons du menu principal */
 .menu-btn{
-  background:#16a34a;
-  color:#fff;
-  padding:5px 8px;
-  border-radius:10px;
-  font-size:16px;
-  transition:all 0.2s;
-  display:inline-flex;
-  justify-content:center;
-  width:auto;
-  white-space:nowrap;
+  background: #ffffff;           /* blanc */
+  color: #16a34a;                /* texte vert */
+  padding: 5px 8px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: inline-flex;
+  justify-content: center;
+  width: auto;
+  white-space: nowrap;
+  border: 1px solid #16a34a;    /* bordure verte */
 }
-.menu-btn:hover{ background:#15803d; transform:translateY(-1px); }
 
-.user-badge{ background:#22c55e; color:#fff; padding:3px 5px; border-radius:6px; font-size:12px; }
-.logout-btn{ background:#ef4444; color:#fff; padding:3px 5px; border-radius:6px; font-size:13px; }
-.logout-btn:hover{ background:#dc2626; }
+.menu-btn:hover{
+  background: #16a34a;           /* fond vert au survol */
+  color: #ffffff;                /* texte blanc au survol */
+  transform: translateY(-1px);
+}
 
-.mobile-auth{ background:#16a34a; padding:3px 5px; border-radius:6px; font-size:13px; }
-.mobile-auth.logout{ background:#ef4444; }
-.mobile-email{ background:#22c55e; padding:2px 4px; border-radius:6px; font-size:12px; color:#fff; }
+/* Badge utilisateur */
+.user-badge{ 
+  background:#22c55e; 
+  color:#fff; 
+  padding:3px 5px; 
+  border-radius:6px; 
+  font-size:12px; 
+}
+
+/* Boutons logout */
+.logout-btn{ 
+  background:#ef4444; 
+  color:#fff; 
+  padding:3px 5px; 
+  border-radius:6px; 
+  font-size:13px; 
+}
+.logout-btn:hover{ 
+  background:#dc2626; 
+}
+
+/* Auth mobile */
+.mobile-auth{ 
+  background:#16a34a; 
+  padding:3px 5px; 
+  border-radius:6px; 
+  font-size:13px; 
+}
+.mobile-auth.logout{ 
+  background:#ef4444; 
+}
+.mobile-email{ 
+  background:#22c55e; 
+  padding:2px 4px; 
+  border-radius:6px; 
+  font-size:12px; 
+  color:#fff; 
+}
 
 @media (max-width: 768px){
   nav{
