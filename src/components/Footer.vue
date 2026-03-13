@@ -1,10 +1,22 @@
 <!-- Footer.vue -->
 <template>
-  <footer class="py-4 text-center text-sm" style="background-color: #fcd34d;">
+  <footer class="bg-white text-center py-4 text-sm">
     <p>
       © 2026 WellShoppings •
-      <a href="https://wellshoppings.com/#/" class="footer-link">Accueil</a> •
-      <a href="https://wellshoppings.com/#/conditions" class="footer-link">Conditions de Vente</a>
+      <router-link 
+        to="/" 
+        class="footer-link" 
+        :class="{ active: $route.path === '/' }"
+      >
+        Accueil
+      </router-link> •
+      <router-link 
+        to="/conditions" 
+        class="footer-link" 
+        :class="{ active: $route.path === '/conditions' }"
+      >
+        Conditions de Vente
+      </router-link>
     </p>
   </footer>
 </template>
@@ -16,14 +28,21 @@ export default {
 </script>
 
 <style scoped>
+/* Liens du footer */
 .footer-link {
-  color: #fff;           /* texte en blanc */
-  font-weight: 600;
-  margin: 0 4px;
+  color: #dc2626; /* rouge */
   text-decoration: none;
+  transition: color 0.2s;
 }
+
+/* Hover */
 .footer-link:hover {
-  color: #d1d5db;        /* gris clair au survol */
-  text-decoration: underline;
+  color: #b91c1c; /* rouge foncé */
+}
+
+/* Lien actif = page courante */
+.footer-link.active {
+  color: #16a34a; /* vert */
+  font-weight: bold;
 }
 </style>
