@@ -1,16 +1,16 @@
 <template>
   <div class="w-full px-4">
 
-    <!-- Section principale : Slider + Pubs -->
-    <section class="flex flex-col md:flex-row w-full gap-4">
+    <!-- Section principale : Slider + Pubs (affiché uniquement si pas de filtre) -->
+    <section v-if="!hasFilter" class="flex flex-col md:flex-row w-full gap-4">
 
       <!-- Gauche : Slider et Vitrine -->
-      <div class="md:w-2/3 w-full flex flex-col gap-0">
+      <div class="md:w-2/3 w-full flex flex-col gap-4">
         <!-- Slider -->
         <SliderProducts :produits="produitsPromos" />
 
-        <!-- Vitrine normale (si pas de filtre) -->
-        <div v-if="!hasFilter">
+        <!-- Vitrine normale -->
+        <div>
           <Vitrine />
         </div>
       </div>
@@ -27,7 +27,7 @@
         </div>
 
         <!-- Pub2 -->
-        <div class="bg-white flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
+        <div class="bg-white-200 flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
           <img
             src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
             alt="EasyShopping Image"
@@ -39,52 +39,50 @@
     </section>
 
     <!-- Résultats filtrés -->
-    <section class="w-full mt-0">
-      <div v-if="hasFilter">
+    <section v-if="hasFilter" class="w-full mt-0">
 
-        <h2 class="text-xl font-bold mb-1">Résultats filtrés</h2>
+      <h2 class="text-xl font-bold mb-2">Résultats filtrés</h2>
 
-        <!-- Aucun résultat -->
-        <div v-if="filteredProducts.length === 0">
-          <p>Aucun produit ne correspond à votre recherche.</p>
+      <!-- Aucun résultat -->
+      <div v-if="filteredProducts.length === 0">
+        <p>Aucun produit ne correspond à votre recherche.</p>
+        <button
+          @click="clearFilter"
+          class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Retour à l'accueil
+        </button>
+      </div>
+
+      <!-- Résultats -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div
+          v-for="produit in filteredProducts"
+          :key="produit.id"
+          class="border rounded-lg p-4 bg-white shadow flex flex-col"
+        >
+          <!-- Image -->
+          <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-3" />
+
+          <!-- Nom -->
+          <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
+
+          <!-- Description -->
+          <p class="text-gray-600 text-sm mb-2">{{ produit.description }}</p>
+
+          <!-- Prix -->
+          <p class="text-green-600 font-bold text-lg mb-3">{{ produit.prix }} $</p>
+
+          <!-- Bouton panier -->
           <button
-            @click="clearFilter"
-            class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            @click="addToCart(produit)"
+            class="mt-auto bg-green-600 text-white py-2 rounded hover:bg-green-700"
           >
-            Retour à l'accueil
+            Ajouter au panier
           </button>
         </div>
-
-        <!-- Résultats -->
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-0">
-          <div
-            v-for="produit in filteredProducts"
-            :key="produit.id"
-            class="border rounded-lg p-4 bg-white shadow flex flex-col"
-          >
-            <!-- Image -->
-            <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-1" />
-
-            <!-- Nom -->
-            <h3 class="font-bold text-lg mb-1">{{ produit.nom }}</h3>
-
-            <!-- Description -->
-            <p class="text-gray-600 text-sm mb-1">{{ produit.description }}</p>
-
-            <!-- Prix -->
-            <p class="text-green-600 font-bold text-lg mb-1">{{ produit.prix }} $</p>
-
-            <!-- Bouton panier -->
-            <button
-              @click="addToCart(produit)"
-              class="mt-auto bg-green-600 text-white py-2 rounded hover:bg-green-700"
-            >
-              Ajouter au panier
-            </button>
-          </div>
-        </div>
-
       </div>
+
     </section>
 
   </div>
@@ -159,16 +157,8 @@ export default {
 </script>
 
 <style scoped>
-/* Supprime tout margin-top entre sections */
+/* Espace vertical léger entre sections */
 section + section {
-  margin-top: 0;
-}
-
-/* Supprime gap dans colonnes et grille pour coller slider et résultats */
-.md\\:flex-col > * {
-  gap: 0 !important;
-}
-.grid {
-  gap: 0 !important;
+  margin-top: 1rem;
 }
 </style>
