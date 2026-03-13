@@ -55,8 +55,8 @@
     <!-- Footer -->
     <footer class="text-center text-sm text-gray-500 mt-8">
       © 2026 WellShoppings •
-      <a href="#/" class="hover:text-gray-700 underline">Accueil</a> •
-      <a href="#/shop" class="hover:text-gray-700 underline">Boutique</a>
+      <a href="#/" class="hover:text-gray-700 underline">Accueil</a> 
+      
     </footer>
   </div>
 </template>
