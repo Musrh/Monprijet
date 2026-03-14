@@ -26,9 +26,7 @@
         <p class="text-gray-600 text-sm mb-2">{{ product.description }}</p>
 
         <!-- Prix -->
-        <p class="text-green-600 font-bold text-lg mb-3">
-          {{ product.retail_price }} $
-        </p>
+        <p class="text-green-600 font-bold text-lg mb-3">{{ product.retail_price }} $</p>
 
         <!-- Ajouter au panier -->
         <button
@@ -62,10 +60,9 @@ export default {
         const res = await fetch(`${props.apiUrl}/printful/products`);
         const data = await res.json();
 
-        // ✅ Transformer les produits pour récupérer la première variante
+        // ✅ Transformation pour prendre la première variante
         products.value = (data.result || []).map((p) => {
           const firstVariant = p.variants && p.variants[0] ? p.variants[0] : {};
-
           return {
             id: p.id,
             name: p.name,
@@ -90,7 +87,7 @@ export default {
 </script>
 
 <style scoped>
-/* Optionnel : hover léger sur l'image */
+/* Optionnel : léger effet au hover sur l'image */
 img {
   transition: transform 0.2s;
 }
