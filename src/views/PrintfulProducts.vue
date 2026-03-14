@@ -64,10 +64,18 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.printful-products img {
+
+.printful-products img{
+  width:100%;
+  height:250px;
+  object-fit:contain;
+  background:#f8f8f8;
+  border-radius:8px;
   transition: transform 0.2s;
 }
-.printful-products img:hover {
-  transform: scale(1.05);
+
+.printful-products img:hover{
+  transform:scale(1.05);
 }
+
 </style>
