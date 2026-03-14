@@ -60,7 +60,7 @@ export default {
         const res = await fetch(`${props.apiUrl}/printful/products`);
         const data = await res.json();
 
-        // ✅ Transformation pour prendre la première variante
+        // ✅ Transformation pour récupérer description et prix depuis la première variante
         products.value = (data.result || []).map((p) => {
           const firstVariant = p.variants && p.variants[0] ? p.variants[0] : {};
           return {
@@ -87,7 +87,7 @@ export default {
 </script>
 
 <style scoped>
-/* Optionnel : léger effet au hover sur l'image */
+/* Effet hover sur les images */
 img {
   transition: transform 0.2s;
 }
