@@ -22,10 +22,10 @@
         <!-- Nom -->
         <h3 class="font-bold text-lg mb-1">{{ product.name }}</h3>
 
-        <!-- Description -->
+        <!-- Description par défaut si absente -->
         <p class="text-gray-600 text-sm mb-2">{{ product.description }}</p>
 
-        <!-- Prix -->
+        <!-- Prix depuis la première variante -->
         <p class="text-green-600 font-bold text-lg mb-3">{{ product.retail_price }} $</p>
 
         <!-- Ajouter au panier -->
@@ -60,15 +60,15 @@ export default {
         const res = await fetch(`${props.apiUrl}/printful/products`);
         const data = await res.json();
 
-        // ✅ Transformation pour récupérer description et prix depuis la première variante
+        // 🔹 Transformation des produits pour récupérer prix et description
         products.value = (data.result || []).map((p) => {
-          const firstVariant = p.variants && p.variants[0] ? p.variants[0] : {};
+          const firstVariant = p.variants && p.variants.length > 0 ? p.variants[0] : {};
           return {
             id: p.id,
             name: p.name,
             thumbnail_url: p.thumbnail_url,
-            description: firstVariant.description || "Pas de description",
-            retail_price: firstVariant.retail_price || "-"
+            description: p.description || "Pas de description disponible",
+            retail_price: firstVariant.retail_price || "Prix non disponible",
           };
         });
 
@@ -87,7 +87,7 @@ export default {
 </script>
 
 <style scoped>
-/* Effet hover sur les images */
+/* Effet léger sur les images au hover */
 img {
   transition: transform 0.2s;
 }
