@@ -62,13 +62,15 @@ export default {
         const res = await fetch(`${props.apiUrl}/printful/products`);
         const data = await res.json();
 
-        products.value = (data.result || []).map(p => {
+        // Extraire image, prix et description de la première variante
+        products.value = (data.result || []).map((p) => {
           const firstVariant = p.variants && p.variants[0] ? p.variants[0] : {};
+
           return {
             id: p.id,
             name: p.name,
             thumbnail_url: p.thumbnail_url,
-            description: p.description || firstVariant.description || "Pas de description",
+            description: firstVariant.description || "Pas de description",
             retail_price: firstVariant.retail_price || "-"
           };
         });
@@ -88,7 +90,7 @@ export default {
 </script>
 
 <style scoped>
-/* Optionnel : effet léger au hover sur les images */
+/* Optionnel : hover léger sur les images */
 img {
   transition: transform 0.2s;
 }
