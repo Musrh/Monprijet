@@ -1,19 +1,34 @@
+<!-- PrintfulProducts.vue -->
 <template>
-  <div class="printful-products">
+  <div class="printful-products p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     <div
       v-for="product in products"
       :key="product.id"
-      class="product-card"
+      class="border rounded-lg p-4 flex flex-col items-center shadow hover:shadow-lg transition"
     >
+      <!-- Image mockup -->
       <img
         v-if="product.thumbnail"
         :src="product.thumbnail"
         :alt="product.name"
-        class="product-image"
+        class="w-full h-64 object-contain mb-4"
       />
-      <h2>{{ product.name }}</h2>
-      <p>{{ product.description }}</p>
-      <p>{{ product.variants[0]?.price || 0 }} €</p>
+      <div v-else class="w-full h-64 bg-gray-100 flex items-center justify-center mb-4">
+        <span class="text-gray-400">Pas d'image</span>
+      </div>
+
+      <!-- Nom -->
+      <h2 class="font-bold text-lg text-center">{{ product.name }}</h2>
+
+      <!-- Description -->
+      <p class="text-gray-600 text-sm text-center mt-2">
+        {{ product.description }}
+      </p>
+
+      <!-- Prix -->
+      <p class="mt-3 font-semibold text-green-600">
+        {{ product.price }} €
+      </p>
     </div>
   </div>
 </template>
@@ -28,42 +43,29 @@ export default {
       products: [],
     };
   },
-  async mounted() {
-    try {
-      const res = await axios.get(
-        "https://printfulapi-production.up.railway.app/printful/products"
-      );
-      this.products = res.data.products || [];
-    } catch (err) {
-      console.error("Erreur récupération produits :", err);
-    }
+  mounted() {
+    this.fetchProducts();
+  },
+  methods: {
+    async fetchProducts() {
+      try {
+        const response = await axios.get(
+          "https://printfulapi-production.up.railway.app/printful/products"
+        );
+        this.products = response.data.products || [];
+      } catch (err) {
+        console.error("Erreur récupération produits Printful:", err);
+      }
+    },
   },
 };
 </script>
 
 <style scoped>
-.printful-products {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-}
-
-.product-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  width: 250px;
-  text-align: center;
-}
-
-.product-image {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
+.printful-products img {
   transition: transform 0.2s;
 }
-
-.product-image:hover {
+.printful-products img:hover {
   transform: scale(1.05);
 }
 </style>
