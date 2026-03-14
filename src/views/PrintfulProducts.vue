@@ -1,34 +1,14 @@
-<!-- PrintfulProducts.vue -->
 <template>
-  <div class="printful-products p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div
-      v-for="product in products"
-      :key="product.id"
-      class="border rounded-lg p-4 flex flex-col items-center shadow hover:shadow-lg transition"
-    >
-      <!-- Image mockup -->
-      <img
-        v-if="product.thumbnail"
-        :src="product.thumbnail"
-        :alt="product.name"
-        class="w-full h-64 object-contain mb-4"
-      />
-      <div v-else class="w-full h-64 bg-gray-100 flex items-center justify-center mb-4">
-        <span class="text-gray-400">Pas d'image</span>
+  <div class="printful-products">
+    <h1>Produits Printful</h1>
+    <div v-if="products.length === 0">Aucun produit trouvé.</div>
+    <div v-else class="grid">
+      <div v-for="p in products" :key="p.id" class="product-card">
+        <img :src="p.thumbnail || '/placeholder.png'" :alt="p.name" />
+        <h2>{{ p.name }}</h2>
+        <p>{{ p.description }}</p>
+        <p class="price">{{ p.price }} €</p>
       </div>
-
-      <!-- Nom -->
-      <h2 class="font-bold text-lg text-center">{{ product.name }}</h2>
-
-      <!-- Description -->
-      <p class="text-gray-600 text-sm text-center mt-2">
-        {{ product.description }}
-      </p>
-
-      <!-- Prix -->
-      <p class="mt-3 font-semibold text-green-600">
-        {{ product.price }} €
-      </p>
     </div>
   </div>
 </template>
@@ -43,29 +23,53 @@ export default {
       products: [],
     };
   },
-  mounted() {
-    this.fetchProducts();
-  },
-  methods: {
-    async fetchProducts() {
-      try {
-        const response = await axios.get(
-          "https://printfulapi-production.up.railway.app/printful/products"
-        );
-        this.products = response.data.products || [];
-      } catch (err) {
-        console.error("Erreur récupération produits Printful:", err);
-      }
-    },
+  async created() {
+    try {
+      const res = await axios.get(
+        "https://printfulapi-production.up.railway.app/printful/products"
+      );
+      this.products = res.data.products || [];
+    } catch (err) {
+      console.error("Erreur fetching products:", err.message);
+    }
   },
 };
 </script>
 
 <style scoped>
-.printful-products img {
+.printful-products {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.product-card {
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+}
+
+.product-card img {
+  width: 100%;
+  object-fit: contain;
   transition: transform 0.2s;
 }
-.printful-products img:hover {
+
+.product-card img:hover {
   transform: scale(1.05);
+}
+
+.price {
+  font-weight: bold;
+  margin-top: 5px;
 }
 </style>
