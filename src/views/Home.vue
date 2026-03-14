@@ -21,7 +21,7 @@
         <div class="h-64 bg-yellow-200 flex items-center justify-center rounded shadow-md overflow-hidden">
           <img
             src="https://res.cloudinary.com/dla18l69k/image/upload/v1773023706/rcvi8ukn3if9tycui13d.jpg"
-            alt="EasyShopping Image"
+            alt="WellShoppings Image"
             class="mx-auto rounded shadow-md max-w-full h-auto"
           />
         </div>
