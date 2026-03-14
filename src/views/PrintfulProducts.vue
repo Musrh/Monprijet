@@ -1,10 +1,30 @@
+<!-- src/views/PrintfulProducts.vue -->
 <template>
-  <div class="products-grid">
-    <div v-for="product in products" :key="product.id" class="product-card">
-      <img :src="product.thumbnail" alt="product.name" class="product-image" />
-      <h2 class="product-name">{{ product.name }}</h2>
-      <p class="product-description">{{ product.description }}</p>
-      <p class="product-price">€{{ product.price }}</p>
+  <div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Produits Printful</h1>
+
+    <div v-if="loading" class="text-center">Chargement des produits...</div>
+    <div v-else-if="products.length === 0" class="text-center">Aucun produit disponible.</div>
+
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div
+        v-for="product in products"
+        :key="product.id"
+        class="border rounded-lg p-4 shadow hover:shadow-lg transition"
+      >
+        <img
+          v-if="product.thumbnail"
+          :src="product.thumbnail"
+          :alt="product.name"
+          class="w-full h-48 object-cover mb-2 rounded"
+        />
+        <div v-else class="w-full h-48 bg-gray-200 mb-2 rounded flex items-center justify-center text-gray-500">
+          Pas d'image
+        </div>
+        <h2 class="font-semibold text-lg mb-1">{{ product.name }}</h2>
+        <p class="text-gray-600 mb-2">{{ product.description }}</p>
+        <p class="font-bold text-gray-800">{{ formatPrice(product.price) }}</p>
+      </div>
     </div>
   </div>
 </template>
@@ -17,47 +37,35 @@ export default {
   data() {
     return {
       products: [],
+      loading: true,
     };
   },
-  async mounted() {
-    try {
-      const res = await axios.get("https://ton-backend-url/printful/products");
-      this.products = res.data.result;
-    } catch (err) {
-      console.error("Erreur fetching Printful products:", err);
-    }
+  methods: {
+    async fetchProducts() {
+      this.loading = true;
+      try {
+        const response = await axios.get("https://printfulapi-production.up.railway.app/printful/products");
+        this.products = response.data.products || [];
+      } catch (err) {
+        console.error("Erreur fetching products:", err);
+        this.products = [];
+      } finally {
+        this.loading = false;
+      }
+    },
+    formatPrice(price) {
+      if (!price) return "0 €";
+      return parseFloat(price).toFixed(2) + " €";
+    },
+  },
+  mounted() {
+    this.fetchProducts();
   },
 };
 </script>
 
 <style scoped>
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-}
-.product-card {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 1rem;
-  text-align: center;
-}
-.product-image {
-  width: 100%;
-  height: 200px;
-  object-fit: cover;
-}
-.product-name {
-  font-weight: bold;
-  margin: 0.5rem 0;
-}
-.product-description {
-  font-size: 0.9rem;
-  color: #555;
-}
-.product-price {
-  font-size: 1.1rem;
-  color: #222;
-  margin-top: 0.5rem;
+.container {
+  max-width: 1200px;
 }
 </style>
