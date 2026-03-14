@@ -9,6 +9,12 @@
         <!-- Slider -->
         <SliderProducts :produits="produitsPromos" />
 
+        <!-- Ici on insère les produits Printful -->
+<PrintfulProducts
+  api-url="https://printfulapi-production.up.railway.app"
+  @add-to-cart="addToCart"
+/>
+        
         <!-- Vitrine normale -->
         <div>
           <Vitrine />
