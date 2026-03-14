@@ -1,97 +1,63 @@
 <template>
-  <div class="w-full mt-6">
-    <h2 class="text-2xl font-bold mb-4">Produits Printful</h2>
-
-    <div v-if="loading" class="text-center text-gray-500">Chargement...</div>
-    <div v-else-if="products.length === 0" class="text-center text-gray-500">Aucun produit trouvé.</div>
-
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-      <div
-        v-for="product in products"
-        :key="product.id"
-        class="border rounded-lg p-4 bg-white shadow flex flex-col"
-      >
-        <!-- Image -->
-        <img
-          v-if="product.thumbnail_url"
-          :src="product.thumbnail_url"
-          class="h-40 w-full object-cover rounded mb-3"
-          :alt="product.name"
-        />
-
-        <!-- Nom -->
-        <h3 class="font-bold text-lg mb-1">{{ product.name }}</h3>
-
-        <!-- Description par défaut si absente -->
-        <p class="text-gray-600 text-sm mb-2">{{ product.description }}</p>
-
-        <!-- Prix depuis la première variante -->
-        <p class="text-green-600 font-bold text-lg mb-3">{{ product.retail_price }} $</p>
-
-        <!-- Ajouter au panier -->
-        <button
-          @click="$emit('add-to-cart', product)"
-          class="mt-auto bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          Ajouter au panier
-        </button>
-      </div>
+  <div class="products-grid">
+    <div v-for="product in products" :key="product.id" class="product-card">
+      <img :src="product.thumbnail" alt="product.name" class="product-image" />
+      <h2 class="product-name">{{ product.name }}</h2>
+      <p class="product-description">{{ product.description }}</p>
+      <p class="product-price">€{{ product.price }}</p>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
+import axios from "axios";
 
 export default {
   name: "PrintfulProducts",
-  props: {
-    apiUrl: {
-      type: String,
-      required: true, // URL de ton backend Node.js
-    },
-  },
-  setup(props, { emit }) {
-    const products = ref([]);
-    const loading = ref(true);
-
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch(`${props.apiUrl}/printful/products`);
-        const data = await res.json();
-
-        // 🔹 Transformation des produits pour récupérer prix et description
-        products.value = (data.result || []).map((p) => {
-          const firstVariant = p.variants && p.variants.length > 0 ? p.variants[0] : {};
-          return {
-            id: p.id,
-            name: p.name,
-            thumbnail_url: p.thumbnail_url,
-            description: p.description || "Pas de description disponible",
-            retail_price: firstVariant.retail_price || "Prix non disponible",
-          };
-        });
-
-      } catch (err) {
-        console.error("Erreur fetching Printful products:", err);
-      } finally {
-        loading.value = false;
-      }
+  data() {
+    return {
+      products: [],
     };
-
-    onMounted(fetchProducts);
-
-    return { products, loading };
+  },
+  async mounted() {
+    try {
+      const res = await axios.get("https://ton-backend-url/printful/products");
+      this.products = res.data.result;
+    } catch (err) {
+      console.error("Erreur fetching Printful products:", err);
+    }
   },
 };
 </script>
 
 <style scoped>
-/* Effet léger sur les images au hover */
-img {
-  transition: transform 0.2s;
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
 }
-img:hover {
-  transform: scale(1.05);
+.product-card {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+.product-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+.product-name {
+  font-weight: bold;
+  margin: 0.5rem 0;
+}
+.product-description {
+  font-size: 0.9rem;
+  color: #555;
+}
+.product-price {
+  font-size: 1.1rem;
+  color: #222;
+  margin-top: 0.5rem;
 }
 </style>
