@@ -97,8 +97,10 @@ import Vitrine from "../components/Vitrine.vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "vuex";
 
+import PrintfulProducts from "./views/PrintfulProducts.vue";
+
 export default {
-  components: { SliderProducts, Vitrine },
+  components: { SliderProducts, Vitrine,PrintfulProducts },
 
   setup() {
     const produits = ref([]);
