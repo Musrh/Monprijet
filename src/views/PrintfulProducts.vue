@@ -1,43 +1,16 @@
 <template>
-  <div class="printful-products p-4 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-    <div v-for="product in products" :key="product.id" class="border rounded-lg p-4 shadow-md">
-      <!-- Image principale -->
-      <img
-        :src="product.thumbnail || fallbackImage"
-        :alt="product.name"
-        class="w-full h-64 object-contain mb-4 rounded"
-      />
+  <div class="printful-products">
+    <div v-for="product in products" :key="product.id" class="product-card">
+      <h2>{{ product.name }}</h2>
+      <p>{{ product.description }}</p>
+      <img :src="product.thumbnail" :alt="product.name" class="main-mockup" />
 
-      <!-- Nom -->
-      <h2 class="text-xl font-bold mb-2">{{ product.name }}</h2>
-
-      <!-- Description -->
-      <p class="text-gray-600 mb-2">{{ product.description }}</p>
-
-      <!-- Variantes -->
-      <div v-if="product.variants && product.variants.length" class="mb-2">
-        <p class="font-semibold">Variantes :</p>
-        <ul>
-          <li
-            v-for="variant in product.variants"
-            :key="variant.id"
-            class="mb-1"
-          >
-            🎨 {{ variant.color }} | 📏 {{ variant.size }} | 💰 {{ variant.price }} €
-            <br />
-            <img
-              v-if="variant.thumbnail"
-              :src="variant.thumbnail"
-              :alt="variant.color + ' ' + variant.size"
-              class="w-32 h-32 object-contain mt-1 border rounded"
-            />
-          </li>
-        </ul>
-      </div>
-
-      <!-- Fallback si aucune variante -->
-      <div v-else>
-        💰 {{ product.price }} €
+      <div class="variants">
+        <h3>Variantes</h3>
+        <div v-for="variant in product.variants" :key="variant.id" class="variant">
+          <img :src="variant.thumbnail" :alt="variant.color + ' ' + variant.size" class="variant-mockup" />
+          <p>🎨 {{ variant.color }} | 📏 {{ variant.size }} | 💰 {{ variant.price }} €</p>
+        </div>
       </div>
     </div>
   </div>
@@ -49,27 +22,41 @@ import axios from "axios";
 export default {
   name: "PrintfulProducts",
   data() {
-    return {
-      products: [],
-      fallbackImage: "https://via.placeholder.com/300x300?text=No+Image",
-    };
+    return { products: [] };
   },
-  async created() {
+  async mounted() {
     try {
       const res = await axios.get("https://printfulapi-production.up.railway.app/printful/products");
-      this.products = res.data.products || [];
+      this.products = res.data.products;
     } catch (err) {
-      console.error("Erreur récupération produits:", err);
+      console.error("Erreur fetching products:", err);
     }
   },
 };
 </script>
 
 <style scoped>
-.printful-products img {
-  transition: transform 0.2s;
+.printful-products {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
 }
-.printful-products img:hover {
-  transform: scale(1.05);
+
+.product-card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  width: 300px;
+}
+
+.main-mockup {
+  width: 100%;
+  object-fit: cover;
+  margin-bottom: 1rem;
+}
+
+.variant-mockup {
+  width: 80px;
+  object-fit: cover;
+  margin-right: 0.5rem;
 }
 </style>
