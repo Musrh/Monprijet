@@ -1,5 +1,6 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
+
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
     <!-- Panier vide -->
@@ -9,21 +10,25 @@
 
     <!-- Panier rempli -->
     <div v-else>
+
+      <!-- PRODUITS -->
       <div
         v-for="item in cart"
-        :key="item.id + '-' + item.taille + '-' + item.couleur"
+        :key="item.id + item.size + item.color"
         class="flex items-center mb-4 border-b pb-2"
       >
         <img
-          :src="item.images?.[0] || item.image || '/placeholder.png'"
-          :alt="item.nom"
+          :src="item.thumbnail || item.image || '/placeholder.png'"
           class="w-20 h-20 object-cover rounded mr-4"
         />
+
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
-          <p>💰 {{ item.prix }} €</p>
-          <p v-if="item.taille">📏 Taille : {{ item.taille }}</p>
-          <p v-if="item.couleur">🎨 Couleur : {{ item.couleur }}</p>
+
+          <p v-if="item.size">Taille : {{ item.size }}</p>
+          <p v-if="item.color">Couleur : {{ item.color }}</p>
+
+          <p>{{ item.prix }} €</p>
 
           <input
             type="number"
@@ -33,37 +38,51 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
+
         <button
-          @click="remove(item.id, item.taille, item.couleur)"
+          @click="remove(item)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
         >
           ❌
         </button>
       </div>
 
-      <!-- Adresse de livraison -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-2">Adresse de livraison</label>
-        <textarea
-          v-model="adresseLivraison"
-          placeholder="Votre adresse complète"
-          class="border p-2 w-full rounded"
-        ></textarea>
+      <!-- TOTAL -->
+      <h3 class="text-lg font-bold mt-4">
+        Total : {{ total }} €
+      </h3>
+
+      <!-- ADRESSE LIVRAISON -->
+      <div class="mt-6 border p-4 rounded bg-gray-50">
+        <h3 class="font-bold mb-2">Adresse de livraison</h3>
+
+        <input v-model="adresse.nom" placeholder="Nom complet"
+          class="border p-2 mb-2 w-full rounded" />
+
+        <input v-model="adresse.rue" placeholder="Adresse"
+          class="border p-2 mb-2 w-full rounded" />
+
+        <input v-model="adresse.ville" placeholder="Ville"
+          class="border p-2 mb-2 w-full rounded" />
+
+        <input v-model="adresse.codePostal" placeholder="Code postal"
+          class="border p-2 mb-2 w-full rounded" />
+
+        <input v-model="adresse.pays" placeholder="Pays"
+          class="border p-2 w-full rounded" />
       </div>
 
-      <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
-
-      <!-- Choix paiement -->
+      <!-- PAIEMENT -->
       <div class="mt-4">
         <label class="font-semibold block mb-2">Mode de paiement</label>
+
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
           <option value="stripe">💳 Carte bancaire (Stripe)</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
       </div>
 
-      <!-- Bouton Payer Stripe -->
+      <!-- STRIPE -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -72,10 +91,11 @@
         Payer
       </button>
 
-      <!-- Bouton PayPal -->
+      <!-- PAYPAL -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
+
     </div>
   </div>
 </template>
@@ -87,88 +107,93 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresseLivraison: "",
+      adresse: {
+        nom: "",
+        rue: "",
+        ville: "",
+        codePostal: "",
+        pays: ""
+      }
     };
   },
+
   computed: {
     ...mapState(["cart", "user"]),
+
     total() {
       return this.cart
         .reduce((sum, item) => sum + item.prix * item.quantity, 0)
         .toFixed(2);
     },
+
+    isPrintful() {
+      return this.cart.some(p => p.source === "Printful");
+    },
+
+    API_BASE() {
+      return this.isPrintful
+        ? "https://printfulapi-production.up.railway.app"
+        : "https://stripe-backend-production-2ac4.up.railway.app";
+    }
   },
+
   watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
+    paymentMethod(newVal) {
+      if (newVal === "paypal") {
         this.$nextTick(() => {
-          if (!this.user) {
-            alert("Veuillez vous connecter avant de payer");
-            this.$router.push("/login");
-            return;
-          }
           this.renderPaypalButton();
         });
       }
-    },
+    }
   },
+
   methods: {
-    remove(id, taille, couleur) {
-      this.$store.dispatch("removeItem", { id, taille, couleur });
+    remove(item) {
+      this.$store.dispatch("removeItem", item);
     },
+
     updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", {
-        id: item.id,
-        taille: item.taille,
-        couleur: item.couleur,
-        quantity: item.quantity,
-      });
+      this.$store.dispatch("updateQuantity", item);
+    },
+
+    validateAdresse() {
+      return (
+        this.adresse.nom &&
+        this.adresse.rue &&
+        this.adresse.ville &&
+        this.adresse.codePostal &&
+        this.adresse.pays
+      );
     },
 
     // ---------------- STRIPE ----------------
     async payerStripe() {
       if (!this.user) {
-        alert("Veuillez vous connecter avant de payer");
-        this.$router.push("/login");
-        return;
-      }
-      if (!this.cart.length) {
-        alert("Panier vide");
-        return;
-      }
-      if (!this.adresseLivraison) {
-        alert("Veuillez saisir une adresse de livraison.");
+        alert("Veuillez vous connecter");
         return;
       }
 
-      const itemsPourCommande = this.cart.map((p) => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity,
-        taille: p.taille,
-        couleur: p.couleur,
-        image: p.images?.[0] || p.image || "/placeholder.png",
-      }));
+      if (!this.validateAdresse()) {
+        alert("Veuillez remplir l'adresse de livraison");
+        return;
+      }
 
-      try {
-        const response = await fetch(
-          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              items: itemsPourCommande,
-              email: this.user.email,
-              adresseLivraison: this.adresseLivraison,
-            }),
-          }
-        );
-        const data = await response.json();
-        if (data.url) window.location.href = data.url;
-      } catch (err) {
-        console.error("Stripe error:", err);
-        alert("Erreur lors du paiement Stripe : " + err.message);
+      const response = await fetch(
+        `${this.API_BASE}/create-stripe-session`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: this.cart,
+            email: this.user.email,
+            adresseLivraison: this.adresse
+          })
+        }
+      );
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
       }
     },
 
@@ -176,8 +201,10 @@ export default {
     async loadPaypalScript() {
       return new Promise((resolve, reject) => {
         if (window.paypal) return resolve(window.paypal);
+
         const script = document.createElement("script");
-        script.src = `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=EUR`;
+        script.src =
+          `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=EUR`;
         script.onload = () => resolve(window.paypal);
         script.onerror = reject;
         document.body.appendChild(script);
@@ -185,71 +212,64 @@ export default {
     },
 
     async renderPaypalButton() {
-      if (!this.cart.length || !this.user || !this.adresseLivraison) return;
+      if (!this.user || !this.cart.length) return;
+
+      if (!this.validateAdresse()) {
+        alert("Veuillez remplir l'adresse avant paiement");
+        return;
+      }
 
       const paypalSdk = await this.loadPaypalScript();
 
-      const itemsPourCommande = this.cart.map((p) => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity,
-        taille: p.taille,
-        couleur: p.couleur,
-      }));
+      document.getElementById("paypal-button-container").innerHTML = "";
 
       paypalSdk.Buttons({
-        createOrder: (data, actions) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
+
+        createOrder: async () => {
+          const res = await fetch(
+            `${this.API_BASE}/create-paypal-order`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                items: itemsPourCommande,
-                email: this.user.email,
-                adresseLivraison: this.adresseLivraison,
-              }),
+              body: JSON.stringify({ items: this.cart })
             }
-          )
-            .then((res) => res.json())
-            .then((order) => order.id);
+          );
+          const data = await res.json();
+          return data.id;
         },
-        onApprove: (data) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
+
+        onApprove: async (data) => {
+          await fetch(
+            `${this.API_BASE}/capture-paypal-order`,
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 orderId: data.orderID,
-                items: itemsPourCommande,
                 user: { email: this.user.email },
-                adresseLivraison: this.adresseLivraison,
-              }),
+                items: this.cart,
+                adresseLivraison: this.adresse
+              })
             }
-          )
-            .then((res) => res.json())
-            .then(() => {
-              this.$store.dispatch("clearCart");
-              this.$router.push("/success");
-            });
+          );
+
+          this.$store.dispatch("clearCart");
+          this.$router.push("/success");
         },
+
         onError: (err) => {
-          console.error("Erreur PayPal:", err);
-          alert("Erreur PayPal : " + err.message);
-        },
+          console.error("PayPal error:", err);
+          alert("Erreur PayPal");
+        }
+
       }).render("#paypal-button-container");
-    },
-  },
+    }
+  }
 };
 </script>
 
 <style scoped>
 img {
   object-fit: cover;
-}
-textarea {
-  resize: vertical;
 }
 </style>
