@@ -17,7 +17,7 @@
 </template>
 
 <script>
-import SliderProducts from "../components/SliderProducts.vue";
+import SliderProducts from "./SliderProducts.vue";
 import HorizontalSlider from "../components/HorizontalSlider.vue";
 import Vitrine from "../components/Vitrine.vue";
 import { ref, onMounted } from "vue";
