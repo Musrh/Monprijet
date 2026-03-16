@@ -1,135 +1,182 @@
 <template>
-  <div class="printful-products">
-    <!-- Slider horizontal ou grille responsive -->
-    <div class="products-grid">
-      <div
-        v-for="product in products"
-        :key="product.id"
-        class="product-card"
-      >
-        <!-- Nom et description -->
-        <h2 class="font-bold text-lg mb-1">{{ product.name }}</h2>
-        <p class="text-gray-600 text-sm mb-2">{{ product.description }}</p>
+  <div class="printful-slider">
+    <button class="scroll-btn left" @click="scrollLeft">&#10094;</button>
 
-        <!-- Mockup principal -->
-        <img
-          v-if="product.thumbnail"
-          :src="product.thumbnail"
-          :alt="product.name"
-          class="main-mockup mb-2"
-        />
+    <div class="slider-container" ref="sliderContainer">
+      <div class="slider-grid">
+        <div
+          v-for="product in products"
+          :key="product.id"
+          class="product-card"
+        >
+          <img :src="product.thumbnail" :alt="product.name" class="main-mockup" />
+          <h3 class="font-bold text-sm mt-1">{{ product.name }}</h3>
+          <p class="text-gray-600 text-xs">{{ product.description }}</p>
 
-        <!-- Variantes disponibles (texte uniquement) -->
-        <div v-if="product.variants && product.variants.length" class="variants mb-2">
-          <h3 class="text-sm font-medium mb-1">Tailles disponibles :</h3>
-          <div class="flex flex-wrap gap-1">
+          <!-- Tailles et couleurs visibles -->
+          <div class="variants flex flex-wrap gap-1 mt-1">
             <span
               v-for="variant in product.variants"
               :key="variant.id"
-              class="text-xs px-2 py-1 border rounded bg-gray-100"
+              class="px-2 py-1 border rounded bg-gray-100 text-xs cursor-pointer"
+              :class="{ 'bg-green-200': isSelected(product.id, variant.id) }"
+              @click="selectVariant(product.id, variant.id)"
             >
-              {{ variant.size || "N/A" }}
+              {{ variant.size || 'N/A' }} / {{ variant.color || 'N/A' }}
             </span>
           </div>
 
-          <h3 class="text-sm font-medium mt-2 mb-1">Couleurs disponibles :</h3>
-          <div class="flex flex-wrap gap-1">
-            <span
-              v-for="variant in product.variants"
-              :key="variant.id + '-color'"
-              class="text-xs px-2 py-1 border rounded bg-gray-100"
-            >
-              {{ variant.color || "N/A" }}
-            </span>
-          </div>
+          <!-- Prix de la variante sélectionnée -->
+          <p class="text-green-600 font-bold mt-1 text-sm">
+            💰 {{ getVariantPrice(product.id) }} €
+          </p>
+
+          <!-- Ajouter au panier -->
+          <button
+            class="mt-1 bg-green-600 text-white py-1 rounded w-full text-xs hover:bg-green-700"
+            @click="addToCart(product)"
+          >
+            Ajouter au panier
+          </button>
         </div>
-
-        <!-- Prix principal -->
-        <p class="text-green-600 font-bold text-lg mb-2">
-          {{ product.price }} €
-        </p>
-
-        <!-- Bouton ajouter au panier -->
-        <button
-          @click="addToCart(product)"
-          class="bg-green-600 text-white py-2 rounded hover:bg-green-700 w-full"
-        >
-          Ajouter au panier
-        </button>
       </div>
     </div>
+
+    <button class="scroll-btn right" @click="scrollRight">&#10095;</button>
   </div>
 </template>
 
 <script>
+import { ref, onMounted } from "vue";
 import axios from "axios";
+import { useStore } from "vuex";
 
 export default {
   name: "PrintfulProducts",
-  props: {
-    // On reçoit le store ou la méthode d'ajout au panier depuis Home.vue
-    onAddToCart: {
-      type: Function,
-      default: null,
-    },
-  },
-  data() {
-    return {
-      products: [],
+  setup() {
+    const store = useStore();
+    const products = ref([]);
+    const sliderContainer = ref(null);
+    const selectedVariants = ref({}); // { productId: variantId }
+
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(
+          "https://printfulapi-production.up.railway.app/printful/products"
+        );
+        products.value = res.data.products;
+      } catch (err) {
+        console.error("Erreur fetching products:", err);
+      }
     };
-  },
-  async mounted() {
-    try {
-      const res = await axios.get(
-        "https://printfulapi-production.up.railway.app/printful/products"
-      );
-      this.products = res.data.products;
-    } catch (err) {
-      console.error("Erreur fetching products:", err);
-    }
-  },
-  methods: {
-    addToCart(product) {
+
+    const selectVariant = (productId, variantId) => {
+      selectedVariants.value[productId] = variantId;
+    };
+
+    const isSelected = (productId, variantId) =>
+      selectedVariants.value[productId] === variantId;
+
+    const getVariantPrice = (productId) => {
+      const product = products.value.find((p) => p.id === productId);
+      const variantId = selectedVariants.value[productId];
+      const variant = product?.variants.find((v) => v.id === variantId);
+      return variant?.price || product?.price || 0;
+    };
+
+    const addToCart = (product) => {
+      const variantId = selectedVariants.value[product.id] || product.variants[0]?.id;
+      const variant = product.variants.find((v) => v.id === variantId) || {};
+
       const item = {
         id: product.id,
         name: product.name,
-        price: product.price, // on prend le prix principal
+        price: variant.price || product.price,
+        size: variant.size || null,
+        color: variant.color || null,
         quantity: 1,
       };
-      if (this.onAddToCart) {
-        this.onAddToCart(item);
-      } else {
-        console.log("Ajouter au panier :", item);
-      }
-    },
+      store.dispatch("addToCart", item);
+    };
+
+    const scrollAmount = 300;
+    const scrollLeft = () => {
+      sliderContainer.value.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+    };
+    const scrollRight = () => {
+      sliderContainer.value.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    };
+
+    onMounted(() => {
+      fetchProducts();
+    });
+
+    return {
+      products,
+      sliderContainer,
+      selectVariant,
+      addToCart,
+      isSelected,
+      getVariantPrice,
+      scrollLeft,
+      scrollRight,
+    };
   },
 };
 </script>
 
 <style scoped>
-.printful-products {
+.printful-slider {
+  position: relative;
   width: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
 }
 
-.products-grid {
+.slider-container {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  flex: 1;
+}
+
+.slider-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-auto-rows: auto;
   gap: 1rem;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* maximum de produits par ligne */
 }
 
 .product-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 0.5rem;
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background: #fff;
 }
 
 .main-mockup {
   width: 100%;
-  height: 160px;
   object-fit: cover;
   border-radius: 0.25rem;
+}
+
+.scroll-btn {
+  position: absolute;
+  top: 40%;
+  background: rgba(255, 255, 255, 0.8);
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50%;
+}
+
+.scroll-btn.left {
+  left: 0.2rem;
+}
+
+.scroll-btn.right {
+  right: 0.2rem;
 }
 </style>
