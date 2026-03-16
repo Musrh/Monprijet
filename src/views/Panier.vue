@@ -1,218 +1,152 @@
 <template>
-  <div class="p-4 max-w-3xl mx-auto">
+  <section class="panier px-4 py-6">
 
-    <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
+    <h2 class="text-2xl font-bold mb-6">🛒 Mon Panier</h2>
 
-    <!-- Panier vide -->
-    <div v-if="cart.length === 0">
-      <p class="text-gray-500">Votre panier est vide.</p>
+    <!-- Si panier vide -->
+    <div v-if="cart.length === 0" class="text-gray-500">
+      Votre panier est vide.
     </div>
 
-    <!-- Panier rempli -->
-    <div v-else>
+    <!-- Liste des produits -->
+    <div v-else class="space-y-6">
+
       <div
         v-for="item in cart"
-        :key="item.id"
-        class="flex items-center mb-4 border-b pb-2"
+        :key="item.id + '-' + item.taille + '-' + item.couleur"
+        class="flex flex-col md:flex-row items-center gap-4 border rounded-lg p-4 shadow bg-white"
       >
+
+        <!-- Image -->
         <img
-          :src="item.images?.[0] || item.image || '/placeholder.png'"
-          :alt="item.nom"
-          class="w-20 h-20 object-cover rounded mr-4"
+          :src="item.images?.[0] || '/placeholder.png'"
+          class="w-28 h-28 object-cover rounded"
         />
-        <div class="flex-1">
-          <h3 class="font-semibold">{{ item.nom }}</h3>
-          <p>{{ item.prix }} €</p>
-          <input
-            type="number"
-            min="1"
-            v-model.number="item.quantity"
-            @change="updateQuantity(item)"
-            class="border w-20 p-1 mt-1"
-          />
+
+        <!-- Infos -->
+        <div class="flex-1 text-center md:text-left">
+
+          <h3 class="font-bold text-lg">
+            {{ item.nom }}
+          </h3>
+
+          <!-- Taille -->
+          <p v-if="item.taille" class="text-sm text-gray-600">
+            📏 Taille : {{ item.taille }}
+          </p>
+
+          <!-- Couleur -->
+          <p v-if="item.couleur" class="text-sm text-gray-600">
+            🎨 Couleur : {{ item.couleur }}
+          </p>
+
+          <!-- Prix -->
+          <p class="text-green-600 font-semibold mt-2">
+            {{ item.prix }} €
+          </p>
+
         </div>
+
+        <!-- Quantité -->
+        <div class="flex items-center gap-2">
+
+          <button
+            @click="decrease(item)"
+            class="bg-gray-200 px-2 rounded"
+          >-</button>
+
+          <span class="px-3">
+            {{ item.quantity }}
+          </span>
+
+          <button
+            @click="increase(item)"
+            class="bg-gray-200 px-2 rounded"
+          >+</button>
+
+        </div>
+
+        <!-- Supprimer -->
         <button
-          @click="remove(item.id)"
-          class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+          @click="remove(item)"
+          class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
         >
-          ❌
+          Supprimer
+        </button>
+
+      </div>
+
+      <!-- Total -->
+      <div class="text-right mt-6 border-t pt-4">
+        <h3 class="text-xl font-bold">
+          Total : {{ cartTotal }} €
+        </h3>
+
+        <button
+          class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+        >
+          Passer la commande
         </button>
       </div>
 
-      <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
-
-      <!-- Choix paiement -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-2">Mode de paiement</label>
-
-        <select v-model="paymentMethod" class="border p-2 rounded w-full">
-          <option value="stripe">💳 Carte bancaire (Stripe)</option>
-          <option value="paypal">🅿️ PayPal</option>
-        </select>
-      </div>
-
-      <!-- Bouton Payer uniquement pour Stripe -->
-      <button
-        v-if="paymentMethod === 'stripe'"
-        @click="payerStripe"
-        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
-      >
-        Payer
-      </button>
-
-      <!-- Conteneur bouton PayPal -->
-      <div v-if="paymentMethod === 'paypal'" class="mt-4">
-        <div id="paypal-button-container"></div>
-      </div>
     </div>
-  </div>
+
+  </section>
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { computed } from "vue";
+import { useStore } from "vuex";
 
 export default {
-  data() {
-    return {
-      paymentMethod: "stripe"
+  name: "Panier",
+  setup() {
+    const store = useStore();
+
+    const cart = computed(() => store.state.cart);
+    const cartTotal = computed(() => store.getters.cartTotal);
+
+    const increase = (item) => {
+      store.dispatch("updateQuantity", {
+        id: item.id,
+        taille: item.taille,
+        couleur: item.couleur,
+        quantity: item.quantity + 1
+      });
     };
-  },
-  computed: {
-    ...mapState(["cart", "user"]),
-    total() {
-      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0).toFixed(2);
-    }
-  },
-  watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
-        this.$nextTick(() => {
-          if (!this.user) {
-            alert("Veuillez vous connecter avant de payer");
-            this.$router.push("/login");
-            return;
-          }
-          this.renderPaypalButton();
+
+    const decrease = (item) => {
+      if (item.quantity > 1) {
+        store.dispatch("updateQuantity", {
+          id: item.id,
+          taille: item.taille,
+          couleur: item.couleur,
+          quantity: item.quantity - 1
         });
       }
-    }
-  },
-  methods: {
-    remove(id) {
-      this.$store.dispatch("removeItem", id);
-    },
-    updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", { id: item.id, quantity: item.quantity });
-    },
+    };
 
-    // ---------------- STRIPE ----------------
-    async payerStripe() {
-      if (!this.user) {
-        alert("Veuillez vous connecter avant de payer");
-        this.$router.push("/login");
-        return;
-      }
-
-      if (!this.cart.length) {
-        alert("Panier vide");
-        return;
-      }
-
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity,
-        image: p.images?.[0] || p.image || "/placeholder.png"
-      }));
-
-      try {
-        const response = await fetch(
-          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-          }
-        );
-        const data = await response.json();
-        if (data.url) {
-          window.location.href = data.url; // Stripe redirige vers success_url configuré dans le backend
-        }
-      } catch (err) {
-        console.error("Stripe error:", err);
-        alert("Erreur lors du paiement Stripe : " + err.message);
-      }
-    },
-
-    // ---------------- PAYPAL ----------------
-    async loadPaypalScript() {
-      return new Promise((resolve, reject) => {
-        if (window.paypal) return resolve(window.paypal);
-        const script = document.createElement("script");
-        script.src =
-          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
-        script.onload = () => resolve(window.paypal);
-        script.onerror = reject;
-        document.body.appendChild(script);
+    const remove = (item) => {
+      store.dispatch("removeItem", {
+        id: item.id,
+        taille: item.taille,
+        couleur: item.couleur
       });
-    },
+    };
 
-    async renderPaypalButton() {
-      if (!this.cart.length || !this.user) return;
-
-      const paypalSdk = await this.loadPaypalScript();
-
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity
-      }));
-
-      paypalSdk.Buttons({
-        createOrder: (data, actions) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: itemsPourCommande, email: this.user.email })
-            }
-          )
-            .then(res => res.json())
-            .then(order => order.id);
-        },
-
-        onApprove: (data) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email } })
-            }
-          )
-            .then(res => res.json())
-            .then(() => {
-              // Vider le panier
-              this.$store.dispatch("clearCart");
-              // Redirection vers Success.vue
-              this.$router.push("/success");
-            });
-        },
-
-        onError: (err) => {
-          console.error("Erreur PayPal:", err);
-          alert("Erreur PayPal : " + err.message);
-        }
-      }).render("#paypal-button-container");
-    }
+    return {
+      cart,
+      cartTotal,
+      increase,
+      decrease,
+      remove
+    };
   }
 };
 </script>
 
 <style scoped>
-img { object-fit: cover; }
+.panier button {
+  transition: 0.2s;
+}
 </style>
