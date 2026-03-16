@@ -50,7 +50,7 @@ import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
-import PrintfulProducts from "../components/PrintfulProducts.vue";
+import PrintfulProducts from "./PrintfulProducts.vue";
 import { useStore } from "vuex";
 
 export default {
@@ -64,7 +64,7 @@ export default {
     const fetchProduits = async () => {
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach((doc) => {
-        const produit = { id: doc.id, ...doc.data() };
+   const produit = { id: doc.id, ...doc.data() };
         produits.value.push(produit);
         if (produit.promo) produitsPromos.value.push(produit);
       });
