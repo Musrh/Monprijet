@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import HorizontalSlider from "../components/HorizontalSlider.vue";
+import HorizontalSlider from "./HorizontalSlider.vue";
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useStore } from "vuex";
