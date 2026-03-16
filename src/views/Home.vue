@@ -6,12 +6,13 @@
       <SliderProducts :produits="produitsPromos" />
     </section>
 
-    <!-- 2️⃣ Produits Printful -->
+    <!-- 2️⃣ Produits Printful en slider horizontal -->
     <section class="mb-4">
+      <h2 class="text-xl font-bold mb-2">Produits Printful</h2>
       <PrintfulProducts @add-to-cart="addToCart" />
     </section>
 
-    <!-- 3️⃣ Vitrine locale (organisée comme Printful) -->
+    <!-- 3️⃣ Vitrine locale -->
     <section class="mb-4">
       <h2 class="text-xl font-bold mb-2">Vitrine</h2>
       <div v-if="produits.length === 0">
@@ -23,23 +24,14 @@
           :key="produit.id"
           class="border rounded-lg p-4 bg-white shadow flex flex-col"
         >
-          <!-- Image -->
           <img
             :src="produit.thumbnail || produit.images?.[0]"
             class="h-40 w-full object-cover rounded mb-3"
             alt="produit.nom"
           />
-
-          <!-- Nom -->
           <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
-
-          <!-- Description -->
           <p class="text-gray-600 text-sm mb-2">{{ produit.description }}</p>
-
-          <!-- Prix -->
           <p class="text-green-600 font-bold text-lg mb-3">{{ produit.prix }} $</p>
-
-          <!-- Bouton panier -->
           <button
             @click="addToCart(produit)"
             class="mt-auto bg-green-600 text-white py-2 rounded hover:bg-green-700"
@@ -58,7 +50,7 @@ import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import SliderProducts from "../components/SliderProducts.vue";
-import PrintfulProducts from "./PrintfulProducts.vue";
+import PrintfulProducts from "../components/PrintfulProducts.vue";
 import { useStore } from "vuex";
 
 export default {
