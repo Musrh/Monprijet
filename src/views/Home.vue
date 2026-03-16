@@ -1,101 +1,102 @@
 <template>
-  <div class="p-4 w-full">
+  <div class="w-full px-4">
 
-    <!-- Slider des produits Printful avant la vitrine -->
+    <!-- 1️⃣ Slider principal -->
     <section class="mb-4">
-      <HorizontalSlider
-        :products="printfulProducts"
-        title="Produits Populaires"
-        @add-to-cart="addToCart"
-      />
+      <SliderProducts :produits="produitsPromos" />
     </section>
 
-    <!-- Vitrine normale -->
+    <!-- 2️⃣ Produits Printful -->
     <section class="mb-4">
-      <Vitrine />
+      <PrintfulProducts @add-to-cart="addToCart" />
     </section>
 
-    <!-- Slider produits promotions -->
+    <!-- 3️⃣ Vitrine locale (organisée comme Printful) -->
     <section class="mb-4">
-      <HorizontalSlider
-        :products="productsPromo"
-        title="Promotions du jour"
-        @add-to-cart="addToCart"
-      />
-    </section>
+      <h2 class="text-xl font-bold mb-2">Vitrine</h2>
+      <div v-if="produits.length === 0">
+        <p>Aucun produit disponible.</p>
+      </div>
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div
+          v-for="produit in produits"
+          :key="produit.id"
+          class="border rounded-lg p-4 bg-white shadow flex flex-col"
+        >
+          <!-- Image -->
+          <img
+            :src="produit.thumbnail || produit.images?.[0]"
+            class="h-40 w-full object-cover rounded mb-3"
+            alt="produit.nom"
+          />
 
-    <!-- Slider autres produits -->
-    <section class="mb-4">
-      <HorizontalSlider
-        :products="otherProducts"
-        title="Meilleures ventes"
-        @add-to-cart="addToCart"
-      />
+          <!-- Nom -->
+          <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
+
+          <!-- Description -->
+          <p class="text-gray-600 text-sm mb-2">{{ produit.description }}</p>
+
+          <!-- Prix -->
+          <p class="text-green-600 font-bold text-lg mb-3">{{ produit.prix }} $</p>
+
+          <!-- Bouton panier -->
+          <button
+            @click="addToCart(produit)"
+            class="mt-auto bg-green-600 text-white py-2 rounded hover:bg-green-700"
+          >
+            Ajouter au panier
+          </button>
+        </div>
+      </div>
     </section>
 
   </div>
 </template>
 
 <script>
-import HorizontalSlider from "./HorizontalSlider.vue";
-import Vitrine from "../components/Vitrine.vue";
 import { ref, onMounted } from "vue";
-import axios from "axios";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
+import SliderProducts from "../components/SliderProducts.vue";
+import PrintfulProducts from "../components/PrintfulProducts.vue";
 import { useStore } from "vuex";
 
 export default {
-  components: { HorizontalSlider, Vitrine },
+  components: { SliderProducts, PrintfulProducts },
+
   setup() {
-    const printfulProducts = ref([]);
-    const productsPromo = ref([]);
-    const otherProducts = ref([]);
+    const produits = ref([]);
+    const produitsPromos = ref([]);
     const store = useStore();
 
-    const fetchPrintfulProducts = async () => {
-      try {
-        const res = await axios.get(
-          "https://printfulapi-production.up.railway.app/printful/products"
-        );
-        // Trier selon vos besoins, ici simplement premier lot pour l'exemple
-        printfulProducts.value = res.data.products;
-      } catch (err) {
-        console.error("Erreur Printful:", err);
-      }
+    const fetchProduits = async () => {
+      const snapshot = await getDocs(collection(db, "products"));
+      snapshot.forEach((doc) => {
+        const produit = { id: doc.id, ...doc.data() };
+        produits.value.push(produit);
+        if (produit.promo) produitsPromos.value.push(produit);
+      });
     };
 
-    const fetchLocalProducts = async () => {
-      try {
-        const res = await axios.get("/api/local-products"); // Exemple
-        const allProducts = res.data.products || [];
-        productsPromo.value = allProducts.filter((p) => p.promo);
-        otherProducts.value = allProducts.filter((p) => !p.promo);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    const addToCart = (product) => {
-      // Passer le prix correct
+    const addToCart = (produit) => {
       store.dispatch("addToCart", {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        thumbnail: product.thumbnail,
+        id: produit.id,
+        name: produit.nom || produit.name,
+        price: produit.prix || produit.price,
+        thumbnail: produit.thumbnail || produit.images?.[0],
       });
     };
 
     onMounted(() => {
-      fetchPrintfulProducts();
-      fetchLocalProducts();
+      fetchProduits();
     });
 
-    return { printfulProducts, productsPromo, otherProducts, addToCart };
+    return { produits, produitsPromos, addToCart };
   },
 };
 </script>
 
 <style scoped>
-/* Espace vertical léger entre sections */
 section + section {
   margin-top: 1rem;
 }
