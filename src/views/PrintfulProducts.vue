@@ -1,39 +1,59 @@
-//Printfulproducts dernier 
 <template>
   <div class="printful-products">
-    <div v-for="product in products" :key="product.id" class="product-card">
-      <!-- Nom et description -->
-      <h2>{{ product.name }}</h2>
-      <p>{{ product.description }}</p>
 
-      <!-- Mockup principal -->
+    <div
+      v-for="product in products"
+      :key="product.id"
+      class="product-card"
+    >
+
+      <!-- Nom -->
+      <h2 class="product-title">
+        {{ product.name }}
+      </h2>
+
+      <!-- Description -->
+      <p class="product-description">
+        {{ product.description }}
+      </p>
+
+      <!-- Image -->
       <img
         v-if="product.thumbnail"
         :src="product.thumbnail"
-        :alt="product.name"
         class="main-mockup"
       />
 
-      <!-- Variantes -->
-      <div v-if="product.variants.length" class="variants">
-        <h3>Variantes disponibles</h3>
-        <div
-          v-for="variant in product.variants"
-          :key="variant.id"
-          class="variant-card"
+      <!-- Tailles visibles -->
+      <div class="sizes">
+
+        <strong>Tailles :</strong>
+
+        <span
+          v-for="size in getSizes(product)"
+          :key="size"
+          class="size-badge"
         >
-          <img
-            v-if="variant.thumbnail"
-            :src="variant.thumbnail"
-            :alt="variant.color + ' ' + variant.size"
-            class="variant-mockup"
-          />
-          <p>
-            🎨 {{ variant.color }} | 📏 {{ variant.size }} | 💰 {{ variant.price }} €
-          </p>
-        </div>
+          {{ size }}
+        </span>
+
       </div>
+
+      <!-- Prix -->
+      <p class="price">
+        💰 {{ product.price }} €
+      </p>
+
+      <!-- Ajouter panier -->
+      <button
+        class="add-cart-btn"
+        @click="addToCart(product)"
+      >
+        Ajouter au panier
+      </button>
+
     </div>
+
   </div>
 </template>
 
@@ -41,60 +61,134 @@
 import axios from "axios";
 
 export default {
+
   name: "PrintfulProducts",
-  data() {
-    return {
-      products: [],
-    };
+
+  props:{
+    apiUrl:String
   },
-  async mounted() {
-    try {
-      const res = await axios.get(
-        "https://printfulapi-production.up.railway.app/printful/products"
-      );
-      this.products = res.data.products;
-    } catch (err) {
-      console.error("Erreur fetching products:", err);
+
+  data(){
+    return{
+      products:[]
     }
   },
-};
+
+  async mounted(){
+
+    const res = await axios.get(
+      `${this.apiUrl}/printful/products`
+    )
+
+    this.products = res.data.products
+  },
+
+  methods:{
+
+    getSizes(product){
+
+      const sizes = product.variants
+        .map(v => v.size)
+        .filter(Boolean)
+
+      return [...new Set(sizes)]
+    },
+
+    addToCart(product){
+
+      const produit = {
+
+        id: product.id,
+
+        nom: product.name,
+
+        prix: product.price,
+
+        description: product.description,
+
+        images: [product.thumbnail],
+
+        source: "printful"
+
+      }
+
+      this.$emit("add-to-cart",produit)
+
+    }
+
+  }
+
+}
 </script>
 
 <style scoped>
-.printful-products {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
+
+.printful-products{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:1.5rem;
 }
 
-.product-card {
-  border: 1px solid #ccc;
-  padding: 1rem;
-  width: 300px;
+@media (min-width:768px){
+  .printful-products{
+    grid-template-columns:repeat(2,1fr);
+  }
 }
 
-.main-mockup {
-  width: 100%;
-  object-fit: cover;
-  margin-bottom: 1rem;
+.product-card{
+  border:1px solid #ddd;
+  padding:1rem;
+  border-radius:8px;
+  background:white;
 }
 
-.variants {
-  margin-top: 1rem;
+.product-title{
+  font-weight:bold;
+  font-size:18px;
 }
 
-.variant-card {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+.product-description{
+  color:#666;
+  font-size:14px;
 }
 
-.variant-mockup {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.main-mockup{
+  width:100%;
+  margin:10px 0;
 }
+
+.sizes{
+  margin-top:10px;
+}
+
+.size-badge{
+  display:inline-block;
+  background:#f3f4f6;
+  border:1px solid #ddd;
+  padding:4px 8px;
+  margin:3px;
+  border-radius:4px;
+  font-size:13px;
+}
+
+.price{
+  font-weight:bold;
+  margin-top:10px;
+}
+
+.add-cart-btn{
+  width:100%;
+  margin-top:10px;
+  background:#16a34a;
+  color:white;
+  padding:8px;
+  border:none;
+  border-radius:4px;
+  cursor:pointer;
+}
+
+.add-cart-btn:hover{
+  background:#15803d;
+}
+
 </style>
