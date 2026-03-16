@@ -15,7 +15,6 @@ import {
   serverTimestamp
 } from "firebase/firestore";
 
-// Images produits
 import produit1 from "./assets/hero.png";
 import produit2 from "./assets/hero.png";
 import produit3 from "./assets/hero.png";
@@ -41,31 +40,27 @@ export default createStore({
       state.cart.reduce((total, item) => total + item.quantity, 0),
 
     cartTotal: state =>
-      state.cart.reduce((total, item) => total + (item.prix * item.quantity), 0)
+      state.cart.reduce((total, item) => total + item.prix * item.quantity, 0)
   },
 
   mutations: {
-
     SET_USER(state, user) {
       state.user = user;
     },
 
-    // ✅ PANIER CORRIGÉ
     ADD_TO_CART(state, produit) {
+      const cartId = `${produit.id}-${produit.taille || ""}-${produit.couleur || ""}`;
 
-      const existing = state.cart.find(item =>
-        item.id === produit.id &&
-        item.taille === produit.taille &&
-        item.couleur === produit.couleur
-      );
+      const existing = state.cart.find(p => p.cartId === cartId);
 
       if (existing) {
         existing.quantity++;
       } else {
         state.cart.push({
+          cartId,
           id: produit.id,
           nom: produit.nom,
-          prix: Number(produit.prix) || 0,
+          prix: Number(produit.prix),
           images: produit.images || [],
           taille: produit.taille || null,
           couleur: produit.couleur || null,
@@ -74,26 +69,13 @@ export default createStore({
       }
     },
 
-    REMOVE_ITEM(state, payload) {
-      state.cart = state.cart.filter(item =>
-        !(
-          item.id === payload.id &&
-          item.taille === payload.taille &&
-          item.couleur === payload.couleur
-        )
-      );
+    REMOVE_ITEM(state, cartId) {
+      state.cart = state.cart.filter(p => p.cartId !== cartId);
     },
 
-    SET_QUANTITY(state, payload) {
-      const item = state.cart.find(i =>
-        i.id === payload.id &&
-        i.taille === payload.taille &&
-        i.couleur === payload.couleur
-      );
-
-      if (item && payload.quantity > 0) {
-        item.quantity = payload.quantity;
-      }
+    SET_QUANTITY(state, { cartId, quantity }) {
+      const item = state.cart.find(p => p.cartId === cartId);
+      if (item && quantity > 0) item.quantity = quantity;
     },
 
     CLEAR_CART(state) {
@@ -103,7 +85,7 @@ export default createStore({
 
   actions: {
 
-    // 🔥 INITIALISATION
+    // 🔥 INIT AUTH
     initAuth({ commit }) {
       return new Promise(resolve => {
         onAuthStateChanged(auth, async user => {
@@ -126,16 +108,14 @@ export default createStore({
       });
     },
 
-    // 🔐 LOGIN
     async login({ commit }, { email, password }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       await user.reload();
-
       if (!user.emailVerified) {
         await signOut(auth);
-        throw new Error("Veuillez vérifier votre email avant de vous connecter");
+        throw new Error("Veuillez vérifier votre email");
       }
 
       const snap = await getDoc(doc(db, "users", user.uid));
@@ -156,15 +136,14 @@ export default createStore({
       }
     },
 
-    // 📝 REGISTER
     async register(_, { email, password }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       await sendEmailVerification(user);
 
-      await setDoc(doc(db, user.uid), {
-        email: email,
+      await setDoc(doc(db, "users", user.uid), {
+        email,
         role: "user",
         isActive: true,
         createdAt: serverTimestamp()
@@ -182,13 +161,12 @@ export default createStore({
       commit("SET_USER", null);
     },
 
-    // 🛒 PANIER
     addToCart({ commit }, produit) {
       commit("ADD_TO_CART", produit);
     },
 
-    removeItem({ commit }, payload) {
-      commit("REMOVE_ITEM", payload);
+    removeItem({ commit }, cartId) {
+      commit("REMOVE_ITEM", cartId);
     },
 
     updateQuantity({ commit }, payload) {
