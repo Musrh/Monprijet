@@ -72,7 +72,7 @@
         Payer
       </button>
 
-      <!-- Bouton PayPal -->
+      <!-- Conteneur bouton PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
@@ -179,19 +179,17 @@ export default {
         const script = document.createElement("script");
         script.src = `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=EUR`;
         script.onload = () => resolve(window.paypal);
-        script.onerror = reject;
+        script.onerror = () => reject(new Error("Erreur chargement SDK PayPal"));
         document.body.appendChild(script);
       });
     },
-
     async renderPaypalButton() {
-      if (!this.cart.length || !this.user || !this.adresseLivraison) return;
+      if (!this.cart.length || !this.user) return;
+
+      const container = document.getElementById("paypal-button-container");
+      container.innerHTML = ""; // vider pour éviter doublons
 
       const paypalSdk = await this.loadPaypalScript();
-
-      // Vider le conteneur pour éviter doublons
-      const container = document.getElementById("paypal-button-container");
-      container.innerHTML = "";
 
       const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
@@ -206,6 +204,10 @@ export default {
         style: { layout: "vertical", color: "blue", shape: "rect", label: "paypal" },
 
         createOrder: (data, actions) => {
+          if (!this.adresseLivraison) {
+            alert("Veuillez saisir une adresse de livraison avant de payer.");
+            throw new Error("Adresse manquante");
+          }
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
             {
