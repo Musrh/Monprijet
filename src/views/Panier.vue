@@ -1,152 +1,82 @@
 <template>
-  <section class="panier px-4 py-6">
+  <div class="p-4 max-w-3xl mx-auto">
 
-    <h2 class="text-2xl font-bold mb-6">🛒 Mon Panier</h2>
+    <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
-    <!-- Si panier vide -->
-    <div v-if="cart.length === 0" class="text-gray-500">
-      Votre panier est vide.
+    <div v-if="cart.length === 0">
+      <p class="text-gray-500">Votre panier est vide.</p>
     </div>
 
-    <!-- Liste des produits -->
-    <div v-else class="space-y-6">
-
+    <div v-else>
       <div
         v-for="item in cart"
-        :key="item.id + '-' + item.taille + '-' + item.couleur"
-        class="flex flex-col md:flex-row items-center gap-4 border rounded-lg p-4 shadow bg-white"
+        :key="item.cartId"
+        class="flex items-center mb-4 border-b pb-2"
       >
-
-        <!-- Image -->
         <img
           :src="item.images?.[0] || '/placeholder.png'"
-          class="w-28 h-28 object-cover rounded"
+          :alt="item.nom"
+          class="w-20 h-20 object-cover rounded mr-4"
         />
 
-        <!-- Infos -->
-        <div class="flex-1 text-center md:text-left">
+        <div class="flex-1">
+          <h3 class="font-semibold">{{ item.nom }}</h3>
 
-          <h3 class="font-bold text-lg">
-            {{ item.nom }}
-          </h3>
+          <p v-if="item.taille">📏 Taille : {{ item.taille }}</p>
+          <p v-if="item.couleur">🎨 Couleur : {{ item.couleur }}</p>
 
-          <!-- Taille -->
-          <p v-if="item.taille" class="text-sm text-gray-600">
-            📏 Taille : {{ item.taille }}
-          </p>
+          <p class="font-bold">{{ item.prix }} €</p>
 
-          <!-- Couleur -->
-          <p v-if="item.couleur" class="text-sm text-gray-600">
-            🎨 Couleur : {{ item.couleur }}
-          </p>
-
-          <!-- Prix -->
-          <p class="text-green-600 font-semibold mt-2">
-            {{ item.prix }} €
-          </p>
-
+          <input
+            type="number"
+            min="1"
+            v-model.number="item.quantity"
+            @change="updateQuantity(item)"
+            class="border w-20 p-1 mt-1"
+          />
         </div>
 
-        <!-- Quantité -->
-        <div class="flex items-center gap-2">
-
-          <button
-            @click="decrease(item)"
-            class="bg-gray-200 px-2 rounded"
-          >-</button>
-
-          <span class="px-3">
-            {{ item.quantity }}
-          </span>
-
-          <button
-            @click="increase(item)"
-            class="bg-gray-200 px-2 rounded"
-          >+</button>
-
-        </div>
-
-        <!-- Supprimer -->
         <button
-          @click="remove(item)"
-          class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+          @click="remove(item.cartId)"
+          class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
         >
-          Supprimer
-        </button>
-
-      </div>
-
-      <!-- Total -->
-      <div class="text-right mt-6 border-t pt-4">
-        <h3 class="text-xl font-bold">
-          Total : {{ cartTotal }} €
-        </h3>
-
-        <button
-          class="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
-        >
-          Passer la commande
+          ❌
         </button>
       </div>
+
+      <h3 class="text-lg font-bold mt-4">
+        Total : {{ total }} €
+      </h3>
 
     </div>
-
-  </section>
+  </div>
 </template>
 
 <script>
-import { computed } from "vue";
-import { useStore } from "vuex";
+import { mapState } from "vuex";
 
 export default {
-  name: "Panier",
-  setup() {
-    const store = useStore();
+  computed: {
+    ...mapState(["cart"]),
 
-    const cart = computed(() => store.state.cart);
-    const cartTotal = computed(() => store.getters.cartTotal);
+    total() {
+      return this.cart
+        .reduce((sum, item) => sum + item.prix * item.quantity, 0)
+        .toFixed(2);
+    }
+  },
 
-    const increase = (item) => {
-      store.dispatch("updateQuantity", {
-        id: item.id,
-        taille: item.taille,
-        couleur: item.couleur,
-        quantity: item.quantity + 1
+  methods: {
+    remove(cartId) {
+      this.$store.dispatch("removeItem", cartId);
+    },
+
+    updateQuantity(item) {
+      this.$store.dispatch("updateQuantity", {
+        cartId: item.cartId,
+        quantity: item.quantity
       });
-    };
-
-    const decrease = (item) => {
-      if (item.quantity > 1) {
-        store.dispatch("updateQuantity", {
-          id: item.id,
-          taille: item.taille,
-          couleur: item.couleur,
-          quantity: item.quantity - 1
-        });
-      }
-    };
-
-    const remove = (item) => {
-      store.dispatch("removeItem", {
-        id: item.id,
-        taille: item.taille,
-        couleur: item.couleur
-      });
-    };
-
-    return {
-      cart,
-      cartTotal,
-      increase,
-      decrease,
-      remove
-    };
+    }
   }
 };
 </script>
-
-<style scoped>
-.panier button {
-  transition: 0.2s;
-}
-</style>
