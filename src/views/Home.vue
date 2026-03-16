@@ -1,11 +1,16 @@
 <template>
   <div class="p-4">
+    <!-- Vitrine principale -->
+    <Vitrine />
+
+    <!-- Slider produits promotions -->
     <HorizontalSlider
       :products="products"
       title="Promotions du jour"
       @add-to-cart="addToCart"
     />
 
+    <!-- Slider autres produits -->
     <HorizontalSlider
       :products="otherProducts"
       title="Meilleures ventes"
@@ -15,13 +20,14 @@
 </template>
 
 <script>
-import HorizontalSlider from "./HorizontalSlider.vue";
+import HorizontalSlider from "../components/HorizontalSlider.vue";
+import Vitrine from "../components/Vitrine.vue";
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import { useStore } from "vuex";
 
 export default {
-  components: { HorizontalSlider },
+  components: { HorizontalSlider, Vitrine },
   setup() {
     const products = ref([]);
     const otherProducts = ref([]);
