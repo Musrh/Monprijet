@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import PrintfulProducts from "../components/PrintfulProducts.vue"
+import PrintfulProducts from "./PrintfulProducts.vue"
 import { useStore } from "vuex"
 
 export default{
