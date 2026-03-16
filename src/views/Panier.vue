@@ -1,6 +1,5 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
-
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
     <!-- Panier vide -->
@@ -89,15 +88,15 @@ export default {
     return {
       paymentMethod: "stripe",
       adresseLivraison: "",
+      PAYPAL_CLIENT_ID: import.meta.env.VITE_PAYPAL_CLIENT_ID,
     };
   },
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart.reduce(
-        (sum, item) => sum + item.prix * item.quantity,
-        0
-      ).toFixed(2);
+      return this.cart
+        .reduce((sum, item) => sum + item.prix * item.quantity, 0)
+        .toFixed(2);
     },
   },
   watch: {
@@ -179,11 +178,7 @@ export default {
       return new Promise((resolve, reject) => {
         if (window.paypal) return resolve(window.paypal);
         const script = document.createElement("script");
-
-        const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
-        const PAYPAL_ENV = import.meta.env.VITE_PAYPAL_ENV || "sandbox"; // sandbox ou production
-
-        script.src = `https://www.paypal.com/sdk/js?client-id=${PAYPAL_CLIENT_ID}&currency=EUR&intent=capture&commit=true`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${this.PAYPAL_CLIENT_ID}&currency=EUR&intent=capture&commit=true`;
         script.onload = () => resolve(window.paypal);
         script.onerror = reject;
         document.body.appendChild(script);
@@ -192,6 +187,9 @@ export default {
 
     async renderPaypalButton() {
       if (!this.cart.length || !this.user || !this.adresseLivraison) return;
+
+      const container = document.getElementById("paypal-button-container");
+      container.innerHTML = ""; // supprime anciens boutons
 
       const paypalSdk = await this.loadPaypalScript();
 
@@ -245,7 +243,7 @@ export default {
           console.error("Erreur PayPal:", err);
           alert("Erreur PayPal : " + err.message);
         },
-      }).render("#paypal-button-container");
+      }).render(container);
     },
   },
 };
