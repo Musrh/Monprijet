@@ -183,10 +183,15 @@ export default {
         document.body.appendChild(script);
       });
     },
+
     async renderPaypalButton() {
       if (!this.cart.length || !this.user || !this.adresseLivraison) return;
 
       const paypalSdk = await this.loadPaypalScript();
+
+      // Vider le conteneur pour éviter doublons
+      const container = document.getElementById("paypal-button-container");
+      container.innerHTML = "";
 
       const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
@@ -198,6 +203,8 @@ export default {
       }));
 
       paypalSdk.Buttons({
+        style: { layout: "vertical", color: "blue", shape: "rect", label: "paypal" },
+
         createOrder: (data, actions) => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
@@ -214,6 +221,7 @@ export default {
             .then((res) => res.json())
             .then((order) => order.id);
         },
+
         onApprove: (data) => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
@@ -234,6 +242,7 @@ export default {
               this.$router.push("/success");
             });
         },
+
         onError: (err) => {
           console.error("Erreur PayPal:", err);
           alert("Erreur PayPal : " + err.message);
