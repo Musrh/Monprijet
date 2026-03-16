@@ -36,28 +36,66 @@ export default createStore({
     isAdmin: state => state.user?.role === "admin",
     userEmail: state => state.user?.email || "",
     isActive: state => state.user?.isActive,
+
     cartItemCount: state =>
       state.cart.reduce((total, item) => total + item.quantity, 0),
+
     cartTotal: state =>
-      state.cart.reduce((total, item) => total + item.prix * item.quantity, 0)
+      state.cart.reduce((total, item) => total + (item.prix * item.quantity), 0)
   },
 
   mutations: {
+
     SET_USER(state, user) {
       state.user = user;
     },
+
+    // ✅ PANIER CORRIGÉ
     ADD_TO_CART(state, produit) {
-      const existing = state.cart.find(p => p.id === produit.id);
-      if (existing) existing.quantity++;
-      else state.cart.push({ ...produit, quantity: 1 });
+
+      const existing = state.cart.find(item =>
+        item.id === produit.id &&
+        item.taille === produit.taille &&
+        item.couleur === produit.couleur
+      );
+
+      if (existing) {
+        existing.quantity++;
+      } else {
+        state.cart.push({
+          id: produit.id,
+          nom: produit.nom,
+          prix: Number(produit.prix) || 0,
+          images: produit.images || [],
+          taille: produit.taille || null,
+          couleur: produit.couleur || null,
+          quantity: 1
+        });
+      }
     },
-    REMOVE_ITEM(state, id) {
-      state.cart = state.cart.filter(p => p.id !== id);
+
+    REMOVE_ITEM(state, payload) {
+      state.cart = state.cart.filter(item =>
+        !(
+          item.id === payload.id &&
+          item.taille === payload.taille &&
+          item.couleur === payload.couleur
+        )
+      );
     },
-    SET_QUANTITY(state, { id, quantity }) {
-      const item = state.cart.find(p => p.id === id);
-      if (item && quantity > 0) item.quantity = quantity;
+
+    SET_QUANTITY(state, payload) {
+      const item = state.cart.find(i =>
+        i.id === payload.id &&
+        i.taille === payload.taille &&
+        i.couleur === payload.couleur
+      );
+
+      if (item && payload.quantity > 0) {
+        item.quantity = payload.quantity;
+      }
     },
+
     CLEAR_CART(state) {
       state.cart = [];
     }
@@ -93,8 +131,8 @@ export default createStore({
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // 🔎 vérifier email
       await user.reload();
+
       if (!user.emailVerified) {
         await signOut(auth);
         throw new Error("Veuillez vérifier votre email avant de vous connecter");
@@ -104,7 +142,6 @@ export default createStore({
       if (snap.exists()) {
         const data = snap.data();
 
-        // 🔒 compte désactivé
         if (!data.isActive) {
           await signOut(auth);
           throw new Error("Compte désactivé");
@@ -120,37 +157,26 @@ export default createStore({
     },
 
     // 📝 REGISTER
-    async register({ commit }, { email, password }) {
+    async register(_, { email, password }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      const uid = user.uid;
-
-      // 📧 envoyer email verification
       await sendEmailVerification(user);
 
-      // 🔥 créer document Firestore
-      await setDoc(doc(db, "users", uid), {
+      await setDoc(doc(db, user.uid), {
         email: email,
         role: "user",
         isActive: true,
         createdAt: serverTimestamp()
       });
 
-      // ❗ Déconnecter l'utilisateur après l'inscription
       await signOut(auth);
     },
 
-    // 🔑 RESET MOT DE PASSE
     async resetPassword(_, email) {
-      try {
-        await sendPasswordResetEmail(auth, email);
-      } catch (error) {
-        throw new Error(error.message);
-      }
+      await sendPasswordResetEmail(auth, email);
     },
 
-    // 🚪 LOGOUT
     async logout({ commit }) {
       await signOut(auth);
       commit("SET_USER", null);
@@ -160,15 +186,17 @@ export default createStore({
     addToCart({ commit }, produit) {
       commit("ADD_TO_CART", produit);
     },
-    removeItem({ commit }, id) {
-      commit("REMOVE_ITEM", id);
+
+    removeItem({ commit }, payload) {
+      commit("REMOVE_ITEM", payload);
     },
+
     updateQuantity({ commit }, payload) {
       commit("SET_QUANTITY", payload);
     },
+
     clearCart({ commit }) {
       commit("CLEAR_CART");
     }
-
   }
 });
