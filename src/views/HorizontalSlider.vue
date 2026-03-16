@@ -1,6 +1,7 @@
 <template>
   <div class="slider-container relative w-full">
     <h2 class="text-lg font-bold mb-2">{{ title }}</h2>
+
     <div class="relative">
       <!-- Flèche gauche -->
       <button
@@ -18,10 +19,11 @@
         <div
           v-for="product in products"
           :key="product.id"
-          class="flex-shrink-0 w-40 bg-white shadow rounded p-2"
+          class="flex-shrink-0 w-40 bg-white shadow rounded p-2 flex flex-col"
         >
-          <!-- Image -->
+          <!-- Image principale -->
           <img
+            v-if="product.thumbnail"
             :src="product.thumbnail"
             :alt="product.name"
             class="w-full h-40 object-cover rounded mb-2"
@@ -30,23 +32,38 @@
           <!-- Nom -->
           <h3 class="text-sm font-semibold truncate">{{ product.name }}</h3>
 
+          <!-- Description vitrine (optionnelle) -->
+          <p class="text-gray-500 text-xs mb-1 truncate">{{ product.description }}</p>
+
           <!-- Prix -->
           <p class="text-red-600 font-bold mt-1">{{ product.price }} €</p>
 
-          <!-- Tailles -->
+          <!-- Tailles visibles -->
           <div class="text-xs text-gray-500 flex flex-wrap gap-1 mt-1">
-            <span v-for="size in product.availableSizes" :key="size" class="px-1 py-0.5 border rounded">{{ size }}</span>
+            <span
+              v-for="size in product.availableSizes"
+              :key="size"
+              class="px-1 py-0.5 border rounded"
+            >
+              {{ size }}
+            </span>
           </div>
 
-          <!-- Couleurs -->
+          <!-- Couleurs visibles -->
           <div class="text-xs text-gray-500 flex flex-wrap gap-1 mt-1">
-            <span v-for="color in product.availableColors" :key="color" class="px-1 py-0.5 border rounded">{{ color }}</span>
+            <span
+              v-for="color in product.availableColors"
+              :key="color"
+              class="px-1 py-0.5 border rounded"
+            >
+              {{ color }}
+            </span>
           </div>
 
-          <!-- Ajouter au panier -->
+          <!-- Ajouter au panier avec prix correct -->
           <button
-            @click="$emit('add-to-cart', product)"
-            class="mt-2 w-full bg-green-600 text-white py-1 rounded hover:bg-green-700 text-xs"
+            @click="addToCart(product)"
+            class="mt-auto w-full bg-green-600 text-white py-1 rounded hover:bg-green-700 text-xs"
           >
             Ajouter au panier
           </button>
@@ -79,23 +96,29 @@ export default {
       default: "Produits",
     },
   },
-  setup() {
+  emits: ["add-to-cart"],
+  setup(props, { emit }) {
     const scrollRef = ref(null);
 
-    const scrollLeft = () => {
-      scrollRef.value.scrollBy({ left: -200, behavior: "smooth" });
-    };
-    const scrollRight = () => {
-      scrollRef.value.scrollBy({ left: 200, behavior: "smooth" });
+    const scrollLeft = () => scrollRef.value.scrollBy({ left: -200, behavior: "smooth" });
+    const scrollRight = () => scrollRef.value.scrollBy({ left: 200, behavior: "smooth" });
+
+    const addToCart = (product) => {
+      // On passe l'objet produit complet, y compris le prix
+      emit("add-to-cart", {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        thumbnail: product.thumbnail,
+      });
     };
 
-    return { scrollRef, scrollLeft, scrollRight };
+    return { scrollRef, scrollLeft, scrollRight, addToCart };
   },
 };
 </script>
 
 <style scoped>
-/* Masquer la scrollbar pour mobile */
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
