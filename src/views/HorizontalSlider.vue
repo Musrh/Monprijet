@@ -1,129 +1,83 @@
 <template>
-  <div class="slider-container relative w-full">
-    <h2 class="text-lg font-bold mb-2">{{ title }}</h2>
-
-    <div class="relative">
-      <!-- Flèche gauche -->
-      <button
-        @click="scrollLeft"
-        class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white/70 p-2 rounded-full shadow z-10"
-      >
-        ◀
-      </button>
-
-      <!-- Conteneur défilable -->
+  <div class="horizontal-slider">
+    <div class="slider-wrapper">
       <div
-        ref="scrollRef"
-        class="flex overflow-x-auto scrollbar-hide space-x-4 scroll-smooth py-2"
+        class="slider-track"
+        :style="{ transform: `translateX(-${scrollX}px)` }"
       >
         <div
           v-for="product in products"
           :key="product.id"
-          class="flex-shrink-0 w-40 bg-white shadow rounded p-2 flex flex-col"
+          class="slider-item"
         >
-          <!-- Image principale -->
-          <img
-            v-if="product.thumbnail"
-            :src="product.thumbnail"
-            :alt="product.name"
-            class="w-full h-40 object-cover rounded mb-2"
-          />
+          <div class="product-card">
+            <img :src="product.thumbnail" :alt="product.name" class="main-mockup" />
+            <h3 class="font-bold text-sm mt-1">{{ product.name }}</h3>
+            <p class="text-green-600 font-bold">{{ product.price }} €</p>
 
-          <!-- Nom -->
-          <h3 class="text-sm font-semibold truncate">{{ product.name }}</h3>
+            <!-- Tailles visibles -->
+            <div class="flex flex-wrap gap-1 text-xs mb-1">
+              <span
+                v-for="variant in product.variants"
+                :key="variant.id"
+                class="px-2 py-1 border rounded bg-gray-100"
+              >
+                {{ variant.size || "N/A" }}
+              </span>
+            </div>
 
-          <!-- Description vitrine (optionnelle) -->
-          <p class="text-gray-500 text-xs mb-1 truncate">{{ product.description }}</p>
-
-          <!-- Prix -->
-          <p class="text-red-600 font-bold mt-1">{{ product.price }} €</p>
-
-          <!-- Tailles visibles -->
-          <div class="text-xs text-gray-500 flex flex-wrap gap-1 mt-1">
-            <span
-              v-for="size in product.availableSizes"
-              :key="size"
-              class="px-1 py-0.5 border rounded"
+            <!-- Ajouter au panier -->
+            <button
+              @click="addToCart(product)"
+              class="bg-green-600 text-white py-1 rounded w-full text-xs hover:bg-green-700"
             >
-              {{ size }}
-            </span>
+              Ajouter au panier
+            </button>
           </div>
-
-          <!-- Couleurs visibles -->
-          <div class="text-xs text-gray-500 flex flex-wrap gap-1 mt-1">
-            <span
-              v-for="color in product.availableColors"
-              :key="color"
-              class="px-1 py-0.5 border rounded"
-            >
-              {{ color }}
-            </span>
-          </div>
-
-          <!-- Ajouter au panier avec prix correct -->
-          <button
-            @click="addToCart(product)"
-            class="mt-auto w-full bg-green-600 text-white py-1 rounded hover:bg-green-700 text-xs"
-          >
-            Ajouter au panier
-          </button>
         </div>
       </div>
-
-      <!-- Flèche droite -->
-      <button
-        @click="scrollRight"
-        class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white/70 p-2 rounded-full shadow z-10"
-      >
-        ▶
-      </button>
     </div>
+
+    <button class="prev" @click="scrollLeft">&#10094;</button>
+    <button class="next" @click="scrollRight">&#10095;</button>
   </div>
 </template>
 
 <script>
-import { ref } from "vue";
+import { useStore } from "vuex";
 
 export default {
   name: "HorizontalSlider",
-  props: {
-    products: {
-      type: Array,
-      required: true,
-    },
-    title: {
-      type: String,
-      default: "Produits",
-    },
-  },
-  emits: ["add-to-cart"],
-  setup(props, { emit }) {
-    const scrollRef = ref(null);
-
-    const scrollLeft = () => scrollRef.value.scrollBy({ left: -200, behavior: "smooth" });
-    const scrollRight = () => scrollRef.value.scrollBy({ left: 200, behavior: "smooth" });
+  props: { products: { type: Array, required: true } },
+  setup(props) {
+    const store = useStore();
+    const scrollX = Vue.ref(0);
+    const itemWidth = 180;
+    const gap = 16;
 
     const addToCart = (product) => {
-      // On passe l'objet produit complet, y compris le prix
-      emit("add-to-cart", {
+      // On ajoute la première variante si existante
+      const variant = product.variants?.[0] || {};
+      const item = {
         id: product.id,
         name: product.name,
-        price: product.price,
-        thumbnail: product.thumbnail,
-      });
+        price: variant.price || product.price,
+        size: variant.size || null,
+        color: variant.color || null,
+        quantity: 1,
+      };
+      store.dispatch("addToCart", item);
     };
 
-    return { scrollRef, scrollLeft, scrollRight, addToCart };
+    const scrollLeft = () => {
+      scrollX.value = Math.max(0, scrollX.value - (itemWidth + gap) * 2);
+    };
+    const scrollRight = () => {
+      const maxScroll = (itemWidth + gap) * props.products.length - window.innerWidth;
+      scrollX.value = Math.min(maxScroll, scrollX.value + (itemWidth + gap) * 2);
+    };
+
+    return { scrollX, addToCart, scrollLeft, scrollRight };
   },
 };
 </script>
-
-<style scoped>
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-</style>
