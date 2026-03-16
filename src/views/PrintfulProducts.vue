@@ -102,15 +102,16 @@ export default {
       }
 
       // ✅ Format EXACT comme ta Vitrine
-      store.dispatch("addToCart", {
-        id: variant.id,
-        nom: product.name,
-        prix: Number(variant.price),
-        images: [variant.thumbnail || product.thumbnail], // ⚠️ tableau
-        taille: variant.size,
-        couleur: variant.color,
-        quantity: 1,
-      });
+       
+store.dispatch("addToCart", {
+  id: product.id,
+  nom: product.name,
+  prix: selectedVariant.price,
+  images: [selectedVariant.thumbnail],
+  taille: selectedVariant.size,
+  couleur: selectedVariant.color
+});
+      
 
       alert(`"${product.name}" ajouté au panier !`);
     };
