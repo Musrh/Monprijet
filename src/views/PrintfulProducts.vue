@@ -2,10 +2,9 @@
   <div class="printful-products">
     <h2 class="text-xl font-bold mb-4">Produits Printful</h2>
 
-    <!-- Slider horizontal -->
     <div class="slider-container">
       <button @click="scrollLeft" class="scroll-btn left">&lt;</button>
-      
+
       <div class="slider" ref="slider">
         <div
           v-for="product in products"
@@ -26,7 +25,7 @@
           <!-- Description -->
           <p class="text-gray-600 text-sm">{{ product.description }}</p>
 
-          <!-- Prix -->
+          <!-- Prix du produit -->
           <p class="text-green-600 font-bold">{{ product.price }} €</p>
 
           <!-- Tailles et couleurs -->
@@ -35,7 +34,7 @@
             <div class="sizes flex flex-wrap gap-2 mb-1">
               <span
                 v-for="variant in product.variants"
-                :key="variant.id"
+                :key="variant.id + '-size'"
                 class="size-chip"
               >
                 {{ variant.size }}
@@ -57,7 +56,7 @@
           <!-- Bouton ajouter au panier -->
           <button
             class="add-cart-btn mt-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
-            @click="addProductToCart(product)"
+            @click="addToCart(product)"
           >
             Ajouter au panier
           </button>
@@ -81,55 +80,42 @@ export default {
     const slider = ref(null);
     const store = useStore();
 
-    const selectedVariants = ref({}); // variant sélectionné par produit
-
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
           "https://printfulapi-production.up.railway.app/printful/products"
         );
         products.value = res.data.products;
-
-        // initialiser variant par défaut (première variante)
-        products.value.forEach((p) => {
-          if (p.variants.length > 0) {
-            selectedVariants.value[p.id] = p.variants[0].id;
-          }
-        });
       } catch (err) {
         console.error("Erreur fetching products:", err);
       }
     };
 
-    const addProductToCart = (product) => {
-      const variantId = selectedVariants.value[product.id];
-      const variant =
-        product.variants.find((v) => v.id === variantId) || product.variants[0];
+    // Ici on récupère toujours la **première variante** pour le bouton
+    const addToCart = (product) => {
+      if (!product.variants || product.variants.length === 0) return;
 
-      if (!variant) return;
+      const variant = product.variants[0]; // première variante par défaut
 
       const item = {
         id: product.id,
         name: product.name,
-        price: variant.price,
-        size: variant.size || null,
-        color: variant.color || null,
+        price: variant.price,      // prix correct
+        size: variant.size,        // taille
+        color: variant.color,      // couleur
         quantity: 1,
+        thumbnail: product.thumbnail
       };
 
       store.dispatch("addToCart", item);
     };
 
-    const scrollLeft = () => {
-      slider.value.scrollBy({ left: -300, behavior: "smooth" });
-    };
-    const scrollRight = () => {
-      slider.value.scrollBy({ left: 300, behavior: "smooth" });
-    };
+    const scrollLeft = () => slider.value.scrollBy({ left: -300, behavior: "smooth" });
+    const scrollRight = () => slider.value.scrollBy({ left: 300, behavior: "smooth" });
 
     onMounted(fetchProducts);
 
-    return { products, slider, addProductToCart, scrollLeft, scrollRight };
+    return { products, slider, addToCart, scrollLeft, scrollRight };
   },
 };
 </script>
@@ -140,7 +126,6 @@ export default {
   margin-bottom: 2rem;
 }
 
-/* Slider horizontal */
 .slider-container {
   position: relative;
   display: flex;
@@ -175,7 +160,6 @@ export default {
   border-radius: 6px;
 }
 
-/* Variantes */
 .size-chip,
 .color-chip {
   background-color: #f1f1f1;
@@ -184,7 +168,6 @@ export default {
   font-size: 0.75rem;
 }
 
-/* Boutons scroll */
 .scroll-btn {
   position: absolute;
   top: 40%;
