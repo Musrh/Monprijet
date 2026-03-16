@@ -1,4 +1,3 @@
-//Panier réussi 
 <template>
   <div class="p-4 max-w-3xl mx-auto">
 
@@ -153,7 +152,7 @@ export default {
         if (window.paypal) return resolve(window.paypal);
         const script = document.createElement("script");
         script.src =
-          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e¤cy=EUR";
+          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
         script.onload = () => resolve(window.paypal);
         script.onerror = reject;
         document.body.appendChild(script);
