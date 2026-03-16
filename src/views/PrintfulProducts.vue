@@ -24,24 +24,18 @@
         class="main-mockup"
       />
 
-      <!-- Taille -->
-      <div class="selector">
+      <!-- Tailles visibles -->
+      <div class="sizes">
 
-        <label>Taille :</label>
+        <strong>Tailles :</strong>
 
-        <div class="options">
-
-          <button
-            v-for="size in getSizes(product)"
-            :key="size"
-            :class="['option-btn',
-            selectedSize[product.id] === size ? 'active' : '']"
-            @click="selectSize(product.id,size)"
-          >
-            {{ size }}
-          </button>
-
-        </div>
+        <span
+          v-for="size in getSizes(product)"
+          :key="size"
+          class="size-badge"
+        >
+          {{ size }}
+        </span>
 
       </div>
 
@@ -50,7 +44,7 @@
         💰 {{ product.price }} €
       </p>
 
-      <!-- Bouton panier -->
+      <!-- Ajouter panier -->
       <button
         class="add-cart-btn"
         @click="addToCart(product)"
@@ -76,8 +70,7 @@ export default {
 
   data(){
     return{
-      products:[],
-      selectedSize:{}
+      products:[]
     }
   },
 
@@ -92,7 +85,6 @@ export default {
 
   methods:{
 
-    // récupérer tailles depuis variants
     getSizes(product){
 
       const sizes = product.variants
@@ -102,36 +94,25 @@ export default {
       return [...new Set(sizes)]
     },
 
-    selectSize(productId,size){
-      this.selectedSize[productId] = size
-    },
-
     addToCart(product){
 
-      const size = this.selectedSize[product.id]
+      const produit = {
 
-      if(!size){
-        alert("Veuillez choisir une taille")
-        return
-      }
-
-      const item = {
-
-        id: product.id + "-" + size,
+        id: product.id,
 
         nom: product.name,
 
         prix: product.price,
 
-        taille: size,
+        description: product.description,
 
-        image: product.thumbnail,
+        images: [product.thumbnail],
 
-        quantity:1
+        source: "printful"
 
       }
 
-      this.$emit("add-to-cart",item)
+      this.$emit("add-to-cart",produit)
 
     }
 
@@ -176,26 +157,18 @@ export default {
   margin:10px 0;
 }
 
-.selector{
+.sizes{
   margin-top:10px;
 }
 
-.options{
-  display:flex;
-  gap:6px;
-}
-
-.option-btn{
-  border:1px solid #ccc;
-  padding:5px 10px;
+.size-badge{
+  display:inline-block;
+  background:#f3f4f6;
+  border:1px solid #ddd;
+  padding:4px 8px;
+  margin:3px;
   border-radius:4px;
-  background:white;
-  cursor:pointer;
-}
-
-.option-btn.active{
-  background:#2563eb;
-  color:white;
+  font-size:13px;
 }
 
 .price{
