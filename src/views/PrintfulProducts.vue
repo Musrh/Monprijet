@@ -7,43 +7,32 @@
       class="product-card"
     >
 
-      <h2 class="product-title">{{ product.name }}</h2>
+      <!-- Nom -->
+      <h2 class="product-title">
+        {{ product.name }}
+      </h2>
 
+      <!-- Description -->
       <p class="product-description">
         {{ product.description }}
       </p>
 
-      <!-- image -->
+      <!-- Image -->
       <img
         v-if="product.thumbnail"
         :src="product.thumbnail"
         class="main-mockup"
       />
 
-      <!-- couleurs -->
+      <!-- Taille -->
       <div class="selector">
-        <label>Couleur :</label>
 
-        <div class="options">
-          <button
-            v-for="color in product.availableColors"
-            :key="color"
-            :class="['option-btn',
-            selectedColor[product.id] === color ? 'active' : '']"
-            @click="selectColor(product.id,color)"
-          >
-            {{ color }}
-          </button>
-        </div>
-      </div>
-
-      <!-- tailles -->
-      <div class="selector">
         <label>Taille :</label>
 
         <div class="options">
+
           <button
-            v-for="size in product.availableSizes"
+            v-for="size in getSizes(product)"
             :key="size"
             :class="['option-btn',
             selectedSize[product.id] === size ? 'active' : '']"
@@ -51,15 +40,17 @@
           >
             {{ size }}
           </button>
+
         </div>
+
       </div>
 
-      <!-- prix -->
+      <!-- Prix -->
       <p class="price">
         💰 {{ product.price }} €
       </p>
 
-      <!-- panier -->
+      <!-- Bouton panier -->
       <button
         class="add-cart-btn"
         @click="addToCart(product)"
@@ -86,7 +77,6 @@ export default {
   data(){
     return{
       products:[],
-      selectedColor:{},
       selectedSize:{}
     }
   },
@@ -102,8 +92,14 @@ export default {
 
   methods:{
 
-    selectColor(productId,color){
-      this.selectedColor[productId] = color
+    // récupérer tailles depuis variants
+    getSizes(product){
+
+      const sizes = product.variants
+        .map(v => v.size)
+        .filter(Boolean)
+
+      return [...new Set(sizes)]
     },
 
     selectSize(productId,size){
@@ -112,17 +108,31 @@ export default {
 
     addToCart(product){
 
+      const size = this.selectedSize[product.id]
+
+      if(!size){
+        alert("Veuillez choisir une taille")
+        return
+      }
+
       const item = {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        color: this.selectedColor[product.id] || "",
-        size: this.selectedSize[product.id] || "",
+
+        id: product.id + "-" + size,
+
+        nom: product.name,
+
+        prix: product.price,
+
+        taille: size,
+
         image: product.thumbnail,
+
         quantity:1
+
       }
 
       this.$emit("add-to-cart",item)
+
     }
 
   }
@@ -164,7 +174,6 @@ export default {
 .main-mockup{
   width:100%;
   margin:10px 0;
-  border-radius:6px;
 }
 
 .selector{
@@ -174,7 +183,6 @@ export default {
 .options{
   display:flex;
   gap:6px;
-  flex-wrap:wrap;
 }
 
 .option-btn{
