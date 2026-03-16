@@ -13,8 +13,8 @@
         >
           <!-- Image principale -->
           <img
-            v-if="product.thumbnail"
-            :src="product.thumbnail"
+            v-if="selectedVariant[product.id]?.thumbnail"
+            :src="selectedVariant[product.id].thumbnail"
             :alt="product.name"
             class="main-mockup"
           />
@@ -25,35 +25,46 @@
           <!-- Description -->
           <p class="text-gray-600 text-sm">{{ product.description }}</p>
 
-          <!-- Prix du produit -->
-          <p class="text-green-600 font-bold">{{ product.price }} €</p>
+          <!-- Prix -->
+          <p class="text-green-600 font-bold">
+            {{ selectedVariant[product.id]?.price || product.price }} €
+          </p>
 
-          <!-- Tailles et couleurs -->
+          <!-- Tailles -->
           <div v-if="product.variants.length" class="variants mt-2">
             <p class="text-sm font-semibold">Tailles :</p>
             <div class="sizes flex flex-wrap gap-2 mb-1">
-              <span
+              <button
                 v-for="variant in product.variants"
                 :key="variant.id + '-size'"
                 class="size-chip"
+                :class="{
+                  'bg-blue-600 text-white': selectedVariant[product.id]?.id === variant.id
+                }"
+                @click="selectVariant(product.id, variant)"
               >
                 {{ variant.size }}
-              </span>
+              </button>
             </div>
 
+            <!-- Couleurs -->
             <p class="text-sm font-semibold">Couleurs :</p>
             <div class="colors flex flex-wrap gap-2 mb-2">
-              <span
+              <button
                 v-for="variant in product.variants"
                 :key="variant.id + '-color'"
                 class="color-chip"
+                :class="{
+                  'bg-blue-600 text-white': selectedVariant[product.id]?.id === variant.id
+                }"
+                @click="selectVariant(product.id, variant)"
               >
                 {{ variant.color }}
-              </span>
+              </button>
             </div>
           </div>
 
-          <!-- Bouton ajouter au panier -->
+          <!-- Bouton Ajouter au panier -->
           <button
             class="add-cart-btn mt-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
             @click="addToCart(product)"
@@ -70,7 +81,7 @@
 
 <script>
 import axios from "axios";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, reactive } from "vue";
 import { useStore } from "vuex";
 
 export default {
@@ -80,31 +91,43 @@ export default {
     const slider = ref(null);
     const store = useStore();
 
+    // Stocke la variante sélectionnée pour chaque produit
+    const selectedVariant = reactive({});
+
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
           "https://printfulapi-production.up.railway.app/printful/products"
         );
         products.value = res.data.products;
+
+        // initialisation des variantes sélectionnées (première variante)
+        products.value.forEach((p) => {
+          if (p.variants && p.variants.length > 0) {
+            selectedVariant[p.id] = p.variants[0];
+          }
+        });
       } catch (err) {
         console.error("Erreur fetching products:", err);
       }
     };
 
-    // Ici on récupère toujours la **première variante** pour le bouton
-    const addToCart = (product) => {
-      if (!product.variants || product.variants.length === 0) return;
+    const selectVariant = (productId, variant) => {
+      selectedVariant[productId] = variant;
+    };
 
-      const variant = product.variants[0]; // première variante par défaut
+    const addToCart = (product) => {
+      const variant = selectedVariant[product.id];
+      if (!variant) return;
 
       const item = {
         id: product.id,
         name: product.name,
-        price: variant.price,      // prix correct
-        size: variant.size,        // taille
-        color: variant.color,      // couleur
+        price: variant.price,
+        size: variant.size,
+        color: variant.color,
         quantity: 1,
-        thumbnail: product.thumbnail
+        thumbnail: variant.thumbnail || product.thumbnail
       };
 
       store.dispatch("addToCart", item);
@@ -115,7 +138,7 @@ export default {
 
     onMounted(fetchProducts);
 
-    return { products, slider, addToCart, scrollLeft, scrollRight };
+    return { products, slider, selectedVariant, selectVariant, addToCart, scrollLeft, scrollRight };
   },
 };
 </script>
@@ -166,6 +189,13 @@ export default {
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.size-chip.bg-blue-600,
+.color-chip.bg-blue-600 {
+  background-color: #2563eb;
+  color: white;
 }
 
 .scroll-btn {
