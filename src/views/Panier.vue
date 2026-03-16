@@ -1,6 +1,5 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
-
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
     <!-- Panier vide -->
@@ -10,26 +9,21 @@
 
     <!-- Panier rempli -->
     <div v-else>
-
-      <!-- PRODUITS -->
       <div
         v-for="item in cart"
-        :key="item.id + item.size + item.color"
+        :key="item.id"
         class="flex items-center mb-4 border-b pb-2"
       >
         <img
-          :src="item.thumbnail || item.image || '/placeholder.png'"
+          :src="item.image || '/placeholder.png'"
+          :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
-
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
-
+          <p>{{ item.prix }} €</p>
           <p v-if="item.size">Taille : {{ item.size }}</p>
           <p v-if="item.color">Couleur : {{ item.color }}</p>
-
-          <p>{{ item.prix }} €</p>
-
           <input
             type="number"
             min="1"
@@ -38,9 +32,8 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
-
         <button
-          @click="remove(item)"
+          @click="remove(item.id)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
         >
           ❌
@@ -48,41 +41,28 @@
       </div>
 
       <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">
-        Total : {{ total }} €
-      </h3>
+      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
 
-      <!-- ADRESSE LIVRAISON -->
-      <div class="mt-6 border p-4 rounded bg-gray-50">
-        <h3 class="font-bold mb-2">Adresse de livraison</h3>
-
-        <input v-model="adresse.nom" placeholder="Nom complet"
-          class="border p-2 mb-2 w-full rounded" />
-
-        <input v-model="adresse.rue" placeholder="Adresse"
-          class="border p-2 mb-2 w-full rounded" />
-
-        <input v-model="adresse.ville" placeholder="Ville"
-          class="border p-2 mb-2 w-full rounded" />
-
-        <input v-model="adresse.codePostal" placeholder="Code postal"
-          class="border p-2 mb-2 w-full rounded" />
-
-        <input v-model="adresse.pays" placeholder="Pays"
-          class="border p-2 w-full rounded" />
+      <!-- Adresse de livraison -->
+      <div class="mt-4">
+        <label class="font-semibold block mb-2">Adresse de livraison</label>
+        <textarea
+          v-model="adresseLivraison"
+          placeholder="Entrez votre adresse complète"
+          class="border p-2 rounded w-full"
+        ></textarea>
       </div>
 
-      <!-- PAIEMENT -->
+      <!-- Choix paiement -->
       <div class="mt-4">
         <label class="font-semibold block mb-2">Mode de paiement</label>
-
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
           <option value="stripe">💳 Carte bancaire (Stripe)</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
       </div>
 
-      <!-- STRIPE -->
+      <!-- Bouton Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -91,11 +71,10 @@
         Payer
       </button>
 
-      <!-- PAYPAL -->
+      <!-- Conteneur PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
-
     </div>
   </div>
 </template>
@@ -103,97 +82,91 @@
 <script>
 import { mapState } from "vuex";
 
+const API_BASE = "https://printfulapi-production.up.railway.app";
+
 export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresse: {
-        nom: "",
-        rue: "",
-        ville: "",
-        codePostal: "",
-        pays: ""
-      }
+      adresseLivraison: "",
     };
   },
-
   computed: {
     ...mapState(["cart", "user"]),
-
     total() {
       return this.cart
         .reduce((sum, item) => sum + item.prix * item.quantity, 0)
         .toFixed(2);
     },
-
-    isPrintful() {
-      return this.cart.some(p => p.source === "Printful");
-    },
-
-    API_BASE() {
-      return this.isPrintful
-        ? "https://printfulapi-production.up.railway.app"
-        : "https://stripe-backend-production-2ac4.up.railway.app";
-    }
   },
-
   watch: {
-    paymentMethod(newVal) {
-      if (newVal === "paypal") {
+    paymentMethod(newMethod) {
+      if (newMethod === "paypal") {
         this.$nextTick(() => {
+          if (!this.user) {
+            alert("Veuillez vous connecter avant de payer");
+            this.$router.push("/login");
+            return;
+          }
           this.renderPaypalButton();
         });
       }
-    }
+    },
   },
-
   methods: {
-    remove(item) {
-      this.$store.dispatch("removeItem", item);
+    remove(id) {
+      this.$store.dispatch("removeItem", id);
     },
-
     updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", item);
-    },
-
-    validateAdresse() {
-      return (
-        this.adresse.nom &&
-        this.adresse.rue &&
-        this.adresse.ville &&
-        this.adresse.codePostal &&
-        this.adresse.pays
-      );
+      this.$store.dispatch("updateQuantity", {
+        id: item.id,
+        quantity: item.quantity,
+      });
     },
 
     // ---------------- STRIPE ----------------
     async payerStripe() {
       if (!this.user) {
-        alert("Veuillez vous connecter");
+        alert("Veuillez vous connecter avant de payer");
+        this.$router.push("/login");
+        return;
+      }
+      if (!this.cart.length) {
+        alert("Panier vide");
+        return;
+      }
+      if (!this.adresseLivraison) {
+        alert("Veuillez entrer votre adresse de livraison");
         return;
       }
 
-      if (!this.validateAdresse()) {
-        alert("Veuillez remplir l'adresse de livraison");
-        return;
-      }
+      const itemsPourCommande = this.cart.map((i) => ({
+        id: i.id,
+        nom: i.nom,
+        prix: i.prix,
+        quantity: i.quantity,
+        image: i.image,
+        size: i.size,
+        color: i.color,
+      }));
 
-      const response = await fetch(
-        `${this.API_BASE}/create-stripe-session`,
-        {
+      try {
+        const response = await fetch(`${API_BASE}/create-stripe-session`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            items: this.cart,
+            items: itemsPourCommande,
             email: this.user.email,
-            adresseLivraison: this.adresse
-          })
+            adresseLivraison: this.adresseLivraison,
+          }),
+        });
+        const data = await response.json();
+        if (data.url) {
+          window.location.href = data.url;
         }
-      );
-
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url;
+      } catch (err) {
+        console.error("Stripe error:", err);
+        alert("Erreur lors du paiement Stripe : " + err.message);
       }
     },
 
@@ -201,10 +174,8 @@ export default {
     async loadPaypalScript() {
       return new Promise((resolve, reject) => {
         if (window.paypal) return resolve(window.paypal);
-
         const script = document.createElement("script");
-        script.src =
-          `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=EUR`;
+        script.src = `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=EUR`;
         script.onload = () => resolve(window.paypal);
         script.onerror = reject;
         document.body.appendChild(script);
@@ -212,59 +183,56 @@ export default {
     },
 
     async renderPaypalButton() {
-      if (!this.user || !this.cart.length) return;
-
-      if (!this.validateAdresse()) {
-        alert("Veuillez remplir l'adresse avant paiement");
-        return;
-      }
+      if (!this.cart.length || !this.user || !this.adresseLivraison) return;
 
       const paypalSdk = await this.loadPaypalScript();
 
-      document.getElementById("paypal-button-container").innerHTML = "";
+      const itemsPourCommande = this.cart.map((i) => ({
+        id: i.id,
+        nom: i.nom,
+        prix: i.prix,
+        quantity: i.quantity,
+        size: i.size,
+        color: i.color,
+      }));
 
       paypalSdk.Buttons({
-
-        createOrder: async () => {
-          const res = await fetch(
-            `${this.API_BASE}/create-paypal-order`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: this.cart })
-            }
-          );
-          const data = await res.json();
-          return data.id;
+        createOrder: () => {
+          return fetch(`${API_BASE}/create-paypal-order`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items: itemsPourCommande,
+              email: this.user.email,
+            }),
+          })
+            .then((res) => res.json())
+            .then((order) => order.id);
         },
-
-        onApprove: async (data) => {
-          await fetch(
-            `${this.API_BASE}/capture-paypal-order`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: data.orderID,
-                user: { email: this.user.email },
-                items: this.cart,
-                adresseLivraison: this.adresse
-              })
-            }
-          );
-
-          this.$store.dispatch("clearCart");
-          this.$router.push("/success");
+        onApprove: (data) => {
+          return fetch(`${API_BASE}/capture-paypal-order`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: data.orderID,
+              user: { email: this.user.email },
+              items: itemsPourCommande,
+              adresseLivraison: this.adresseLivraison,
+            }),
+          })
+            .then((res) => res.json())
+            .then(() => {
+              this.$store.dispatch("clearCart");
+              this.$router.push("/success");
+            });
         },
-
         onError: (err) => {
-          console.error("PayPal error:", err);
-          alert("Erreur PayPal");
-        }
-
+          console.error("Erreur PayPal:", err);
+          alert("Erreur PayPal : " + err.message);
+        },
       }).render("#paypal-button-container");
-    }
-  }
+    },
+  },
 };
 </script>
 
