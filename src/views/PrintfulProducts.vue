@@ -1,194 +1,207 @@
 <template>
   <div class="printful-products">
+    <div class="slider-wrapper">
+      <button class="scroll-btn left" @click="scrollLeft">&#10094;</button>
+      
+      <div class="slider-container" ref="sliderContainer">
+        <div class="slider-grid">
+          <div
+            v-for="product in products"
+            :key="product.id"
+            class="product-card"
+          >
+            <!-- Image principale -->
+            <img :src="product.thumbnail" :alt="product.name" class="main-mockup" />
 
-    <div
-      v-for="product in products"
-      :key="product.id"
-      class="product-card"
-    >
+            <!-- Nom et description -->
+            <h3 class="font-bold text-sm mt-1">{{ product.name }}</h3>
+            <p class="text-gray-600 text-xs">{{ product.description }}</p>
 
-      <!-- Nom -->
-      <h2 class="product-title">
-        {{ product.name }}
-      </h2>
+            <!-- Variantes visibles -->
+            <div class="variants flex flex-wrap gap-1 mt-1">
+              <span
+                v-for="variant in product.variants"
+                :key="variant.id"
+                class="px-2 py-1 border rounded bg-gray-100 text-xs cursor-pointer"
+                :class="{ 'bg-green-200': isSelected(product.id, variant.id) }"
+                @click="selectVariant(product.id, variant.id)"
+              >
+                {{ variant.size || 'N/A' }} / {{ variant.color || 'N/A' }}
+              </span>
+            </div>
 
-      <!-- Description -->
-      <p class="product-description">
-        {{ product.description }}
-      </p>
+            <!-- Prix -->
+            <p class="text-green-600 font-bold mt-1 text-sm">
+              💰 {{ getVariantPrice(product.id) }} €
+            </p>
 
-      <!-- Image -->
-      <img
-        v-if="product.thumbnail"
-        :src="product.thumbnail"
-        class="main-mockup"
-      />
-
-      <!-- Tailles visibles -->
-      <div class="sizes">
-
-        <strong>Tailles :</strong>
-
-        <span
-          v-for="size in getSizes(product)"
-          :key="size"
-          class="size-badge"
-        >
-          {{ size }}
-        </span>
-
+            <!-- Bouton Ajouter au panier -->
+            <button
+              class="mt-1 bg-green-600 text-white py-1 rounded w-full text-xs hover:bg-green-700"
+              @click="addToCart(product)"
+            >
+              Ajouter au panier
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- Prix -->
-      <p class="price">
-        💰 {{ product.price }} €
-      </p>
-
-      <!-- Ajouter panier -->
-      <button
-        class="add-cart-btn"
-        @click="addToCart(product)"
-      >
-        Ajouter au panier
-      </button>
-
+      <button class="scroll-btn right" @click="scrollRight">&#10095;</button>
     </div>
-
   </div>
 </template>
 
 <script>
+import { ref, onMounted } from "vue";
 import axios from "axios";
+import { useStore } from "vuex";
 
 export default {
-
   name: "PrintfulProducts",
+  setup() {
+    const store = useStore();
+    const products = ref([]);
+    const sliderContainer = ref(null);
+    const selectedVariants = ref({}); // { productId: variantId }
 
-  props:{
-    apiUrl:String
-  },
+    // Récupération des produits depuis l'API
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get(
+          "https://printfulapi-production.up.railway.app/printful/products"
+        );
+        products.value = res.data.products;
 
-  data(){
-    return{
-      products:[]
-    }
-  },
-
-  async mounted(){
-
-    const res = await axios.get(
-      `${this.apiUrl}/printful/products`
-    )
-
-    this.products = res.data.products
-  },
-
-  methods:{
-
-    getSizes(product){
-
-      const sizes = product.variants
-        .map(v => v.size)
-        .filter(Boolean)
-
-      return [...new Set(sizes)]
-    },
-
-    addToCart(product){
-
-      const produit = {
-
-        id: product.id,
-
-        nom: product.name,
-
-        prix: product.price,
-
-        description: product.description,
-
-        images: [product.thumbnail],
-
-        source: "printful"
-
+        // Initialiser une variante sélectionnée par défaut
+        products.value.forEach((p) => {
+          if (p.variants.length > 0) selectedVariants.value[p.id] = p.variants[0].id;
+        });
+      } catch (err) {
+        console.error("Erreur fetching products:", err);
       }
+    };
 
-      this.$emit("add-to-cart",produit)
+    // Sélection d'une variante
+    const selectVariant = (productId, variantId) => {
+      selectedVariants.value[productId] = variantId;
+    };
 
-    }
+    const isSelected = (productId, variantId) =>
+      selectedVariants.value[productId] === variantId;
 
-  }
+    const getVariantPrice = (productId) => {
+      const product = products.value.find((p) => p.id === productId);
+      const variantId = selectedVariants.value[productId];
+      const variant = product?.variants.find((v) => v.id === variantId);
+      return variant?.price || product?.price || 0;
+    };
 
-}
+    // Ajouter au panier avec prix et taille/couleur
+    const addToCart = (product) => {
+      const variantId = selectedVariants.value[product.id];
+      const variant = product.variants.find((v) => v.id === variantId) || {};
+      const item = {
+        id: product.id,
+        name: product.name,
+        price: variant.price || product.price,
+        size: variant.size || null,
+        color: variant.color || null,
+        quantity: 1,
+      };
+      store.dispatch("addToCart", item);
+    };
+
+    // Défilement horizontal
+    const scrollAmount = 300;
+    const scrollLeft = () => {
+      sliderContainer.value.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+    };
+    const scrollRight = () => {
+      sliderContainer.value.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    };
+
+    onMounted(() => {
+      fetchProducts();
+    });
+
+    return {
+      products,
+      sliderContainer,
+      selectVariant,
+      addToCart,
+      isSelected,
+      getVariantPrice,
+      scrollLeft,
+      scrollRight,
+    };
+  },
+};
 </script>
 
 <style scoped>
-
-.printful-products{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:1.5rem;
+.printful-products {
+  position: relative;
+  width: 100%;
+  margin-top: 1rem;
 }
 
-@media (min-width:768px){
-  .printful-products{
-    grid-template-columns:repeat(2,1fr);
-  }
+/* Slider horizontal */
+.slider-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
 }
 
-.product-card{
-  border:1px solid #ddd;
-  padding:1rem;
-  border-radius:8px;
-  background:white;
+.slider-container {
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  flex: 1;
 }
 
-.product-title{
-  font-weight:bold;
-  font-size:18px;
+.slider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-auto-rows: auto;
+  gap: 1rem;
 }
 
-.product-description{
-  color:#666;
-  font-size:14px;
+.product-card {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background: #fff;
 }
 
-.main-mockup{
-  width:100%;
-  margin:10px 0;
+.main-mockup {
+  width: 100%;
+  object-fit: cover;
+  border-radius: 0.25rem;
 }
 
-.sizes{
-  margin-top:10px;
+/* Boutons de scroll */
+.scroll-btn {
+  position: absolute;
+  top: 40%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+  padding: 0.2rem 0.5rem;
+  border-radius: 50%;
 }
 
-.size-badge{
-  display:inline-block;
-  background:#f3f4f6;
-  border:1px solid #ddd;
-  padding:4px 8px;
-  margin:3px;
-  border-radius:4px;
-  font-size:13px;
+.scroll-btn.left {
+  left: 0.2rem;
 }
 
-.price{
-  font-weight:bold;
-  margin-top:10px;
+.scroll-btn.right {
+  right: 0.2rem;
 }
 
-.add-cart-btn{
-  width:100%;
-  margin-top:10px;
-  background:#16a34a;
-  color:white;
-  padding:8px;
-  border:none;
-  border-radius:4px;
-  cursor:pointer;
+/* Variantes */
+.variants span {
+  user-select: none;
 }
-
-.add-cart-btn:hover{
-  background:#15803d;
-}
-
 </style>
