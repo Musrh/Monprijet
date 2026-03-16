@@ -1,70 +1,88 @@
 <template>
   <div class="printful-products">
-    <div class="slider-wrapper">
-      <button class="scroll-btn left" @click="scrollLeft">&#10094;</button>
+    <h2 class="text-xl font-bold mb-4">Produits Printful</h2>
+
+    <!-- Slider horizontal -->
+    <div class="slider-container">
+      <button @click="scrollLeft" class="scroll-btn left">&lt;</button>
       
-      <div class="slider-container" ref="sliderContainer">
-        <div class="slider-grid">
-          <div
-            v-for="product in products"
-            :key="product.id"
-            class="product-card"
-          >
-            <!-- Image principale -->
-            <img :src="product.thumbnail" :alt="product.name" class="main-mockup" />
+      <div class="slider" ref="slider">
+        <div
+          v-for="product in products"
+          :key="product.id"
+          class="product-card"
+        >
+          <!-- Image principale -->
+          <img
+            v-if="product.thumbnail"
+            :src="product.thumbnail"
+            :alt="product.name"
+            class="main-mockup"
+          />
 
-            <!-- Nom et description -->
-            <h3 class="font-bold text-sm mt-1">{{ product.name }}</h3>
-            <p class="text-gray-600 text-xs">{{ product.description }}</p>
+          <!-- Nom -->
+          <h3 class="font-bold text-lg mt-2">{{ product.name }}</h3>
 
-            <!-- Variantes visibles -->
-            <div class="variants flex flex-wrap gap-1 mt-1">
+          <!-- Description -->
+          <p class="text-gray-600 text-sm">{{ product.description }}</p>
+
+          <!-- Prix -->
+          <p class="text-green-600 font-bold">{{ product.price }} €</p>
+
+          <!-- Tailles et couleurs -->
+          <div v-if="product.variants.length" class="variants mt-2">
+            <p class="text-sm font-semibold">Tailles :</p>
+            <div class="sizes flex flex-wrap gap-2 mb-1">
               <span
                 v-for="variant in product.variants"
                 :key="variant.id"
-                class="px-2 py-1 border rounded bg-gray-100 text-xs cursor-pointer"
-                :class="{ 'bg-green-200': isSelected(product.id, variant.id) }"
-                @click="selectVariant(product.id, variant.id)"
+                class="size-chip"
               >
-                {{ variant.size || 'N/A' }} / {{ variant.color || 'N/A' }}
+                {{ variant.size }}
               </span>
             </div>
 
-            <!-- Prix -->
-            <p class="text-green-600 font-bold mt-1 text-sm">
-              💰 {{ getVariantPrice(product.id) }} €
-            </p>
-
-            <!-- Bouton Ajouter au panier -->
-            <button
-              class="mt-1 bg-green-600 text-white py-1 rounded w-full text-xs hover:bg-green-700"
-              @click="addToCart(product)"
-            >
-              Ajouter au panier
-            </button>
+            <p class="text-sm font-semibold">Couleurs :</p>
+            <div class="colors flex flex-wrap gap-2 mb-2">
+              <span
+                v-for="variant in product.variants"
+                :key="variant.id + '-color'"
+                class="color-chip"
+              >
+                {{ variant.color }}
+              </span>
+            </div>
           </div>
+
+          <!-- Bouton ajouter au panier -->
+          <button
+            class="add-cart-btn mt-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+            @click="addProductToCart(product)"
+          >
+            Ajouter au panier
+          </button>
         </div>
       </div>
 
-      <button class="scroll-btn right" @click="scrollRight">&#10095;</button>
+      <button @click="scrollRight" class="scroll-btn right">&gt;</button>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
 import axios from "axios";
+import { ref, onMounted } from "vue";
 import { useStore } from "vuex";
 
 export default {
   name: "PrintfulProducts",
   setup() {
-    const store = useStore();
     const products = ref([]);
-    const sliderContainer = ref(null);
-    const selectedVariants = ref({}); // { productId: variantId }
+    const slider = ref(null);
+    const store = useStore();
 
-    // Récupération des produits depuis l'API
+    const selectedVariants = ref({}); // variant sélectionné par produit
+
     const fetchProducts = async () => {
       try {
         const res = await axios.get(
@@ -72,136 +90,123 @@ export default {
         );
         products.value = res.data.products;
 
-        // Initialiser une variante sélectionnée par défaut
+        // initialiser variant par défaut (première variante)
         products.value.forEach((p) => {
-          if (p.variants.length > 0) selectedVariants.value[p.id] = p.variants[0].id;
+          if (p.variants.length > 0) {
+            selectedVariants.value[p.id] = p.variants[0].id;
+          }
         });
       } catch (err) {
         console.error("Erreur fetching products:", err);
       }
     };
 
-    // Sélection d'une variante
-    const selectVariant = (productId, variantId) => {
-      selectedVariants.value[productId] = variantId;
-    };
-
-    const isSelected = (productId, variantId) =>
-      selectedVariants.value[productId] === variantId;
-
-    const getVariantPrice = (productId) => {
-      const product = products.value.find((p) => p.id === productId);
-      const variantId = selectedVariants.value[productId];
-      const variant = product?.variants.find((v) => v.id === variantId);
-      return variant?.price || product?.price || 0;
-    };
-
-    // Ajouter au panier avec prix et taille/couleur
-    const addToCart = (product) => {
+    const addProductToCart = (product) => {
       const variantId = selectedVariants.value[product.id];
-      const variant = product.variants.find((v) => v.id === variantId) || {};
+      const variant =
+        product.variants.find((v) => v.id === variantId) || product.variants[0];
+
+      if (!variant) return;
+
       const item = {
         id: product.id,
         name: product.name,
-        price: variant.price || product.price,
+        price: variant.price,
         size: variant.size || null,
         color: variant.color || null,
         quantity: 1,
       };
+
       store.dispatch("addToCart", item);
     };
 
-    // Défilement horizontal
-    const scrollAmount = 300;
     const scrollLeft = () => {
-      sliderContainer.value.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+      slider.value.scrollBy({ left: -300, behavior: "smooth" });
     };
     const scrollRight = () => {
-      sliderContainer.value.scrollBy({ left: scrollAmount, behavior: "smooth" });
+      slider.value.scrollBy({ left: 300, behavior: "smooth" });
     };
 
-    onMounted(() => {
-      fetchProducts();
-    });
+    onMounted(fetchProducts);
 
-    return {
-      products,
-      sliderContainer,
-      selectVariant,
-      addToCart,
-      isSelected,
-      getVariantPrice,
-      scrollLeft,
-      scrollRight,
-    };
+    return { products, slider, addProductToCart, scrollLeft, scrollRight };
   },
 };
 </script>
 
 <style scoped>
 .printful-products {
-  position: relative;
   width: 100%;
-  margin-top: 1rem;
+  margin-bottom: 2rem;
 }
 
 /* Slider horizontal */
-.slider-wrapper {
+.slider-container {
   position: relative;
   display: flex;
   align-items: center;
-  overflow: hidden;
 }
 
-.slider-container {
+.slider {
+  display: flex;
   overflow-x: auto;
   scroll-behavior: smooth;
-  flex: 1;
+  gap: 1rem;
+  padding: 0.5rem 0;
 }
 
-.slider-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  grid-auto-rows: auto;
-  gap: 1rem;
+.slider::-webkit-scrollbar {
+  display: none;
 }
 
 .product-card {
+  flex: 0 0 200px;
   border: 1px solid #ccc;
+  border-radius: 8px;
   padding: 0.5rem;
-  border-radius: 0.25rem;
-  background: #fff;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-mockup {
   width: 100%;
   object-fit: cover;
-  border-radius: 0.25rem;
+  border-radius: 6px;
 }
 
-/* Boutons de scroll */
+/* Variantes */
+.size-chip,
+.color-chip {
+  background-color: #f1f1f1;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* Boutons scroll */
 .scroll-btn {
   position: absolute;
   top: 40%;
-  background: rgba(255, 255, 255, 0.9);
+  background-color: rgba(0, 0, 0, 0.3);
+  color: white;
   border: none;
+  padding: 0.5rem;
   font-size: 1.5rem;
   cursor: pointer;
   z-index: 10;
-  padding: 0.2rem 0.5rem;
   border-radius: 50%;
 }
 
 .scroll-btn.left {
-  left: 0.2rem;
+  left: -10px;
 }
 
 .scroll-btn.right {
-  right: 0.2rem;
+  right: -10px;
 }
 
-/* Variantes */
-.variants span {
-  user-select: none;
+.add-cart-btn {
+  margin-top: auto;
 }
 </style>
