@@ -93,10 +93,9 @@ export default {
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart.reduce(
-        (sum, item) => sum + item.prix * item.quantity,
-        0
-      ).toFixed(2);
+      return this.cart
+        .reduce((sum, item) => sum + item.prix * item.quantity, 0)
+        .toFixed(2);
     },
   },
   watch: {
@@ -178,8 +177,7 @@ export default {
       return new Promise((resolve, reject) => {
         if (window.paypal) return resolve(window.paypal);
         const script = document.createElement("script");
-        script.src =
-          "https://www.paypal.com/sdk/js?client-id=TON_CLIENT_ID&currency=EUR";
+        script.src = `https://www.paypal.com/sdk/js?client-id=${import.meta.env.VITE_PAYPAL_CLIENT_ID}&currency=EUR`;
         script.onload = () => resolve(window.paypal);
         script.onerror = reject;
         document.body.appendChild(script);
