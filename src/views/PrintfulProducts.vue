@@ -1,48 +1,45 @@
 <template>
-  <div class="printful-slider">
-    <button class="scroll-btn left" @click="scrollLeft">&#10094;</button>
-
-    <div class="slider-container" ref="sliderContainer">
-      <div class="slider-grid">
-        <div
-          v-for="product in products"
-          :key="product.id"
-          class="product-card"
-        >
-          <img :src="product.thumbnail" :alt="product.name" class="main-mockup" />
-          <h3 class="font-bold text-sm mt-1">{{ product.name }}</h3>
-          <p class="text-gray-600 text-xs">{{ product.description }}</p>
-
-          <!-- Tailles et couleurs visibles -->
-          <div class="variants flex flex-wrap gap-1 mt-1">
-            <span
-              v-for="variant in product.variants"
-              :key="variant.id"
-              class="px-2 py-1 border rounded bg-gray-100 text-xs cursor-pointer"
-              :class="{ 'bg-green-200': isSelected(product.id, variant.id) }"
-              @click="selectVariant(product.id, variant.id)"
-            >
-              {{ variant.size || 'N/A' }} / {{ variant.color || 'N/A' }}
-            </span>
-          </div>
-
-          <!-- Prix de la variante sélectionnée -->
-          <p class="text-green-600 font-bold mt-1 text-sm">
-            💰 {{ getVariantPrice(product.id) }} €
-          </p>
-
-          <!-- Ajouter au panier -->
-          <button
-            class="mt-1 bg-green-600 text-white py-1 rounded w-full text-xs hover:bg-green-700"
-            @click="addToCart(product)"
+  <div class="printful-products">
+    <div class="slider-wrapper">
+      <button class="scroll-btn left" @click="scrollLeft">&#10094;</button>
+      <div class="slider-container" ref="sliderContainer">
+        <div class="slider-grid">
+          <div
+            v-for="product in products"
+            :key="product.id"
+            class="product-card"
           >
-            Ajouter au panier
-          </button>
+            <img :src="product.thumbnail" :alt="product.name" class="main-mockup" />
+            <h3 class="font-bold text-sm mt-1">{{ product.name }}</h3>
+            <p class="text-gray-600 text-xs">{{ product.description }}</p>
+
+            <div class="variants flex flex-wrap gap-1 mt-1">
+              <span
+                v-for="variant in product.variants"
+                :key="variant.id"
+                class="px-2 py-1 border rounded bg-gray-100 text-xs cursor-pointer"
+                :class="{ 'bg-green-200': isSelected(product.id, variant.id) }"
+                @click="selectVariant(product.id, variant.id)"
+              >
+                {{ variant.size || 'N/A' }} / {{ variant.color || 'N/A' }}
+              </span>
+            </div>
+
+            <p class="text-green-600 font-bold mt-1 text-sm">
+              💰 {{ getVariantPrice(product.id) }} €
+            </p>
+
+            <button
+              class="mt-1 bg-green-600 text-white py-1 rounded w-full text-xs hover:bg-green-700"
+              @click="addToCart(product)"
+            >
+              Ajouter au panier
+            </button>
+          </div>
         </div>
       </div>
+      <button class="scroll-btn right" @click="scrollRight">&#10095;</button>
     </div>
-
-    <button class="scroll-btn right" @click="scrollRight">&#10095;</button>
   </div>
 </template>
 
@@ -65,6 +62,10 @@ export default {
           "https://printfulapi-production.up.railway.app/printful/products"
         );
         products.value = res.data.products;
+        // Initialiser une variante sélectionnée par défaut
+        products.value.forEach((p) => {
+          if (p.variants.length > 0) selectedVariants.value[p.id] = p.variants[0].id;
+        });
       } catch (err) {
         console.error("Erreur fetching products:", err);
       }
@@ -85,9 +86,8 @@ export default {
     };
 
     const addToCart = (product) => {
-      const variantId = selectedVariants.value[product.id] || product.variants[0]?.id;
+      const variantId = selectedVariants.value[product.id];
       const variant = product.variants.find((v) => v.id === variantId) || {};
-
       const item = {
         id: product.id,
         name: product.name,
@@ -126,12 +126,16 @@ export default {
 </script>
 
 <style scoped>
-.printful-slider {
+.printful-products {
   position: relative;
   width: 100%;
-  overflow: hidden;
+}
+
+.slider-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
+  overflow: hidden;
 }
 
 .slider-container {
@@ -142,7 +146,7 @@ export default {
 
 .slider-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   grid-auto-rows: auto;
   gap: 1rem;
 }
