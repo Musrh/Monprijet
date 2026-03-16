@@ -20,7 +20,7 @@
 </template>
 
 <script>
-import HorizontalSlider from "../components/HorizontalSlider.vue";
+import HorizontalSlider from "./HorizontalSlider.vue";
 import Vitrine from "../components/Vitrine.vue";
 import { ref, onMounted } from "vue";
 import axios from "axios";
