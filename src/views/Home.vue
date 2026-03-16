@@ -1,54 +1,173 @@
+//home dernier 
 <template>
-  <div>
-    <!-- Slider principal -->
-    <SliderProducts :produits="produitsPromos" />
+  <div class="w-full px-4">
 
-    <!-- Produits Printful en horizontal slider -->
-    <HorizontalSlider
-      :products="printfulProducts"
-      :onAddToCart="addToCart"
-    />
+    <!-- Section principale : Slider + Pubs (affiché uniquement si pas de filtre) -->
+    <section v-if="!hasFilter" class="flex flex-col md:flex-row w-full gap-4">
 
-    <!-- Vitrine -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
-      <Vitrine />
-    </div>
+      <!-- Gauche : Slider et Vitrine -->
+      <div class="md:w-2/3 w-full flex flex-col gap-4">
+        <!-- Slider -->
+        <SliderProducts :produits="produitsPromos" />
+
+        <!-- Ici on insère les produits Printful -->
+<PrintfulProducts
+  api-url="https://printfulapi-production.up.railway.app"
+  @add-to-cart="addToCart"
+/>
+        
+        <!-- Vitrine normale -->
+        <div>
+          <Vitrine />
+        </div>
+      </div>
+
+      <!-- Droite : Pub1 et Pub2 -->
+      <div class="md:w-1/3 w-full flex flex-col gap-4">
+        <!-- Pub1 -->
+        <div class="h-64 bg-yellow-200 flex items-center justify-center rounded shadow-md overflow-hidden">
+          <img
+            src="https://res.cloudinary.com/dla18l69k/image/upload/v1773023706/rcvi8ukn3if9tycui13d.jpg"
+            alt="WellShoppings Image"
+            class="mx-auto rounded shadow-md max-w-full h-auto"
+          />
+        </div>
+
+        <!-- Pub2 -->
+        <div class="bg-white-200 flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
+          <img
+            src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
+            alt="EasyShopping Image"
+            class="mx-auto rounded shadow-md h-full w-auto"
+          />
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Résultats filtrés -->
+    <section v-if="hasFilter" class="w-full mt-0">
+
+      <h2 class="text-xl font-bold mb-2">Résultats filtrés</h2>
+
+      <!-- Aucun résultat -->
+      <div v-if="filteredProducts.length === 0">
+        <p>Aucun produit ne correspond à votre recherche.</p>
+        <button
+          @click="clearFilter"
+          class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          Retour à l'accueil
+        </button>
+      </div>
+
+      <!-- Résultats -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div
+          v-for="produit in filteredProducts"
+          :key="produit.id"
+          class="border rounded-lg p-4 bg-white shadow flex flex-col"
+        >
+          <!-- Image -->
+          <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-3" />
+
+          <!-- Nom -->
+          <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
+
+          <!-- Description -->
+          <p class="text-gray-600 text-sm mb-2">{{ produit.description }}</p>
+
+          <!-- Prix -->
+          <p class="text-green-600 font-bold text-lg mb-3">{{ produit.prix }} $</p>
+
+          <!-- Bouton panier -->
+          <button
+            @click="addToCart(produit)"
+            class="mt-auto bg-green-600 text-white py-2 rounded hover:bg-green-700"
+          >
+            Ajouter au panier
+          </button>
+        </div>
+      </div>
+
+    </section>
+
   </div>
 </template>
 
 <script>
-import SliderProducts from "./SliderProducts.vue";
-import HorizontalSlider from "./HorizontalSlider.vue";
+import { ref, onMounted, computed, watch } from "vue";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
-import { ref, onMounted } from "vue";
-import axios from "axios";
+import { useRoute, useRouter } from "vue-router";
+import { useStore } from "vuex";
+
+import PrintfulProducts from "./PrintfulProducts.vue";
 
 export default {
-  components: { SliderProducts, HorizontalSlider, Vitrine },
-  setup() {
-    const printfulProducts = ref([]);
+  components: { SliderProducts, Vitrine,PrintfulProducts },
 
-    const fetchPrintfulProducts = async () => {
-      try {
-        const res = await axios.get(
-          "https://printfulapi-production.up.railway.app/printful/products"
-        );
-        printfulProducts.value = res.data.products;
-      } catch (err) {
-        console.error(err);
-      }
+  setup() {
+    const produits = ref([]);
+    const produitsPromos = ref([]);
+    const filteredProducts = ref([]);
+
+    const route = useRoute();
+    const router = useRouter();
+    const store = useStore();
+
+    const hasFilter = computed(() => route.query.search || route.query.categorie);
+
+    const fetchProduits = async () => {
+      const snapshot = await getDocs(collection(db, "products"));
+      snapshot.forEach((doc) => {
+        const produit = { id: doc.id, ...doc.data() };
+        produits.value.push(produit);
+        if (produit.promo) produitsPromos.value.push(produit);
+      });
     };
 
-    onMounted(() => {
-      fetchPrintfulProducts();
+    const applyFilter = () => {
+      const searchText = (route.query.search || "").toLowerCase();
+      const categorie = (route.query.categorie || "").toLowerCase();
+
+      filteredProducts.value = produits.value.filter((p) => {
+        const nom = (p.nom || "").toLowerCase();
+        const description = (p.description || "").toLowerCase();
+        const cat = (p.categorie || "").toLowerCase();
+
+        const matchText =
+          searchText === "" ||
+          nom.includes(searchText) ||
+          description.includes(searchText) ||
+          cat.includes(searchText);
+
+        const matchCategorie = categorie === "" || cat === categorie;
+
+        return matchText && matchCategorie;
+      });
+    };
+
+    const clearFilter = () => router.push({ path: "/" });
+    const addToCart = (produit) => store.dispatch("addToCart", produit);
+
+    onMounted(async () => {
+      await fetchProduits();
+      applyFilter();
     });
 
-    const addToCart = (product) => {
-      console.log("Ajouter au panier :", product);
-      // Ici, dispatch vers store Vuex si utilisé
-    };
+    watch(() => route.query, applyFilter);
 
-    return { printfulProducts, addToCart };
+    return { produitsPromos, filteredProducts, hasFilter, clearFilter, addToCart };
   },
 };
 </script>
+
+<style scoped>
+/* Espace vertical léger entre sections */
+section + section {
+  margin-top: 1rem;
+}
+</style>
