@@ -1,4 +1,3 @@
-//panier avec stripe+PayPal et taille et couleur 
 <template>
   <div class="p-4 max-w-3xl mx-auto">
 
@@ -123,13 +122,11 @@ export default {
             this.$router.push("/login");
             return;
           }
-
           if (!this.adresseLivraison) {
             alert("Veuillez saisir une adresse de livraison.");
             this.paymentMethod = "stripe";
             return;
           }
-
           this.renderPaypalButton();
         });
       }
@@ -137,7 +134,6 @@ export default {
   },
 
   methods: {
-
     remove(item) {
       this.$store.dispatch("removeItem", {
         id: item.id,
@@ -157,13 +153,11 @@ export default {
 
     // ================= STRIPE =================
     async payerStripe() {
-
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
         this.$router.push("/login");
         return;
       }
-
       if (!this.adresseLivraison) {
         alert("Veuillez saisir une adresse de livraison.");
         return;
@@ -200,18 +194,15 @@ export default {
     async loadPaypalScript() {
       return new Promise((resolve) => {
         if (window.paypal) return resolve(window.paypal);
-
         const script = document.createElement("script");
         script.src =
-          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e¤cy=EUR";
-
+          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
         script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
       });
     },
 
     async renderPaypalButton() {
-
       const container = document.getElementById("paypal-button-container");
       container.innerHTML = "";
 
@@ -227,7 +218,6 @@ export default {
       }));
 
       paypalSdk.Buttons({
-
         createOrder: () => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
@@ -241,8 +231,8 @@ export default {
               })
             }
           )
-            .then(res => res.json())
-            .then(order => order.id);
+          .then(res => res.json())
+          .then(order => order.id);
         },
 
         onApprove: (data) => {
@@ -259,13 +249,12 @@ export default {
               })
             }
           )
-            .then(res => res.json())
-            .then(() => {
-              this.$store.dispatch("clearCart");
-              this.$router.push("/success");
-            });
+          .then(res => res.json())
+          .then(() => {
+            this.$store.dispatch("clearCart");
+            this.$router.push("/success");
+          });
         }
-
       }).render(container);
     }
   }
