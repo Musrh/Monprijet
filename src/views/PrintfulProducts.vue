@@ -1,194 +1,152 @@
 <template>
-  <div class="printful-products">
+  <section class="px-4 mt-6">
+    <h2 class="text-2xl font-bold mb-4">Produits Printful</h2>
 
-    <div
-      v-for="product in products"
-      :key="product.id"
-      class="product-card"
-    >
-
-      <!-- Nom -->
-      <h2 class="product-title">
-        {{ product.name }}
-      </h2>
-
-      <!-- Description -->
-      <p class="product-description">
-        {{ product.description }}
-      </p>
-
-      <!-- Image -->
-      <img
-        v-if="product.thumbnail"
-        :src="product.thumbnail"
-        class="main-mockup"
-      />
-
-      <!-- Tailles visibles -->
-      <div class="sizes">
-
-        <strong>Tailles :</strong>
-
-        <span
-          v-for="size in getSizes(product)"
-          :key="size"
-          class="size-badge"
-        >
-          {{ size }}
-        </span>
-
-      </div>
-
-      <!-- Prix -->
-      <p class="price">
-        💰 {{ product.price }} €
-      </p>
-
-      <!-- Ajouter panier -->
-      <button
-        class="add-cart-btn"
-        @click="addToCart(product)"
+    <div v-if="products.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <div
+        v-for="product in products"
+        :key="product.id"
+        class="border rounded shadow p-3 flex flex-col bg-white"
       >
-        Ajouter au panier
-      </button>
+        <!-- IMAGE -->
+        <img
+          :src="product.thumbnail || '/placeholder.png'"
+          :alt="product.name"
+          class="w-full h-40 object-cover rounded mb-2"
+        />
 
+        <!-- NOM -->
+        <h3 class="font-semibold text-sm mb-1">{{ product.name }}</h3>
+
+        <!-- PRIX -->
+        <p class="text-green-600 font-bold mb-2">
+          {{ selectedVariantPrice(product) }} €
+        </p>
+
+        <!-- TAILLES -->
+        <div v-if="product.availableSizes?.length" class="mb-2">
+          <p class="text-xs font-semibold">Tailles :</p>
+          <div class="flex flex-wrap gap-1 mt-1">
+            <button
+              v-for="size in product.availableSizes"
+              :key="size"
+              @click="selectedSize[product.id] = size"
+              :class="[
+                'px-2 py-1 text-xs border rounded',
+                selectedSize[product.id] === size
+                  ? 'bg-black text-white'
+                  : 'bg-gray-100'
+              ]"
+            >
+              {{ size }}
+            </button>
+          </div>
+        </div>
+
+        <!-- COULEURS -->
+        <div v-if="product.availableColors?.length" class="mb-2">
+          <p class="text-xs font-semibold">Couleurs :</p>
+          <div class="flex flex-wrap gap-1 mt-1">
+            <button
+              v-for="color in product.availableColors"
+              :key="color"
+              @click="selectedColor[product.id] = color"
+              :class="[
+                'px-2 py-1 text-xs border rounded',
+                selectedColor[product.id] === color
+                  ? 'bg-black text-white'
+                  : 'bg-gray-100'
+              ]"
+            >
+              {{ color }}
+            </button>
+          </div>
+        </div>
+
+        <!-- BOUTON PANIER -->
+        <button
+          @click="addToCart(product)"
+          class="mt-auto bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm"
+        >
+          Ajouter au panier
+        </button>
+      </div>
     </div>
 
-  </div>
+    <div v-else class="text-gray-500">Aucun produit Printful disponible.</div>
+  </section>
 </template>
 
 <script>
 import axios from "axios";
 
 export default {
-
   name: "PrintfulProducts",
-
-  props:{
-    apiUrl:String
+  data() {
+    return {
+      products: [],
+      selectedSize: {},
+      selectedColor: {},
+    };
   },
-
-  data(){
-    return{
-      products:[]
+  async mounted() {
+    try {
+      const res = await axios.get(
+        "https://printfulapi-production.up.railway.app/printful/products"
+      );
+      this.products = res.data.products.map(p => ({
+        ...p,
+        price: Number(p.price),
+      }));
+    } catch (err) {
+      console.error("Erreur Printful:", err);
     }
   },
-
-  async mounted(){
-
-    const res = await axios.get(
-      `${this.apiUrl}/printful/products`
-    )
-
-    this.products = res.data.products
-  },
-
-  methods:{
-
-    getSizes(product){
-
-      const sizes = product.variants
-        .map(v => v.size)
-        .filter(Boolean)
-
-      return [...new Set(sizes)]
+  methods: {
+    selectedVariantPrice(product) {
+      // Si variantes spécifiques disponibles, prendre le prix de la combinaison taille/couleur
+      const size = this.selectedSize[product.id];
+      const color = this.selectedColor[product.id];
+      if (product.variants?.length) {
+        const variant = product.variants.find(
+          v => (!size || v.size === size) && (!color || v.color === color)
+        );
+        return variant ? variant.price : product.price;
+      }
+      return product.price;
     },
+    addToCart(product) {
+      const taille = this.selectedSize[product.id] || product.availableSizes?.[0] || null;
+      const couleur = this.selectedColor[product.id] || product.availableColors?.[0] || null;
 
-    addToCart(product){
-
-      const produit = {
-
-        id: product.id,
-
-        nom: product.name,
-
-        prix: product.price,
-
-        description: product.description,
-
-        images: [product.thumbnail],
-
-        source: "printful"
-
+      // Cherche la variante exacte pour le prix
+      let prix = product.price;
+      if (product.variants?.length) {
+        const variant = product.variants.find(
+          v => (!taille || v.size === taille) && (!couleur || v.color === couleur)
+        );
+        if (variant) prix = variant.price;
       }
 
-      this.$emit("add-to-cart",produit)
+      const produitPanier = {
+        id: product.id,
+        nom: product.name,
+        prix,
+        images: [product.thumbnail],
+        quantity: 1,
+        taille,
+        couleur,
+      };
 
-    }
-
-  }
-
-}
+      this.$store.dispatch("addToCart", produitPanier);
+      alert(`Produit "${product.name}" ajouté au panier !`);
+    },
+  },
+};
 </script>
 
 <style scoped>
-
-.printful-products{
-  display:grid;
-  grid-template-columns:1fr;
-  gap:1.5rem;
+button {
+  transition: background-color 0.2s;
 }
-
-@media (min-width:768px){
-  .printful-products{
-    grid-template-columns:repeat(2,1fr);
-  }
-}
-
-.product-card{
-  border:1px solid #ddd;
-  padding:1rem;
-  border-radius:8px;
-  background:white;
-}
-
-.product-title{
-  font-weight:bold;
-  font-size:18px;
-}
-
-.product-description{
-  color:#666;
-  font-size:14px;
-}
-
-.main-mockup{
-  width:100%;
-  margin:10px 0;
-}
-
-.sizes{
-  margin-top:10px;
-}
-
-.size-badge{
-  display:inline-block;
-  background:#f3f4f6;
-  border:1px solid #ddd;
-  padding:4px 8px;
-  margin:3px;
-  border-radius:4px;
-  font-size:13px;
-}
-
-.price{
-  font-weight:bold;
-  margin-top:10px;
-}
-
-.add-cart-btn{
-  width:100%;
-  margin-top:10px;
-  background:#16a34a;
-  color:white;
-  padding:8px;
-  border:none;
-  border-radius:4px;
-  cursor:pointer;
-}
-
-.add-cart-btn:hover{
-  background:#15803d;
-}
-
 </style>
