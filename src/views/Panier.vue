@@ -1,6 +1,5 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
-
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
     <!-- Panier vide -->
@@ -20,15 +19,11 @@
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
-
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
-
-          <!-- Taille & couleur -->
           <p v-if="item.taille">📏 Taille : {{ item.taille }}</p>
           <p v-if="item.couleur">🎨 Couleur : {{ item.couleur }}</p>
-
           <input
             type="number"
             min="1"
@@ -37,7 +32,6 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
-
         <button
           @click="remove(item)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
@@ -48,9 +42,7 @@
 
       <!-- Adresse de livraison -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Adresse de livraison
-        </label>
+        <label class="font-semibold block mb-2">Adresse de livraison</label>
         <textarea
           v-model="adresseLivraison"
           placeholder="Votre adresse complète"
@@ -65,10 +57,7 @@
 
       <!-- Choix paiement -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Mode de paiement
-        </label>
-
+        <label class="font-semibold block mb-2">Mode de paiement</label>
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
           <option value="stripe">💳 Carte bancaire (Stripe)</option>
           <option value="paypal">🅿️ PayPal</option>
@@ -88,7 +77,6 @@
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
-
     </div>
   </div>
 </template>
@@ -100,7 +88,7 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresseLivraison: ""
+      adresseLivraison: "",
     };
   },
 
@@ -110,7 +98,7 @@ export default {
       return this.cart
         .reduce((sum, item) => sum + item.prix * item.quantity, 0)
         .toFixed(2);
-    }
+    },
   },
 
   watch: {
@@ -122,15 +110,17 @@ export default {
             this.$router.push("/login");
             return;
           }
+
           if (!this.adresseLivraison) {
             alert("Veuillez saisir une adresse de livraison.");
             this.paymentMethod = "stripe";
             return;
           }
+
           this.renderPaypalButton();
         });
       }
-    }
+    },
   },
 
   methods: {
@@ -138,7 +128,7 @@ export default {
       this.$store.dispatch("removeItem", {
         id: item.id,
         taille: item.taille,
-        couleur: item.couleur
+        couleur: item.couleur,
       });
     },
 
@@ -147,7 +137,7 @@ export default {
         id: item.id,
         taille: item.taille,
         couleur: item.couleur,
-        quantity: item.quantity
+        quantity: item.quantity,
       });
     },
 
@@ -164,17 +154,16 @@ export default {
         return;
       }
 
-      const itemsPourCommande = this.cart.map(p => ({
+      const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
         taille: p.taille,
         couleur: p.couleur,
-        image: p.images?.[0] || p.image || "/placeholder.png"
+        image: p.images?.[0] || p.image || "/placeholder.png",
       }));
 
-      // ⚠️ Juste créer session Stripe, le webhook s'occupe de Firestore
       const response = await fetch(
         "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
         {
@@ -183,8 +172,8 @@ export default {
           body: JSON.stringify({
             items: itemsPourCommande,
             email: this.user.email,
-            adresseLivraison: this.adresseLivraison
-          })
+            adresseLivraison: this.adresseLivraison,
+          }),
         }
       );
 
@@ -200,7 +189,6 @@ export default {
         const script = document.createElement("script");
         script.src =
           "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
-
         script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
       });
@@ -212,13 +200,13 @@ export default {
 
       const paypalSdk = await this.loadPaypalScript();
 
-      const itemsPourCommande = this.cart.map(p => ({
+      const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
         taille: p.taille,
-        couleur: p.couleur
+        couleur: p.couleur,
       }));
 
       paypalSdk.Buttons({
@@ -231,12 +219,12 @@ export default {
               body: JSON.stringify({
                 items: itemsPourCommande,
                 email: this.user.email,
-                adresseLivraison: this.adresseLivraison
-              })
+                adresseLivraison: this.adresseLivraison,
+              }),
             }
           )
-          .then(res => res.json())
-          .then(order => order.id);
+            .then((res) => res.json())
+            .then((order) => order.id);
         },
 
         onApprove: (data) => {
@@ -249,23 +237,27 @@ export default {
                 orderId: data.orderID,
                 items: itemsPourCommande,
                 user: { email: this.user.email },
-                adresseLivraison: this.adresseLivraison
-              })
+                adresseLivraison: this.adresseLivraison,
+              }),
             }
           )
-          .then(res => res.json())
-          .then(() => {
-            this.$store.dispatch("clearCart");
-            this.$router.push("/success");
-          });
-        }
+            .then((res) => res.json())
+            .then(() => {
+              this.$store.dispatch("clearCart");
+              this.$router.push("/success");
+            });
+        },
       }).render(container);
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-img { object-fit: cover; }
-textarea { resize: vertical; }
+img {
+  object-fit: cover;
+}
+textarea {
+  resize: vertical;
+}
 </style>
