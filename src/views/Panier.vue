@@ -1,3 +1,4 @@
+//panier avec stripe+PayPal et taille et couleur 
 <template>
   <div class="p-4 max-w-3xl mx-auto">
 
@@ -25,6 +26,7 @@
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
 
+          <!-- Taille & couleur -->
           <p v-if="item.taille">📏 Taille : {{ item.taille }}</p>
           <p v-if="item.couleur">🎨 Couleur : {{ item.couleur }}</p>
 
@@ -47,7 +49,9 @@
 
       <!-- Adresse de livraison -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">Adresse de livraison</label>
+        <label class="font-semibold block mb-2">
+          Adresse de livraison
+        </label>
         <textarea
           v-model="adresseLivraison"
           placeholder="Votre adresse complète"
@@ -56,11 +60,15 @@
       </div>
 
       <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
+      <h3 class="text-lg font-bold mt-4">
+        Total : {{ total }} €
+      </h3>
 
       <!-- Choix paiement -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">Mode de paiement</label>
+        <label class="font-semibold block mb-2">
+          Mode de paiement
+        </label>
 
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
           <option value="stripe">💳 Carte bancaire (Stripe)</option>
@@ -81,6 +89,7 @@
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
+
     </div>
   </div>
 </template>
@@ -92,7 +101,7 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresseLivraison: "",
+      adresseLivraison: ""
     };
   },
 
@@ -102,7 +111,7 @@ export default {
       return this.cart
         .reduce((sum, item) => sum + item.prix * item.quantity, 0)
         .toFixed(2);
-    },
+    }
   },
 
   watch: {
@@ -124,15 +133,16 @@ export default {
           this.renderPaypalButton();
         });
       }
-    },
+    }
   },
 
   methods: {
+
     remove(item) {
       this.$store.dispatch("removeItem", {
         id: item.id,
         taille: item.taille,
-        couleur: item.couleur,
+        couleur: item.couleur
       });
     },
 
@@ -141,12 +151,13 @@ export default {
         id: item.id,
         taille: item.taille,
         couleur: item.couleur,
-        quantity: item.quantity,
+        quantity: item.quantity
       });
     },
 
     // ================= STRIPE =================
     async payerStripe() {
+
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
         this.$router.push("/login");
@@ -158,14 +169,14 @@ export default {
         return;
       }
 
-      const itemsPourCommande = this.cart.map((p) => ({
+      const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
         taille: p.taille,
         couleur: p.couleur,
-        image: p.images?.[0] || p.image || "/placeholder.png",
+        image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
       const response = await fetch(
@@ -176,8 +187,8 @@ export default {
           body: JSON.stringify({
             items: itemsPourCommande,
             email: this.user.email,
-            adresseLivraison: this.adresseLivraison,
-          }),
+            adresseLivraison: this.adresseLivraison
+          })
         }
       );
 
@@ -192,7 +203,7 @@ export default {
 
         const script = document.createElement("script");
         script.src =
-          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
+          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e¤cy=EUR";
 
         script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
@@ -200,21 +211,23 @@ export default {
     },
 
     async renderPaypalButton() {
+
       const container = document.getElementById("paypal-button-container");
       container.innerHTML = "";
 
       const paypalSdk = await this.loadPaypalScript();
 
-      const itemsPourCommande = this.cart.map((p) => ({
+      const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
         taille: p.taille,
-        couleur: p.couleur,
+        couleur: p.couleur
       }));
 
       paypalSdk.Buttons({
+
         createOrder: () => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
@@ -224,12 +237,12 @@ export default {
               body: JSON.stringify({
                 items: itemsPourCommande,
                 email: this.user.email,
-                adresseLivraison: this.adresseLivraison,
-              }),
+                adresseLivraison: this.adresseLivraison
+              })
             }
           )
-            .then((res) => res.json())
-            .then((order) => order.id);
+            .then(res => res.json())
+            .then(order => order.id);
         },
 
         onApprove: (data) => {
@@ -242,27 +255,24 @@ export default {
                 orderId: data.orderID,
                 items: itemsPourCommande,
                 user: { email: this.user.email },
-                adresseLivraison: this.adresseLivraison,
-              }),
+                adresseLivraison: this.adresseLivraison
+              })
             }
           )
-            .then((res) => res.json())
+            .then(res => res.json())
             .then(() => {
               this.$store.dispatch("clearCart");
               this.$router.push("/success");
             });
-        },
+        }
+
       }).render(container);
-    },
-  },
+    }
+  }
 };
 </script>
 
 <style scoped>
-img {
-  object-fit: cover;
-}
-textarea {
-  resize: vertical;
-}
+img { object-fit: cover; }
+textarea { resize: vertical; }
 </style>
