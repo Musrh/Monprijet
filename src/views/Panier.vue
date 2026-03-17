@@ -16,7 +16,7 @@
         class="flex items-center mb-4 border-b pb-2"
       >
         <img
-          :src="item.images?.[0] || item.image || '/placeholder.png'"
+          :src="item.thumbnail || item.images?.[0] || item.image || '/placeholder.png'"
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
@@ -160,6 +160,7 @@ export default {
         this.$router.push("/login");
         return;
       }
+
       if (!this.adresseLivraison) {
         alert("Veuillez saisir une adresse de livraison.");
         return;
@@ -172,25 +173,28 @@ export default {
         quantity: p.quantity,
         taille: p.taille,
         couleur: p.couleur,
-        image: p.images?.[0] || p.image || "/placeholder.png"
+        image: p.thumbnail || p.images?.[0] || p.image || "/placeholder.png"
       }));
 
-      const response = await fetch(
-        "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            items: itemsPourCommande,
-            email: this.user.email,
-            adresseLivraison: this.adresseLivraison
-          })
-        }
-      );
+      try {
+        const response = await fetch(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items: itemsPourCommande,
+              email: this.user.email,
+              adresseLivraison: this.adresseLivraison
+            })
+          }
+        );
 
-      const data = await response.json();
-      if (data.url) {
-        window.location.href = data.url; // Redirection vers Stripe
+        const data = await response.json();
+        if (data.url) window.location.href = data.url;
+      } catch (err) {
+        console.error("Erreur Stripe:", err);
+        alert("Erreur lors de la création du paiement Stripe.");
       }
     },
 
@@ -239,6 +243,7 @@ export default {
             .then(res => res.json())
             .then(order => order.id);
         },
+
         onApprove: (data) => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
@@ -259,6 +264,7 @@ export default {
               this.$router.push("/success");
             });
         }
+
       }).render(container);
     }
   }
