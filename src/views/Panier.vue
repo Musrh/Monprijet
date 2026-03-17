@@ -25,7 +25,6 @@
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
 
-          <!-- Taille & couleur -->
           <p v-if="item.taille">📏 Taille : {{ item.taille }}</p>
           <p v-if="item.couleur">🎨 Couleur : {{ item.couleur }}</p>
 
@@ -122,11 +121,13 @@ export default {
             this.$router.push("/login");
             return;
           }
+
           if (!this.adresseLivraison) {
             alert("Veuillez saisir une adresse de livraison.");
             this.paymentMethod = "stripe";
             return;
           }
+
           this.renderPaypalButton();
         });
       }
@@ -158,6 +159,7 @@ export default {
         this.$router.push("/login");
         return;
       }
+
       if (!this.adresseLivraison) {
         alert("Veuillez saisir une adresse de livraison.");
         return;
@@ -173,6 +175,7 @@ export default {
         image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
+      // Envoi vers serveur central Stripe
       const response = await fetch(
         "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
         {
@@ -194,9 +197,11 @@ export default {
     async loadPaypalScript() {
       return new Promise((resolve) => {
         if (window.paypal) return resolve(window.paypal);
+
         const script = document.createElement("script");
         script.src =
           "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
+
         script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
       });
