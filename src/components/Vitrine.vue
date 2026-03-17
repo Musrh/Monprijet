@@ -24,7 +24,7 @@ import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
-import ProductCard from "../views/ProductCard.vue";
+import ProductCard from "./ProductCard.vue";
 
 export default {
   name: "Vitrine",
@@ -46,15 +46,16 @@ export default {
     };
 
     const fetchProduits = async () => {
-      const snapshot = await getDocs(collection(db, "PrintfulProducts"));
+      // ⚠️ Ici on change la collection
+      const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach((doc) => {
         const data = doc.data();
         produits.value.push({
           id: doc.id,
-          nom: data.name,
-          prix: Number(data.price),
-          images: [data.thumbnail, ...(data.variants?.map(v => v.image).filter(Boolean) || [])],
-          promo: false,
+          nom: data.nom, // champs dans la collection products
+          prix: Number(data.prix),
+          images: data.images ? data.images : ["/placeholder.png"],
+          promo: data.promo || false,
           availableSizes: data.availableSizes || [],
           availableColors: data.availableColors || [],
         });
