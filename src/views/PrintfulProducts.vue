@@ -35,7 +35,7 @@
                 'px-2 py-1 text-xs border rounded',
                 selectedSize[product.id] === size
                   ? 'bg-black text-black'
-                  : 'bg-gray-100'
+                  : 'bg-yellow'
               ]"
             >
               {{ size }}
@@ -55,7 +55,7 @@
                 'px-2 py-1 text-xs border rounded',
                 selectedColor[product.id] === color
                   ? 'bg-black text-black'
-                  : 'bg-gray-100'
+                  : 'bg-yellow'
               ]"
             >
               {{ color }}
