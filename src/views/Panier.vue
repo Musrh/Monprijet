@@ -122,13 +122,11 @@ export default {
             this.$router.push("/login");
             return;
           }
-
           if (!this.adresseLivraison) {
             alert("Veuillez saisir une adresse de livraison.");
             this.paymentMethod = "stripe";
             return;
           }
-
           this.renderPaypalButton();
         });
       }
@@ -176,6 +174,7 @@ export default {
         image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
+      // ⚠️ Juste créer session Stripe, le webhook s'occupe de Firestore
       const response = await fetch(
         "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
         {
