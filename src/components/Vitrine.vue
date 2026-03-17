@@ -24,7 +24,7 @@ import { ref, onMounted } from "vue";
 import { collection, getDocs } from "firebase/firestore";
 import { useStore } from "vuex";
 import { db } from "../firebase";
-import ProductCard from "./ProductCard.vue";
+import ProductCard from "../views/ProductCard.vue";
 
 export default {
   name: "Vitrine",
