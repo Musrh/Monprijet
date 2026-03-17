@@ -3,7 +3,7 @@
 
     <h2 class="text-2xl font-bold text-left">Vitrine</h2>
 
-    <div v-if="produits.length" class="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
+    <div v-if="produits.length" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
       <ProductCard
         v-for="p in produits"
         :key="p.id"
@@ -46,13 +46,12 @@ export default {
     };
 
     const fetchProduits = async () => {
-      // ⚠️ Ici on change la collection
       const snapshot = await getDocs(collection(db, "products"));
       snapshot.forEach((doc) => {
         const data = doc.data();
         produits.value.push({
           id: doc.id,
-          nom: data.nom, // champs dans la collection products
+          nom: data.nom,
           prix: Number(data.prix),
           images: data.images ? data.images : ["/placeholder.png"],
           promo: data.promo || false,
@@ -73,10 +72,17 @@ export default {
 .vitrine img {
   display: block;
   width: 100%;
+  height: 140px; /* Hauteur réduite pour plus de visibilité */
   object-fit: cover;
 }
 
 .vitrine button {
   transition: background-color 0.2s;
+}
+
+/* Largeur minimale et maximale des cartes pour que toutes les tailles tiennent */
+.product-card {
+  min-width: 180px;
+  max-width: 220px;
 }
 </style>
