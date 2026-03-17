@@ -21,45 +21,10 @@
         <!-- PRIX -->
         <p class="text-green-600 font-bold mb-2">{{ product.price }} €</p>
 
-        <!-- TAILLES -->
-        <div v-if="product.availableSizes?.length" class="mb-2">
-          <p class="text-xs font-semibold">Tailles :</p>
-          <div class="flex flex-wrap gap-1 mt-1">
-            <button
-              v-for="size in product.availableSizes"
-              :key="size"
-              @click="selectedSize[product.id] = size"
-              :class="[
-                'px-2 py-1 text-xs border rounded',
-                selectedSize[product.id] === size
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100'
-              ]"
-            >
-              {{ size }}
-            </button>
-          </div>
-        </div>
-
-        <!-- COULEURS -->
-        <div v-if="product.availableColors?.length" class="mb-2">
-          <p class="text-xs font-semibold">Couleurs :</p>
-          <div class="flex flex-wrap gap-1 mt-1">
-            <button
-              v-for="color in product.availableColors"
-              :key="color"
-              @click="selectedColor[product.id] = color"
-              :class="[
-                'px-2 py-1 text-xs border rounded',
-                selectedColor[product.id] === color
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100'
-              ]"
-            >
-              {{ color }}
-            </button>
-          </div>
-        </div>
+        <!-- VARIANTS (si disponibles) -->
+        <p v-if="product.variants" class="text-xs text-gray-500 mb-2">
+          Variantes : {{ product.variants }}
+        </p>
 
         <!-- BOUTON PANIER -->
         <button
@@ -83,8 +48,6 @@ export default {
   data() {
     return {
       products: [],
-      selectedSize: {},
-      selectedColor: {},
     };
   },
   async mounted() {
@@ -92,9 +55,12 @@ export default {
       const res = await axios.get(
         "https://printfulapi-production.up.railway.app/printful/products"
       );
+
+      // Assurer que price est un nombre et définir par défaut les variantes
       this.products = res.data.products.map(p => ({
         ...p,
         price: Number(p.price),
+        variants: p.variants || 0,
       }));
     } catch (err) {
       console.error("Erreur Printful:", err);
@@ -102,17 +68,13 @@ export default {
   },
   methods: {
     addToCart(product) {
-      const taille = this.selectedSize[product.id] || product.availableSizes?.[0] || null;
-      const couleur = this.selectedColor[product.id] || product.availableColors?.[0] || null;
-
       const produitPanier = {
         id: product.id,
         nom: product.name,
         prix: Number(product.price),
         images: [product.thumbnail],
         quantity: 1,
-        taille,
-        couleur,
+        // tailles et couleurs non gérées ici
       };
 
       this.$store.dispatch("addToCart", produitPanier);
