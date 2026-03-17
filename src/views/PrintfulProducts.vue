@@ -34,7 +34,7 @@
               :class="[
                 'px-2 py-1 text-xs border rounded',
                 selectedSize[product.id] === size
-                  ? 'bg-black text-black'
+                  ? 'bg-yellow text-red'
                   : 'bg-yellow'
               ]"
             >
@@ -54,7 +54,7 @@
               :class="[
                 'px-2 py-1 text-xs border rounded',
                 selectedColor[product.id] === color
-                  ? 'bg-black text-black'
+                  ? 'bg-yellow text-red'
                   : 'bg-yellow'
               ]"
             >
