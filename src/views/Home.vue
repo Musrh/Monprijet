@@ -33,7 +33,7 @@
           />
         </div>
 
-        <!-- Pub2 -->
+        <!-- Pub2 
         <div class="bg-white-200 flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
           <img
             src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
@@ -41,6 +41,7 @@
             class="mx-auto rounded shadow-md h-full w-auto"
           />
         </div>
+        -->
       </div>
 
     </section>
