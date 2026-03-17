@@ -2,17 +2,23 @@
   <section class="px-4 mt-6">
     <h2 class="text-2xl font-bold mb-4">Produits Printful</h2>
 
-    <div v-if="products.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+    <div
+      v-if="products.length"
+      class="grid gap-4"
+      :style="{
+        gridTemplateColumns: `repeat(auto-fit, minmax(${cardWidth}px, 1fr))`
+      }"
+    >
       <div
         v-for="product in products"
         :key="product.id"
         class="border rounded shadow p-3 flex flex-col bg-white"
       >
-        <!-- IMAGE avec click pour afficher description -->
+        <!-- IMAGE avec click -->
         <img
           :src="product.thumbnail || '/placeholder.png'"
           :alt="product.name"
-          class="w-full h-40 object-cover rounded mb-2 cursor-pointer"
+          class="w-full h-32 object-cover rounded mb-2 cursor-pointer"
           @click="showDescription(product)"
         />
 
@@ -76,7 +82,7 @@
 
 <script>
 import axios from "axios";
-import { useRouter } from "vue-router"; // si tu utilises Vue Router
+import { useRouter } from "vue-router";
 
 export default {
   name: "PrintfulProducts",
@@ -85,6 +91,7 @@ export default {
       products: [],
       selectedSize: {},
       selectedColor: {},
+      cardWidth: 180, // largeur minimale d’une fiche produit en px
     };
   },
   async mounted() {
@@ -142,14 +149,10 @@ export default {
       alert(`Produit "${product.name}" ajouté au panier !`);
     },
     showDescription(product) {
-      // ⚡ Si tu utilises Vue Router
       this.router.push({
         name: "Description",
         params: { id: product.id, productData: product }
       });
-
-      // ⚡ Sinon, tu peux émettre un événement vers un parent
-      // this.$emit("show-description", product);
     }
   },
 };
@@ -160,6 +163,6 @@ button {
   transition: background-color 0.2s;
 }
 img {
-  cursor: pointer; /* Indique que l'image est cliquable */
+  cursor: pointer;
 }
 </style>
