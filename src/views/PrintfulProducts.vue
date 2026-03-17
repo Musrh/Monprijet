@@ -6,13 +6,13 @@
       <div
         v-for="product in products"
         :key="product.id"
-        class="border rounded shadow p-3 flex flex-col bg-white product-card"
+        class="border rounded shadow p-3 flex flex-col bg-white"
       >
-        <!-- IMAGE avec clic -->
+        <!-- IMAGE avec click pour afficher description -->
         <img
           :src="product.thumbnail || '/placeholder.png'"
           :alt="product.name"
-          class="product-image mb-2 cursor-pointer"
+          class="w-full h-40 object-cover rounded mb-2 cursor-pointer"
           @click="showDescription(product)"
         />
 
@@ -27,16 +27,14 @@
         <!-- TAILLES -->
         <div v-if="product.availableSizes?.length" class="mb-2">
           <p class="text-xs font-semibold">Tailles :</p>
-          <div class="flex gap-1 mt-1 sizes-row">
+          <div class="flex flex-wrap gap-1 mt-1">
             <button
               v-for="size in product.availableSizes"
               :key="size"
               @click="selectedSize[product.id] = size"
               :class="[
                 'px-2 py-1 text-xs border rounded',
-                selectedSize[product.id] === size
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-black'
+                selectedSize[product.id] === size ? 'bg-yellow text-red' : 'bg-yellow'
               ]"
             >
               {{ size }}
@@ -54,9 +52,7 @@
               @click="selectedColor[product.id] = color"
               :class="[
                 'px-2 py-1 text-xs border rounded',
-                selectedColor[product.id] === color
-                  ? 'bg-black text-white'
-                  : 'bg-gray-100 text-black'
+                selectedColor[product.id] === color ? 'bg-yellow text-red' : 'bg-yellow'
               ]"
             >
               {{ color }}
@@ -75,29 +71,20 @@
     </div>
 
     <div v-else class="text-gray-500">Aucun produit Printful disponible.</div>
-
-    <!-- MODAL DESCRIPTION -->
-    <DescriptionModal
-      v-if="currentProduct"
-      :product="currentProduct"
-      @close="currentProduct = null"
-    />
   </section>
 </template>
 
 <script>
 import axios from "axios";
-import DescriptionModal from "./Description.vue";
+import { useRouter } from "vue-router"; // si tu utilises Vue Router
 
 export default {
   name: "PrintfulProducts",
-  components: { DescriptionModal },
   data() {
     return {
       products: [],
       selectedSize: {},
       selectedColor: {},
-      currentProduct: null, // produit pour modal
     };
   },
   async mounted() {
@@ -112,6 +99,10 @@ export default {
     } catch (err) {
       console.error("Erreur Printful:", err);
     }
+  },
+  setup() {
+    const router = useRouter();
+    return { router };
   },
   methods: {
     selectedVariantPrice(product) {
@@ -151,8 +142,15 @@ export default {
       alert(`Produit "${product.name}" ajouté au panier !`);
     },
     showDescription(product) {
-      this.currentProduct = product; // ouvre la modal Description.vue
-    },
+      // ⚡ Si tu utilises Vue Router
+      this.router.push({
+        name: "Description",
+        params: { id: product.id, productData: product }
+      });
+
+      // ⚡ Sinon, tu peux émettre un événement vers un parent
+      // this.$emit("show-description", product);
+    }
   },
 };
 </script>
@@ -161,24 +159,7 @@ export default {
 button {
   transition: background-color 0.2s;
 }
-.product-card {
-  min-width: 220px;
-  max-width: 300px;
-}
-.product-image {
-  height: 140px;
-  object-fit: cover;
-  cursor: pointer;
-}
-.sizes-row {
-  flex-wrap: nowrap;
-  overflow-x: auto;
-}
-.sizes-row::-webkit-scrollbar {
-  height: 4px;
-}
-.sizes-row::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 2px;
+img {
+  cursor: pointer; /* Indique que l'image est cliquable */
 }
 </style>
