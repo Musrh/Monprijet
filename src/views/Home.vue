@@ -17,7 +17,7 @@
 import { ref, onMounted } from "vue";
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
-import PrintfulProducts from "../components/PrintfulProducts.vue";
+import PrintfulProducts from "./PrintfulProducts.vue";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
