@@ -2,7 +2,7 @@
   <section class="w-full">
     <h2 class="text-2xl font-bold mb-4">Produits Printful</h2>
 
-    <div v-if="products.length" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 w-full"
+    <div v-if="products.length" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 w-full">
       
       <div v-for="product in products" :key="product.id" class="border rounded-lg p-4 bg-white shadow flex flex-col">
         
