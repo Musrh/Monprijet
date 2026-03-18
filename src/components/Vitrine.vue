@@ -14,17 +14,19 @@
 </template>
 
 <script>
+import { useRouter } from "vue-router";
+
 export default {
   name: "Vitrine",
   props: {
     categories: { type: Array, required: true, default: () => [] },
   },
-  setup(_, { emit }) {
+  setup() {
+    const router = useRouter();
+
     const goToDetails = (slug) => {
-      // 🔹 Redirection vers la page Détails.vue
-      // On utilise $router pour naviguer
-      emit("navigate", slug); // optionnel si parent veut écouter
-      window.location.href = `/details/${slug}`;
+      // 🔹 Navigation SPA vers Details.vue sans recharger la page
+      router.push({ name: "Details", params: { slug } });
     };
 
     return { goToDetails };
