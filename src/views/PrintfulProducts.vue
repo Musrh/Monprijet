@@ -5,11 +5,11 @@
     <div v-if="products.length" class="flex flex-col md:flex-row gap-6">
 
       <!-- PRODUIT PRINCIPAL -->
-      <div class="md:w-2/3 w-full flex flex-col items-center bg-white p-4 rounded shadow">
+      <div class="md:w-2/3 w-full flex flex-col items-center bg-white p-4 rounded shadow transition-all duration-300">
         <img
           :src="selectedProduct.thumbnail || '/placeholder.png'"
           :alt="selectedProduct.name"
-          class="w-full md:h-[400px] object-cover rounded border-4 border-gray-300 mb-4"
+          class="w-full md:h-[400px] object-cover rounded border-4 border-gray-300 mb-4 transition-all duration-300"
         />
 
         <h3 class="font-bold text-lg mb-2">{{ selectedProduct.name }}</h3>
@@ -65,7 +65,8 @@
         <div
           v-for="product in products.filter(p => p.id !== selectedProduct.id)"
           :key="product.id"
-          class="cursor-pointer border rounded hover:shadow-lg"
+          class="cursor-pointer border rounded hover:shadow-lg transition-all duration-200"
+          :class="selectedProduct.id === product.id ? 'border-blue-500' : 'border-gray-200'"
           @click="selectProduct(product)"
         >
           <img
