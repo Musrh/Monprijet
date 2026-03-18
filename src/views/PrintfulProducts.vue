@@ -5,7 +5,7 @@
     <div v-if="products.length" class="flex flex-col md:flex-row gap-6">
 
       <!-- PRODUIT PRINCIPAL -->
-      <div class="md:w-2/3 w-full flex flex-col items-center bg-white p-4 rounded shadow transition-all duration-300">
+      <div class="md:flex-[0_0_60%] w-full flex flex-col items-center bg-white p-4 rounded shadow transition-all duration-300">
         <img
           :src="selectedProduct.thumbnail || '/placeholder.png'"
           :alt="selectedProduct.name"
@@ -61,7 +61,7 @@
       </div>
 
       <!-- VIGNETTES -->
-      <div class="md:w-1/3 w-full grid grid-cols-3 gap-x-0 gap-y-0">
+      <div class="md:flex-[0_0_40%] w-full grid grid-cols-3 md:grid-cols-3 gap-x-2 gap-y-0">
         <div
           v-for="product in products.filter(p => p.id !== selectedProduct.id)"
           :key="product.id"
