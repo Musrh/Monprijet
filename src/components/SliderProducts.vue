@@ -10,12 +10,14 @@
           :key="produit.id"
           class="slider-item w-full flex-shrink-0 p-2 text-center relative bg-white rounded shadow"
         >
-          <!-- Image -->
-          <img
-            :src="produit.images?.[0]"
-            :alt="produit.nom"
-            class="w-full h-48 object-cover rounded"
-          />
+          <!-- Image réduite proportionnellement -->
+          <div class="w-full h-40 md:h-48 flex items-center justify-center overflow-hidden rounded mb-2">
+            <img
+              :src="produit.images?.[0]"
+              :alt="produit.nom"
+              class="object-contain w-full h-full transition-transform duration-300"
+            />
+          </div>
 
           <!-- Nom -->
           <h3 class="mt-2 font-semibold">{{ produit.nom }}</h3>
@@ -81,7 +83,6 @@ export default {
     const currentIndex = ref(0);
     let timer = null;
 
-    // 🔹 Produits promo uniquement
     const produitsPromos = computed(() =>
       props.produits.filter((p) => p.promo === true)
     );
@@ -97,7 +98,6 @@ export default {
         produitsPromos.value.length;
     };
 
-    // 🔹 Ajouter au panier
     const ajouterAuPanier = (produit) => {
       const prix = produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
       store.dispatch("addToCart", {
@@ -110,7 +110,6 @@ export default {
       alert(`Le produit "${produit.nom}" a été ajouté au panier !`);
     };
 
-    // 🔹 Auto-slide
     onMounted(() => {
       if (props.auto) timer = setInterval(next, props.interval);
     });
@@ -118,7 +117,6 @@ export default {
       if (timer) clearInterval(timer);
     });
 
-    // 🔹 Reset index si produits changent
     watch(() => props.produits, () => currentIndex.value = 0);
 
     return { currentIndex, next, prev, produitsPromos, ajouterAuPanier };
@@ -127,11 +125,14 @@ export default {
 </script>
 
 <style scoped>
-.slider-wrapper { margin: 0; }
-@media (min-width: 768px) { .slider-wrapper { width: 75%; } }
 .slider-container { position: relative; }
 .slider-track { display: flex; width: 100%; }
 .slider-item { position: relative; }
-.slider-item img { transition: transform 0.3s; }
-.slider-item img:hover { transform: scale(1.05); }
+
+.slider-item img {
+  transition: transform 0.3s;
+}
+.slider-item img:hover {
+  transform: scale(1.05);
+}
 </style>
