@@ -2,13 +2,7 @@
   <section class="px-4 mt-6">
     <h2 class="text-2xl font-bold mb-4">Produits Printful</h2>
 
-    <div
-      v-if="products.length"
-      class="grid gap-4"
-      :style="{
-        gridTemplateColumns: `repeat(auto-fit, minmax(${cardWidth}px, 1fr))`
-      }"
-    >
+    <div v-if="products.length" class="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 w-full">
       <div
         v-for="product in products"
         :key="product.id"
@@ -23,7 +17,7 @@
         />
 
         <!-- NOM -->
-        <h3 class="font-semibold text-sm mb-1">{{ product.name }}</h3>
+        <h3 class="font-semibold text-sm mb-1 truncate">{{ product.name }}</h3>
 
         <!-- PRIX -->
         <p class="text-green-600 font-bold mb-2">
@@ -40,7 +34,7 @@
               @click="selectedSize[product.id] = size"
               :class="[
                 'px-2 py-1 text-xs border rounded',
-                selectedSize[product.id] === size ? 'bg-yellow text-red' : 'bg-yellow'
+                selectedSize[product.id] === size ? 'bg-yellow-500 text-red-600' : 'bg-yellow-200'
               ]"
             >
               {{ size }}
@@ -58,7 +52,7 @@
               @click="selectedColor[product.id] = color"
               :class="[
                 'px-2 py-1 text-xs border rounded',
-                selectedColor[product.id] === color ? 'bg-yellow text-red' : 'bg-yellow'
+                selectedColor[product.id] === color ? 'bg-yellow-500 text-red-600' : 'bg-yellow-200'
               ]"
             >
               {{ color }}
@@ -91,7 +85,6 @@ export default {
       products: [],
       selectedSize: {},
       selectedColor: {},
-      cardWidth: 180, // largeur minimale d’une fiche produit en px
     };
   },
   async mounted() {
@@ -99,12 +92,10 @@ export default {
       const res = await axios.get(
         "https://printfulapi-production.up.railway.app/printful/products"
       );
-      this.products = res.data.products.map(p => ({
-        ...p,
-        price: Number(p.price),
-      }));
+      this.products = Array.isArray(res.data.products) ? res.data.products.map(p => ({ ...p, price: Number(p.price) })) : [];
     } catch (err) {
       console.error("Erreur Printful:", err);
+      this.products = [];
     }
   },
   setup() {
