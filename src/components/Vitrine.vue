@@ -10,7 +10,9 @@
         @click="goToCategory(cat.slug)"
       >
         <span class="text-4xl mb-2">{{ cat.emoji }}</span>
-        <h3 class="text-sm font-semibold text-center truncate">{{ cat.name }}</h3>
+        <h3 class="text-sm font-semibold text-center truncate">
+          {{ cat.name }}
+        </h3>
       </div>
     </div>
   </section>
@@ -21,29 +23,26 @@ import { useRouter } from "vue-router";
 
 export default {
   name: "Vitrine",
-  props: {
-    categories: {
-      type: Array,
-      default: () => [
-        { name: "Téléphones", slug: "telephones", emoji: "📱" },
-        { name: "Ordinateurs", slug: "ordinateurs", emoji: "🖥️" },
-        { name: "Chaussures", slug: "chaussures", emoji: "👟" },
-        { name: "Bijoux", slug: "bijoux", emoji: "💍" },
-        { name: "Cuisine", slug: "cuisine", emoji: "🍳" },
-        { name: "Accessoires", slug: "accessoires", emoji: "🎒" },
-        { name: "Maison", slug: "maison", emoji: "🏠" },
-        { name: "Beauté", slug: "beaute", emoji: "💄" },
-      ]
-    }
-  },
+
   setup() {
     const router = useRouter();
+
+    const categories = [
+      { name: "Téléphones", slug: "telephones", emoji: "📱" },
+      { name: "Ordinateurs", slug: "ordinateurs", emoji: "🖥️" },
+      { name: "Chaussures", slug: "chaussures", emoji: "👟" },
+      { name: "Bijoux", slug: "bijoux", emoji: "💍" },
+      { name: "Cuisine", slug: "cuisine", emoji: "🍳" },
+      { name: "Accessoires", slug: "accessoires", emoji: "🎒" },
+      { name: "Maison", slug: "maison", emoji: "🏠" },
+      { name: "Beauté", slug: "beaute", emoji: "💄" }
+    ];
 
     const goToCategory = (slug) => {
       router.push({ name: "Details", params: { slug } });
     };
 
-    return { goToCategory };
+    return { categories, goToCategory };
   }
 };
 </script>
