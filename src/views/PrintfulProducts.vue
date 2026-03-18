@@ -2,30 +2,45 @@
   <section class="px-4 mt-6">
     <h2 class="text-2xl font-bold mb-4">Produits Printful</h2>
 
-    <div v-if="products.length" class="flex flex-col md:flex-row gap-6">
-
-      <!-- PRODUIT PRINCIPAL -->
-      <div class="md:w-2/3 w-full flex flex-col items-center bg-white p-4 rounded shadow">
+    <div
+      v-if="products.length"
+      class="grid gap-4"
+      :style="{
+        gridTemplateColumns: `repeat(auto-fit, minmax(${cardWidth}px, 1fr))`
+      }"
+    >
+      <div
+        v-for="product in products"
+        :key="product.id"
+        class="border rounded shadow p-3 flex flex-col bg-white"
+      >
+        <!-- IMAGE avec click -->
         <img
-          :src="selectedProduct.thumbnail || '/placeholder.png'"
-          :alt="selectedProduct.name"
-          class="w-full md:h-[400px] object-cover rounded mb-4"
+          :src="product.thumbnail || '/placeholder.png'"
+          :alt="product.name"
+          class="w-full h-32 object-cover rounded mb-2 cursor-pointer"
+          @click="showDescription(product)"
         />
 
-        <h3 class="font-bold text-lg mb-2">{{ selectedProduct.name }}</h3>
-        <p class="text-green-600 font-bold text-lg mb-4">{{ selectedVariantPrice(selectedProduct) }} €</p>
+        <!-- NOM -->
+        <h3 class="font-semibold text-sm mb-1">{{ product.name }}</h3>
 
-        <!-- Tailles -->
-        <div v-if="selectedProduct.availableSizes?.length" class="mb-2">
-          <p class="text-sm font-semibold">Tailles :</p>
-          <div class="flex flex-wrap gap-2 mt-1">
+        <!-- PRIX -->
+        <p class="text-green-600 font-bold mb-2">
+          {{ selectedVariantPrice(product) }} €
+        </p>
+
+        <!-- TAILLES -->
+        <div v-if="product.availableSizes?.length" class="mb-2">
+          <p class="text-xs font-semibold">Tailles :</p>
+          <div class="flex flex-wrap gap-1 mt-1">
             <button
-              v-for="size in selectedProduct.availableSizes"
+              v-for="size in product.availableSizes"
               :key="size"
-              @click="selectedSize[selectedProduct.id] = size"
+              @click="selectedSize[product.id] = size"
               :class="[
-                'px-3 py-1 border rounded text-sm',
-                selectedSize[selectedProduct.id] === size ? 'bg-yellow-500 text-red-600' : 'bg-yellow-200'
+                'px-2 py-1 text-xs border rounded',
+                selectedSize[product.id] === size ? 'bg-yellow text-red' : 'bg-yellow'
               ]"
             >
               {{ size }}
@@ -33,17 +48,17 @@
           </div>
         </div>
 
-        <!-- Couleurs -->
-        <div v-if="selectedProduct.availableColors?.length" class="mb-4">
-          <p class="text-sm font-semibold">Couleurs :</p>
-          <div class="flex flex-wrap gap-2 mt-1">
+        <!-- COULEURS -->
+        <div v-if="product.availableColors?.length" class="mb-2">
+          <p class="text-xs font-semibold">Couleurs :</p>
+          <div class="flex flex-wrap gap-1 mt-1">
             <button
-              v-for="color in selectedProduct.availableColors"
+              v-for="color in product.availableColors"
               :key="color"
-              @click="selectedColor[selectedProduct.id] = color"
+              @click="selectedColor[product.id] = color"
               :class="[
-                'px-3 py-1 border rounded text-sm',
-                selectedColor[selectedProduct.id] === color ? 'bg-yellow-500 text-red-600' : 'bg-yellow-200'
+                'px-2 py-1 text-xs border rounded',
+                selectedColor[product.id] === color ? 'bg-yellow text-red' : 'bg-yellow'
               ]"
             >
               {{ color }}
@@ -51,31 +66,14 @@
           </div>
         </div>
 
-        <!-- Bouton panier -->
+        <!-- BOUTON PANIER -->
         <button
-          @click="addToCart(selectedProduct)"
-          class="bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700"
+          @click="addToCart(product)"
+          class="mt-auto bg-blue-600 text-white py-2 rounded hover:bg-blue-700 text-sm"
         >
           Ajouter au panier
         </button>
       </div>
-
-      <!-- VIGNETTES -->
-      <div class="md:w-1/3 w-full grid grid-cols-3 gap-2">
-        <div
-          v-for="product in products.filter(p => p.id !== selectedProduct.id)"
-          :key="product.id"
-          class="cursor-pointer border rounded hover:shadow-lg"
-          @click="selectProduct(product)"
-        >
-          <img
-            :src="product.thumbnail || '/placeholder.png'"
-            :alt="product.name"
-            class="w-full h-24 object-cover rounded"
-          />
-        </div>
-      </div>
-
     </div>
 
     <div v-else class="text-gray-500">Aucun produit Printful disponible.</div>
@@ -91,9 +89,9 @@ export default {
   data() {
     return {
       products: [],
-      selectedProduct: null,
       selectedSize: {},
-      selectedColor: {}
+      selectedColor: {},
+      cardWidth: 180, // largeur minimale d’une fiche produit en px
     };
   },
   async mounted() {
@@ -101,12 +99,12 @@ export default {
       const res = await axios.get(
         "https://printfulapi-production.up.railway.app/printful/products"
       );
-      const list = Array.isArray(res.data.products) ? res.data.products : [];
-      this.products = list.map(p => ({ ...p, price: Number(p.price) }));
-      if (this.products.length) this.selectedProduct = this.products[0];
+      this.products = res.data.products.map(p => ({
+        ...p,
+        price: Number(p.price),
+      }));
     } catch (err) {
       console.error("Erreur Printful:", err);
-      this.products = [];
     }
   },
   setup() {
@@ -150,9 +148,6 @@ export default {
       this.$store.dispatch("addToCart", produitPanier);
       alert(`Produit "${product.name}" ajouté au panier !`);
     },
-    selectProduct(product) {
-      this.selectedProduct = product;
-    },
     showDescription(product) {
       this.router.push({
         name: "Description",
@@ -164,10 +159,10 @@ export default {
 </script>
 
 <style scoped>
-img {
-  cursor: pointer;
-}
 button {
   transition: background-color 0.2s;
+}
+img {
+  cursor: pointer;
 }
 </style>
