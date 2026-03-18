@@ -1,35 +1,29 @@
 <template>
-  <div class="w-full px-4">
-    <!-- Vitrine -->
-    <Vitrine
-      :categories="categories"
-      @category-selected="goToCategory"
-    />
+  <div class="w-full">
 
-    <!-- Section produits -->
-    <section v-if="!hasFilter" class="w-full mt-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      <div
-        v-for="produit in produits"
-        :key="produit.id"
-        class="border rounded-lg p-4 bg-white shadow flex flex-col"
-      >
-        <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-3" />
-        <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
-        <p class="text-gray-600 text-sm mb-2">{{ produit.description }}</p>
-        <p class="text-green-600 font-bold text-lg mb-3">{{ produit.prix }} $</p>
-        <button
-          @click="addToCart(produit)"
-          class="mt-auto bg-green-600 text-white py-2 rounded hover:bg-green-700"
-        >
-          Ajouter au panier
-        </button>
-      </div>
+    <!-- Section principale : Slider + Printful + Vitrine -->
+    <section v-if="!hasFilter" class="w-full flex flex-col gap-6">
+
+      <!-- Slider -->
+      <SliderProducts :produits="produitsPromos" />
+
+      <!-- Printful Products -->
+      <PrintfulProducts
+        api-url="https://printfulapi-production.up.railway.app"
+        @add-to-cart="addToCart"
+      />
+
+      <!-- Vitrine / Catégories -->
+      <Vitrine />
+
     </section>
 
     <!-- Résultats filtrés -->
-    <section v-if="hasFilter" class="w-full mt-4">
+    <section v-if="hasFilter" class="w-full mt-6">
+
       <h2 class="text-xl font-bold mb-2">Résultats filtrés</h2>
 
+      <!-- Aucun résultat -->
       <div v-if="filteredProducts.length === 0">
         <p>Aucun produit ne correspond à votre recherche.</p>
         <button
@@ -40,16 +34,26 @@
         </button>
       </div>
 
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <!-- Résultats -->
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <div
           v-for="produit in filteredProducts"
           :key="produit.id"
           class="border rounded-lg p-4 bg-white shadow flex flex-col"
         >
+          <!-- Image -->
           <img :src="produit.images[0]" class="h-40 w-full object-cover rounded mb-3" />
+
+          <!-- Nom -->
           <h3 class="font-bold text-lg">{{ produit.nom }}</h3>
+
+          <!-- Description -->
           <p class="text-gray-600 text-sm mb-2">{{ produit.description }}</p>
+
+          <!-- Prix -->
           <p class="text-green-600 font-bold text-lg mb-3">{{ produit.prix }} $</p>
+
+          <!-- Bouton panier -->
           <button
             @click="addToCart(produit)"
             class="mt-auto bg-green-600 text-white py-2 rounded hover:bg-green-700"
@@ -58,29 +62,30 @@
           </button>
         </div>
       </div>
+
     </section>
+
   </div>
 </template>
 
 <script>
 import { ref, onMounted, computed, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useStore } from "vuex";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
+import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
+import { useRoute, useRouter } from "vue-router";
+import { useStore } from "vuex";
+
+import PrintfulProducts from "./PrintfulProducts.vue";
 
 export default {
-  components: { Vitrine },
+  components: { SliderProducts, Vitrine, PrintfulProducts },
+
   setup() {
     const produits = ref([]);
+    const produitsPromos = ref([]);
     const filteredProducts = ref([]);
-    const categories = ref([
-      { name: "T-shirts", slug: "t-shirts", emoji: "👕" },
-      { name: "Sweats", slug: "sweats", emoji: "🧥" },
-      { name: "Accessoires", slug: "accessoires", emoji: "🎒" },
-      // 🔹 Ajouter toutes les catégories nécessaires
-    ]);
 
     const route = useRoute();
     const router = useRouter();
@@ -93,8 +98,8 @@ export default {
       snapshot.forEach((doc) => {
         const produit = { id: doc.id, ...doc.data() };
         produits.value.push(produit);
+        if (produit.promo) produitsPromos.value.push(produit);
       });
-      applyFilter();
     };
 
     const applyFilter = () => {
@@ -121,22 +126,21 @@ export default {
     const clearFilter = () => router.push({ path: "/" });
     const addToCart = (produit) => store.dispatch("addToCart", produit);
 
-    const goToCategory = (slug) => {
-      router.push({ path: "/", query: { categorie: slug } });
-    };
+    onMounted(async () => {
+      await fetchProduits();
+      applyFilter();
+    });
 
-    onMounted(fetchProduits);
     watch(() => route.query, applyFilter);
 
-    return {
-      produits,
-      filteredProducts,
-      categories,
-      hasFilter,
-      clearFilter,
-      addToCart,
-      goToCategory,
-    };
+    return { produitsPromos, filteredProducts, hasFilter, clearFilter, addToCart };
   },
 };
 </script>
+
+<style scoped>
+/* Espace vertical léger entre sections */
+section + section {
+  margin-top: 1rem;
+}
+</style>
