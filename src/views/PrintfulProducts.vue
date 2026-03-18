@@ -7,12 +7,13 @@
       <!-- PRODUIT PRINCIPAL -->
       <div class="md:w-2/3 w-full flex flex-col items-center bg-white p-4 rounded shadow">
         <img
-          :src="selectedProduct.thumbnail"
+          :src="selectedProduct.thumbnail || '/placeholder.png'"
           :alt="selectedProduct.name"
           class="w-full md:h-[400px] object-cover rounded mb-4"
         />
+
         <h3 class="font-bold text-lg mb-2">{{ selectedProduct.name }}</h3>
-        <p class="text-green-600 font-bold text-lg mb-4">{{ selectedProduct.price }} €</p>
+        <p class="text-green-600 font-bold text-lg mb-4">{{ selectedVariantPrice(selectedProduct) }} €</p>
 
         <!-- Tailles -->
         <div v-if="selectedProduct.availableSizes?.length" class="mb-2">
@@ -68,7 +69,7 @@
           @click="selectProduct(product)"
         >
           <img
-            :src="product.thumbnail"
+            :src="product.thumbnail || '/placeholder.png'"
             :alt="product.name"
             class="w-full h-24 object-cover rounded"
           />
@@ -83,6 +84,7 @@
 
 <script>
 import axios from "axios";
+import { useRouter } from "vue-router";
 
 export default {
   name: "PrintfulProducts",
@@ -96,40 +98,76 @@ export default {
   },
   async mounted() {
     try {
-      const res = await axios.get("https://ton-nouvel-endpoint/get-products");
-      this.products = Array.isArray(res.data) ? res.data : [];
-      // sélectionner automatiquement le premier produit
+      const res = await axios.get(
+        "https://printfulapi-production.up.railway.app/printful/products"
+      );
+      const list = Array.isArray(res.data.products) ? res.data.products : [];
+      this.products = list.map(p => ({ ...p, price: Number(p.price) }));
       if (this.products.length) this.selectedProduct = this.products[0];
     } catch (err) {
       console.error("Erreur Printful:", err);
       this.products = [];
     }
   },
+  setup() {
+    const router = useRouter();
+    return { router };
+  },
   methods: {
-    selectProduct(product) {
-      this.selectedProduct = product;
+    selectedVariantPrice(product) {
+      const size = this.selectedSize[product.id];
+      const color = this.selectedColor[product.id];
+      if (product.variants?.length) {
+        const variant = product.variants.find(
+          v => (!size || v.size === size) && (!color || v.color === color)
+        );
+        return variant ? variant.price : product.price;
+      }
+      return product.price;
     },
     addToCart(product) {
       const taille = this.selectedSize[product.id] || product.availableSizes?.[0] || null;
       const couleur = this.selectedColor[product.id] || product.availableColors?.[0] || null;
+
+      let prix = product.price;
+      if (product.variants?.length) {
+        const variant = product.variants.find(
+          v => (!taille || v.size === taille) && (!couleur || v.color === couleur)
+        );
+        if (variant) prix = variant.price;
+      }
+
       const produitPanier = {
         id: product.id,
         nom: product.name,
-        prix: product.price,
+        prix,
         images: [product.thumbnail],
         quantity: 1,
         taille,
-        couleur
+        couleur,
       };
+
       this.$store.dispatch("addToCart", produitPanier);
       alert(`Produit "${product.name}" ajouté au panier !`);
+    },
+    selectProduct(product) {
+      this.selectedProduct = product;
+    },
+    showDescription(product) {
+      this.router.push({
+        name: "Description",
+        params: { id: product.id, productData: product }
+      });
     }
-  }
+  },
 };
 </script>
 
 <style scoped>
 img {
   cursor: pointer;
+}
+button {
+  transition: background-color 0.2s;
 }
 </style>
