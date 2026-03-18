@@ -17,7 +17,7 @@ import Test3D from "./views/Test3D.vue";
 
 import Conditions from "./views/Conditions.vue";
 
-imports Details from "./views/Details.vue";
+imports Details from "../views/Details.vue";
 
 const routes = [
   { path: "/", component: Home },
