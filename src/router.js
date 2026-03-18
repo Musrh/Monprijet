@@ -29,7 +29,7 @@ const routes = [
   {
   path: '/details/:slug',
   name: 'Details', // 🔹 Le nom doit être exactement "Details"
-  component: () => import('./Details.vue'),
+  component: () => import('../components/Details.vue'),
 },
 
   { path: "/conditions", component: Conditions },
