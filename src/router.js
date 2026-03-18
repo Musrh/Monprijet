@@ -17,6 +17,8 @@ import Test3D from "./views/Test3D.vue";
 
 import Conditions from "./views/Conditions.vue";
 
+imports Details from "./views/Details.vue";
+
 const routes = [
   { path: "/", component: Home },
   { path: "/produits", component: Produits },
@@ -28,8 +30,7 @@ const routes = [
 
   {
   path: '/details/:slug',
-  name: 'Details', // 🔹 Le nom doit être exactement "Details"
-  component: () => import('../views/Details.vue'),
+  component: Details),
 },
 
   { path: "/conditions", component: Conditions },
