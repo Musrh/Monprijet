@@ -9,10 +9,7 @@
         class="flex flex-col items-center p-4 bg-white rounded shadow hover:shadow-lg transition transform hover:-translate-y-1 cursor-pointer"
         @click="goToCategory(cat.slug)"
       >
-        <!-- Emoji / Icône -->
         <span class="text-4xl mb-2">{{ cat.emoji }}</span>
-
-        <!-- Nom -->
         <h3 class="text-sm font-semibold text-center truncate">{{ cat.name }}</h3>
       </div>
     </div>
@@ -37,7 +34,7 @@ export default {
       ]
     }
   },
-  setup(props) {
+  setup() {
     const router = useRouter();
 
     const goToCategory = (slug) => {
@@ -45,12 +42,11 @@ export default {
     };
 
     return { goToCategory };
-  },
+  }
 };
 </script>
 
 <style scoped>
-/* Petite animation au hover pour les cartes */
 div > div:hover {
   transform: translateY(-3px);
   transition: all 0.2s;
