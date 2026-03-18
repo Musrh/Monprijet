@@ -6,7 +6,7 @@
       class="cursor-pointer flex flex-col items-center p-2 bg-white rounded shadow hover:shadow-lg transition"
       @click="selectCategory(categorie.slug)"
     >
-      <!-- Emoji ou image -->
+      <!-- Emoji ou image de la catégorie -->
       <span class="text-3xl mb-1">{{ categorie.emoji }}</span>
       <span class="text-sm font-semibold text-center">{{ categorie.name }}</span>
     </div>
