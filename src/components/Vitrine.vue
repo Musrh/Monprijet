@@ -1,4 +1,3 @@
-
 <template>
   <section class="w-full px-4 py-6">
     <h2 class="text-2xl font-bold mb-4">Catégories</h2>
@@ -10,10 +9,7 @@
         class="flex flex-col items-center p-4 bg-white rounded shadow hover:shadow-lg transition transform hover:-translate-y-1 cursor-pointer"
         @click="goToCategory(cat.slug)"
       >
-        <!-- Emoji / Icône -->
         <span class="text-4xl mb-2">{{ cat.emoji }}</span>
-
-        <!-- Nom -->
         <h3 class="text-sm font-semibold text-center truncate">{{ cat.name }}</h3>
       </div>
     </div>
@@ -24,10 +20,10 @@
 import { useRouter } from "vue-router";
 
 export default {
+  name: "Vitrine",
   props: {
     categories: {
       type: Array,
-      required: true,
       default: () => [
         { name: "Téléphones", slug: "telephones", emoji: "📱" },
         { name: "Chaussures", slug: "chaussures", emoji: "👟" },
@@ -42,7 +38,6 @@ export default {
     const router = useRouter();
 
     const goToCategory = (slug) => {
-      // Redirection vers Details.vue avec param slug
       router.push({ name: "Details", params: { slug } });
     };
 
