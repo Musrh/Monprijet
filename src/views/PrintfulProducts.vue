@@ -4,15 +4,12 @@
 
     <div
       v-if="products.length"
-      class="grid gap-4"
-      :style="{
-        gridTemplateColumns: `repeat(auto-fit, minmax(${cardWidth}px, 1fr))`
-      }"
+      class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 w-full"
     >
       <div
         v-for="product in products"
         :key="product.id"
-        class="border rounded shadow p-3 flex flex-col bg-white"
+        class="border rounded shadow p-3 flex flex-col bg-white hover:shadow-lg transition transform hover:-translate-y-1"
       >
         <!-- IMAGE avec click -->
         <img
@@ -91,20 +88,23 @@ export default {
       products: [],
       selectedSize: {},
       selectedColor: {},
-      cardWidth: 180, // largeur minimale d’une fiche produit en px
     };
   },
   async mounted() {
     try {
       const res = await axios.get(
-        "https://printfulapi-production.up.railway.app/printful/products"
+        "https://ton-nouvel-endpoint/get-products" // endpoint qui renvoie un tableau de produits
       );
-      this.products = res.data.products.map(p => ({
-        ...p,
-        price: Number(p.price),
-      }));
+      // sécuriser si API ne renvoie pas un tableau
+      this.products = Array.isArray(res.data)
+        ? res.data.map(p => ({
+            ...p,
+            price: Number(p.price || 0),
+          }))
+        : [];
     } catch (err) {
       console.error("Erreur Printful:", err);
+      this.products = [];
     }
   },
   setup() {
