@@ -1,53 +1,25 @@
-//home dernier 
 <template>
-  <div class="w-full px-4">
+  <div class="w-full">
 
-    <!-- Section principale : Slider + Pubs (affiché uniquement si pas de filtre) -->
-    <section v-if="!hasFilter" class="flex flex-col md:flex-row w-full gap-4">
+    <!-- Section principale : Slider + Printful + Vitrine -->
+    <section v-if="!hasFilter" class="w-full flex flex-col gap-6">
 
-      <!-- Gauche : Slider et Vitrine -->
-      <div class="md:w-2/3 w-full flex flex-col gap-4">
-        <!-- Slider -->
-        <SliderProducts :produits="produitsPromos" />
+      <!-- Slider -->
+      <SliderProducts :produits="produitsPromos" />
 
-        <!-- Ici on insère les produits Printful -->
-<PrintfulProducts
-  api-url="https://printfulapi-production.up.railway.app"
-  @add-to-cart="addToCart"
-/>
-        
-        <!-- Vitrine normale -->
-        <div>
-          <Vitrine />
-        </div>
-      </div>
+      <!-- Printful Products -->
+      <PrintfulProducts
+        api-url="https://printfulapi-production.up.railway.app"
+        @add-to-cart="addToCart"
+      />
 
-      <!-- Droite : Pub1 et Pub2 -->
-      <div class="md:w-1/3 w-full flex flex-col gap-4">
-        <!-- Pub1 -->
-        <div class="h-64 bg-yellow-200 flex items-center justify-center rounded shadow-md overflow-hidden">
-          <img
-            src="https://res.cloudinary.com/dla18l69k/image/upload/v1773023706/rcvi8ukn3if9tycui13d.jpg"
-            alt="WellShoppings Image"
-            class="mx-auto rounded shadow-md max-w-full h-auto"
-          />
-        </div>
-
-        <!-- Pub2 
-        <div class="bg-white-200 flex items-center justify-center rounded shadow-md overflow-hidden h-[500px]">
-          <img
-            src="https://res.cloudinary.com/dla18l69k/image/upload/v1773193967/ujcme773ewq0eauqs557.jpg"
-            alt="EasyShopping Image"
-            class="mx-auto rounded shadow-md h-full w-auto"
-          />
-        </div>
-        -->
-      </div>
+      <!-- Vitrine / Catégories -->
+      <Vitrine />
 
     </section>
 
     <!-- Résultats filtrés -->
-    <section v-if="hasFilter" class="w-full mt-0">
+    <section v-if="hasFilter" class="w-full mt-6">
 
       <h2 class="text-xl font-bold mb-2">Résultats filtrés</h2>
 
@@ -63,7 +35,7 @@
       </div>
 
       <!-- Résultats -->
-      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <div
           v-for="produit in filteredProducts"
           :key="produit.id"
@@ -108,7 +80,7 @@ import { useStore } from "vuex";
 import PrintfulProducts from "./PrintfulProducts.vue";
 
 export default {
-  components: { SliderProducts, Vitrine,PrintfulProducts },
+  components: { SliderProducts, Vitrine, PrintfulProducts },
 
   setup() {
     const produits = ref([]);
