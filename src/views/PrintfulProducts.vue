@@ -9,7 +9,7 @@
         <img
           :src="selectedProduct.thumbnail || '/placeholder.png'"
           :alt="selectedProduct.name"
-          class="w-full md:h-[400px] object-cover rounded mb-4"
+          class="w-full md:h-[400px] object-cover rounded border-4 border-gray-300 mb-4"
         />
 
         <h3 class="font-bold text-lg mb-2">{{ selectedProduct.name }}</h3>
@@ -61,7 +61,7 @@
       </div>
 
       <!-- VIGNETTES -->
-      <div class="md:w-1/3 w-full grid grid-cols-3 gap-2">
+      <div class="md:w-1/3 w-full grid grid-cols-3 gap-x-2 gap-y-0">
         <div
           v-for="product in products.filter(p => p.id !== selectedProduct.id)"
           :key="product.id"
