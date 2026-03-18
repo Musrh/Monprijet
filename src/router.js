@@ -12,12 +12,9 @@ import Upload from "./views/Upload.vue";
 import AdminProduits from "./views/AdminProduits.vue";
 import Minishop from "./views/Minishop.vue";
 import PasswordReset from "./views/PasswordReset.vue";
-
 import Test3D from "./views/Test3D.vue";
-
 import Conditions from "./views/Conditions.vue";
-
-imports Details from "../views/Details.vue";
+import Details from "./views/Details.vue"; // ✅ CORRIGÉ
 
 const routes = [
   { path: "/", component: Home },
@@ -28,17 +25,19 @@ const routes = [
   { path: "/success", component: Success },
   { path: "/minishop", component: Minishop },
 
+  // ✅ ROUTE DETAILS CORRIGÉE
   {
-  path: '/details/:slug',
-  component: Details),
-},
+    path: "/details/:slug",
+    name: "Details",
+    component: Details
+  },
 
   { path: "/conditions", component: Conditions },
 
   {
-  path: "/test3d",
-  name: "test3d",
-  component: Test3D
+    path: "/test3d",
+    name: "test3d",
+    component: Test3D
   },
 
   {
@@ -61,12 +60,10 @@ const routes = [
     component: AdminProduits,
     meta: { requiresAdmin: true }
   },
-{
-  path: "/password-reset",
-  component: PasswordReset
-}
-
- 
+  {
+    path: "/password-reset",
+    component: PasswordReset
+  }
 ];
 
 const router = createRouter({
