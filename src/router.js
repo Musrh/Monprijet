@@ -26,6 +26,12 @@ const routes = [
   { path: "/success", component: Success },
   { path: "/minishop", component: Minishop },
 
+  {
+  path: '/details/:slug',
+  name: 'Details', // 🔹 Le nom doit être exactement "Details"
+  component: () => import('./Details.vue'),
+},
+
   { path: "/conditions", component: Conditions },
 
   {
