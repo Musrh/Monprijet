@@ -1,4 +1,3 @@
-
 <template>
   <section class="w-full px-4 py-6">
     <h2 class="text-2xl font-bold mb-4">Catégories</h2>
@@ -27,9 +26,11 @@ export default {
       type: Array,
       default: () => [
         { name: "Téléphones", slug: "telephones", emoji: "📱" },
+        { name: "Ordinateurs", slug: "ordinateurs", emoji: "🖥️" },
         { name: "Chaussures", slug: "chaussures", emoji: "👟" },
+        { name: "Bijoux", slug: "bijoux", emoji: "💍" },
+        { name: "Cuisine", slug: "cuisine", emoji: "🍳" },
         { name: "Accessoires", slug: "accessoires", emoji: "🎒" },
-        { name: "Informatique", slug: "informatique", emoji: "💻" },
         { name: "Maison", slug: "maison", emoji: "🏠" },
         { name: "Beauté", slug: "beaute", emoji: "💄" },
       ]
