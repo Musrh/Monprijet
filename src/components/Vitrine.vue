@@ -1,88 +1,76 @@
 <template>
-  <section class="vitrine px-4 mt-6">
+  <section class="px-4 mt-8">
+    <h2 class="text-2xl font-bold mb-6">
+      Découvrez nos catégories
+    </h2>
 
-    <h2 class="text-2xl font-bold text-left">Vitrine</h2>
-
-    <div v-if="produits.length" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-4 mt-4">
-      <ProductCard
-        v-for="p in produits"
-        :key="p.id"
-        :product="p"
-        @add-to-cart="ajouterAuPanier"
-      />
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+      <router-link
+        v-for="cat in categories"
+        :key="cat.slug"
+        :to="`/categorie/${cat.slug}`"
+        class="bg-white border border-gray-200 rounded-xl p-6 
+               flex flex-col items-center justify-center
+               hover:shadow-lg hover:scale-105 transition duration-300"
+      >
+        <component :is="cat.icon" class="w-14 h-14 mb-4 text-black" />
+        <h3 class="text-center font-semibold text-purple-700">
+          {{ cat.name }}
+        </h3>
+      </router-link>
     </div>
-
-    <div v-else class="text-gray-500 text-center mt-4">
-      Aucun produit à afficher.
-    </div>
-
   </section>
 </template>
 
 <script>
-import { ref, onMounted } from "vue";
-import { collection, getDocs } from "firebase/firestore";
-import { useStore } from "vuex";
-import { db } from "../firebase";
-import ProductCard from "./ProductCard.vue";
+import {
+  DevicePhoneMobileIcon,
+  ComputerDesktopIcon,
+  HomeIcon,
+  PuzzlePieceIcon,
+  SparklesIcon,
+  DiamondIcon,
+  ShoppingBagIcon,
+  HeartIcon,
+  WrenchScrewdriverIcon,
+  FaceSmileIcon,
+  TrophyIcon,
+  TvIcon
+} from "@heroicons/vue/24/outline";
 
 export default {
   name: "Vitrine",
-  components: { ProductCard },
-  setup() {
-    const store = useStore();
-    const produits = ref([]);
-
-    const ajouterAuPanier = (produit) => {
-      const prixFinal = produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
-      store.dispatch("addToCart", {
-        id: produit.id,
-        nom: produit.nom,
-        prix: prixFinal,
-        images: produit.images,
-        quantity: 1,
-      });
-      alert(`Le produit "${produit.nom}" a été ajouté à votre panier !`);
-    };
-
-    const fetchProduits = async () => {
-      const snapshot = await getDocs(collection(db, "products"));
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        produits.value.push({
-          id: doc.id,
-          nom: data.nom,
-          prix: Number(data.prix),
-          images: data.images ? data.images : ["/placeholder.png"],
-          promo: data.promo || false,
-          availableSizes: data.availableSizes || [],
-          availableColors: data.availableColors || [],
-        });
-      });
-    };
-
-    onMounted(fetchProduits);
-
-    return { produits, ajouterAuPanier };
+  components: {
+    DevicePhoneMobileIcon,
+    ComputerDesktopIcon,
+    HomeIcon,
+    PuzzlePieceIcon,
+    SparklesIcon,
+    DiamondIcon,
+    ShoppingBagIcon,
+    HeartIcon,
+    WrenchScrewdriverIcon,
+    FaceSmileIcon,
+    TrophyIcon,
+    TvIcon
   },
+  data() {
+    return {
+      categories: [
+        { name: "Téléphones & Tablettes", slug: "telephones", icon: "DevicePhoneMobileIcon" },
+        { name: "Ordinateurs & Informatique", slug: "ordinateurs", icon: "ComputerDesktopIcon" },
+        { name: "Electroménager & Maison", slug: "maison", icon: "HomeIcon" },
+        { name: "Jeux Vidéos & Consoles", slug: "gaming", icon: "PuzzlePieceIcon" },
+        { name: "Parfums & Coffrets", slug: "parfums", icon: "SparklesIcon" },
+        { name: "Accessoires & Bijoux", slug: "bijoux", icon: "DiamondIcon" },
+        { name: "Vêtement & Chaussures", slug: "vetements", icon: "ShoppingBagIcon" },
+        { name: "Parapharmacie", slug: "parapharmacie", icon: "HeartIcon" },
+        { name: "Outillage & Jardinage", slug: "jardin", icon: "WrenchScrewdriverIcon" },
+        { name: "Beauté & Santé", slug: "beaute", icon: "FaceSmileIcon" },
+        { name: "Boutika Sport", slug: "sport", icon: "TrophyIcon" },
+        { name: "Téléviseur / Son & Hifi", slug: "tv", icon: "TvIcon" }
+      ]
+    };
+  }
 };
 </script>
-
-<style scoped>
-.vitrine img {
-  display: block;
-  width: 100%;
-  height: 140px; /* Hauteur réduite pour plus de visibilité */
-  object-fit: cover;
-}
-
-.vitrine button {
-  transition: background-color 0.2s;
-}
-
-/* Largeur minimale et maximale des cartes pour que toutes les tailles tiennent */
-.product-card {
-  min-width: 180px;
-  max-width: 220px;
-}
-</style>
