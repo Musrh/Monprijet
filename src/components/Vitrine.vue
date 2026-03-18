@@ -1,39 +1,58 @@
 <template>
-  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-    <div
-      v-for="categorie in categories"
-      :key="categorie.slug"
-      class="cursor-pointer flex flex-col items-center p-2 bg-white rounded shadow hover:shadow-lg transition"
-      @click="goToDetails(categorie.slug)"
-    >
-      <!-- Emoji ou image -->
-      <span class="text-3xl mb-1">{{ categorie.emoji }}</span>
-      <span class="text-sm font-semibold text-center">{{ categorie.name }}</span>
+  <section class="w-full px-4 py-6">
+    <h2 class="text-2xl font-bold mb-4">Catégories</h2>
+
+    <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4 w-full">
+      <div
+        v-for="cat in categories"
+        :key="cat.slug"
+        class="flex flex-col items-center p-4 bg-white rounded shadow hover:shadow-lg transition transform hover:-translate-y-1 cursor-pointer"
+        @click="goToCategory(cat.slug)"
+      >
+        <!-- Emoji / Icône -->
+        <span class="text-4xl mb-2">{{ cat.emoji }}</span>
+
+        <!-- Nom -->
+        <h3 class="text-sm font-semibold text-center truncate">{{ cat.name }}</h3>
+      </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script>
 import { useRouter } from "vue-router";
 
 export default {
-  name: "Vitrine",
   props: {
-    categories: { type: Array, required: true, default: () => [] },
+    categories: {
+      type: Array,
+      required: true,
+      default: () => [
+        { name: "Téléphones", slug: "telephones", emoji: "📱" },
+        { name: "Chaussures", slug: "chaussures", emoji: "👟" },
+        { name: "Accessoires", slug: "accessoires", emoji: "🎒" },
+        { name: "Informatique", slug: "informatique", emoji: "💻" },
+        { name: "Maison", slug: "maison", emoji: "🏠" },
+        { name: "Beauté", slug: "beaute", emoji: "💄" },
+      ]
+    }
   },
-  setup() {
+  setup(props) {
     const router = useRouter();
 
-    const goToDetails = (slug) => {
-      // 🔹 Navigation SPA vers Details.vue sans recharger la page
+    const goToCategory = (slug) => {
       router.push({ name: "Details", params: { slug } });
     };
 
-    return { goToDetails };
+    return { goToCategory };
   },
 };
 </script>
 
 <style scoped>
-/* styles déjà présents */
+/* Petite animation au hover pour les cartes */
+div > div:hover {
+  transform: translateY(-3px);
+  transition: all 0.2s;
+}
 </style>
