@@ -61,7 +61,7 @@
       </div>
 
       <!-- VIGNETTES -->
-      <div class="md:w-1/3 w-full grid grid-cols-3 gap-x-2 gap-y-0">
+      <div class="md:w-1/3 w-full grid grid-cols-3 gap-x-0 gap-y-0">
         <div
           v-for="product in products.filter(p => p.id !== selectedProduct.id)"
           :key="product.id"
