@@ -21,73 +21,34 @@
       </select>
     </div>
 
-    <!-- Formulaire de modification / vérification -->
+    <!-- Formulaire -->
     <div v-if="selectedOrder">
       <label class="block mb-1 font-semibold">Adresse :</label>
-      <input
-        v-model="selectedOrder.adresse"
-        type="text"
-        class="border rounded px-3 py-2 w-full mb-2"
-      />
+      <input v-model="selectedOrder.adresseLivraison" type="text" class="border rounded px-3 py-2 w-full mb-2" />
 
       <label class="block mb-1 font-semibold">Ville :</label>
-      <input
-        v-model="selectedOrder.city"
-        type="text"
-        class="border rounded px-3 py-2 w-full mb-2"
-      />
+      <input v-model="selectedOrder.ville" type="text" class="border rounded px-3 py-2 w-full mb-2" />
 
       <label class="block mb-1 font-semibold">Code Postal :</label>
-      <input
-        v-model="selectedOrder.zip"
-        type="text"
-        class="border rounded px-3 py-2 w-full mb-2"
-      />
+      <input v-model="selectedOrder.codePostal" type="text" class="border rounded px-3 py-2 w-full mb-2" />
 
       <label class="block mb-1 font-semibold">Pays :</label>
-      <input
-        v-model="selectedOrder.pays"
-        type="text"
-        class="border rounded px-3 py-2 w-full mb-4"
-      />
+      <input v-model="selectedOrder.pays" type="text" class="border rounded px-3 py-2 w-full mb-4" />
 
       <h3 class="font-semibold mb-2">Produits :</h3>
-      <table class="w-full border mb-4">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border px-2 py-1">Nom</th>
-            <th class="border px-2 py-1">ID (Printful)</th>
-            <th class="border px-2 py-1">Couleur</th>
-            <th class="border px-2 py-1">Taille</th>
-            <th class="border px-2 py-1">Quantité</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(item, index) in selectedOrder.items" :key="index">
-            <td class="border px-2 py-1">{{ item.nom }}</td>
-            <td class="border px-2 py-1">{{ item.id }}</td>
-            <td class="border px-2 py-1">{{ item.couleur || "" }}</td>
-            <td class="border px-2 py-1">{{ item.taille || "" }}</td>
-            <td class="border px-2 py-1">{{ item.quantity }}</td>
-          </tr>
-        </tbody>
-      </table>
+      <ul class="mb-4">
+        <li v-for="(item, index) in selectedOrder.items" :key="index" class="mb-1">
+          {{ item.nom }} - {{ item.quantity }} x {{ item.couleur || '' }} / {{ item.taille || '' }} (ID: {{ item.id }})
+        </li>
+      </ul>
 
-      <button
-        @click="sendToPrintful"
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-      >
+      <button @click="sendToPrintful" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
         Envoyer à Printful
       </button>
     </div>
 
-    <div v-if="message" class="mt-4 p-2 border rounded bg-green-100">
-      {{ message }}
-    </div>
-
-    <div v-if="error" class="mt-4 p-2 border rounded bg-red-100">
-      {{ error }}
-    </div>
+    <div v-if="message" class="mt-4 p-2 border rounded bg-green-100">{{ message }}</div>
+    <div v-if="error" class="mt-4 p-2 border rounded bg-red-100">{{ error }}</div>
   </div>
 </template>
 
@@ -96,7 +57,6 @@ import { getAuth, onAuthStateChanged } from "firebase/auth";
 import axios from "axios";
 
 export default {
-  name: "SendToPrintful",
   data() {
     return {
       commandes: [],
@@ -115,53 +75,38 @@ export default {
         );
         this.commandes = res.data.commandes || [];
       } catch (err) {
-        console.error("Erreur récupération commandes:", err);
+        console.error(err);
         this.error = "Impossible de récupérer les commandes.";
       }
     },
-
     onSelectOrder() {
       this.selectedOrder =
-        this.commandes.find((c) => c.id === this.selectedOrderId) || null;
+        this.commandes.find(c => c.id === this.selectedOrderId) || null;
 
-      // Détecter le pays automatiquement si possible
+      // Remplir le pays automatiquement si vide
       if (this.selectedOrder && !this.selectedOrder.pays) {
-        const address = this.selectedOrder.adresse || "";
+        const address = this.selectedOrder.adresseLivraison || "";
         if (address.toLowerCase().includes("maroc")) this.selectedOrder.pays = "MA";
         else if (address.toLowerCase().includes("hollande")) this.selectedOrder.pays = "NL";
-        else this.selectedOrder.pays = "FR"; // défaut
+        else this.selectedOrder.pays = "FR";
       }
-
-      // Initialiser city et zip si inexistants
-      this.selectedOrder.city = this.selectedOrder.city || "";
-      this.selectedOrder.zip = this.selectedOrder.zip || "";
     },
-
     async sendToPrintful() {
       if (!this.selectedOrder) return;
 
-      // Transformer id → variant_id
-      const itemsForPrintful = this.selectedOrder.items.map((i) => ({
-        variant_id: i.id, // ici l'id devient variant_id
-        quantity: i.quantity,
-        name: i.nom,
-        color: i.couleur || "",
-        size: i.taille || "",
-      }));
-
-      const orderForPrintful = {
-        nomClient: this.selectedOrder.email,
-        adresse: this.selectedOrder.adresse,
-        city: this.selectedOrder.city,
-        country: this.selectedOrder.pays,
-        codePostal: this.selectedOrder.zip,
-        items: itemsForPrintful,
-      };
-
       try {
+        // 🔹 Transformer id en variant_id côté front avant envoi
+        const orderForPrintful = {
+          ...this.selectedOrder,
+          items: this.selectedOrder.items.map(item => ({
+            ...item,
+            variant_id: item.id, // ici on prend id affiché et le renomme
+          })),
+        };
+
         const res = await axios.post(
-          "https://printfulpasscommandes-production.up.railway.app/create-order",
-          { order: orderForPrintful }
+          `https://printfulpasscommandes-production.up.railway.app/admin/send-to-printful/${this.selectedOrder.id}`,
+          orderForPrintful
         );
 
         if (res.data.success) {
@@ -172,16 +117,15 @@ export default {
           this.message = "";
         }
       } catch (err) {
-        console.error("Erreur envoi Printful :", err);
+        console.error(err);
         this.error = "Erreur lors de l'envoi à Printful ❌";
         this.message = "";
       }
     },
   },
-
   mounted() {
     const auth = getAuth();
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, async user => {
       if (user) {
         const token = await user.getIdToken();
         this.fetchCommandes(token);
@@ -190,7 +134,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-/* Style simple */
-</style>
