@@ -10,6 +10,7 @@
 
     <!-- Panier rempli -->
     <div v-else>
+
       <div
         v-for="item in cart"
         :key="item.id + '-' + item.taille + '-' + item.couleur"
@@ -45,24 +46,35 @@
         </button>
       </div>
 
-      <!-- Adresse de livraison -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Adresse de livraison
-        </label>
-        <textarea
-          v-model="adresseLivraison"
-          placeholder="Votre adresse complète"
-          class="border p-2 w-full rounded"
-        ></textarea>
+      <!-- ================= ADRESSE STRUCTURÉE ================= -->
+
+      <div class="mt-6">
+        <h3 class="font-semibold mb-3">Adresse de livraison</h3>
+
+        <div class="grid gap-3">
+          <input v-model="adresse.nom" placeholder="Nom complet" class="border p-2 rounded w-full" required />
+          <input v-model="adresse.address1" placeholder="Adresse 1" class="border p-2 rounded w-full" required />
+          <input v-model="adresse.address2" placeholder="Adresse 2 (optionnel)" class="border p-2 rounded w-full" />
+          <input v-model="adresse.city" placeholder="Ville" class="border p-2 rounded w-full" required />
+          <input v-model="adresse.zip" placeholder="Code postal" class="border p-2 rounded w-full" required />
+
+          <select v-model="adresse.country_code" class="border p-2 rounded w-full" required>
+            <option value="MA">Maroc</option>
+            <option value="FR">France</option>
+            <option value="BE">Belgique</option>
+            <option value="CA">Canada</option>
+          </select>
+        </div>
       </div>
 
-      <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">
+      <!-- ================= TOTAL ================= -->
+
+      <h3 class="text-lg font-bold mt-6">
         Total : {{ total }} €
       </h3>
 
-      <!-- Choix paiement -->
+      <!-- ================= PAIEMENT ================= -->
+
       <div class="mt-4">
         <label class="font-semibold block mb-2">
           Mode de paiement
@@ -99,7 +111,14 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresseLivraison: ""
+      adresse: {
+        nom: "",
+        address1: "",
+        address2: "",
+        city: "",
+        zip: "",
+        country_code: "MA"
+      }
     };
   },
 
@@ -122,8 +141,8 @@ export default {
             return;
           }
 
-          if (!this.adresseLivraison) {
-            alert("Veuillez saisir une adresse de livraison.");
+          if (!this.adresseComplete()) {
+            alert("Veuillez remplir tous les champs obligatoires.");
             this.paymentMethod = "stripe";
             return;
           }
@@ -135,6 +154,17 @@ export default {
   },
 
   methods: {
+
+    adresseComplete() {
+      return (
+        this.adresse.nom &&
+        this.adresse.address1 &&
+        this.adresse.city &&
+        this.adresse.zip &&
+        this.adresse.country_code
+      );
+    },
+
     remove(item) {
       this.$store.dispatch("removeItem", {
         id: item.id,
@@ -153,15 +183,17 @@ export default {
     },
 
     // ================= STRIPE =================
+
     async payerStripe() {
+
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
         this.$router.push("/login");
         return;
       }
 
-      if (!this.adresseLivraison) {
-        alert("Veuillez saisir une adresse de livraison.");
+      if (!this.adresseComplete()) {
+        alert("Veuillez remplir tous les champs obligatoires.");
         return;
       }
 
@@ -175,7 +207,6 @@ export default {
         image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
-      // Envoi vers serveur central Stripe
       const response = await fetch(
         "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
         {
@@ -184,7 +215,7 @@ export default {
           body: JSON.stringify({
             items: itemsPourCommande,
             email: this.user.email,
-            adresseLivraison: this.adresseLivraison
+            adresseLivraison: this.adresse
           })
         }
       );
@@ -194,6 +225,7 @@ export default {
     },
 
     // ================= PAYPAL =================
+
     async loadPaypalScript() {
       return new Promise((resolve) => {
         if (window.paypal) return resolve(window.paypal);
@@ -208,6 +240,7 @@ export default {
     },
 
     async renderPaypalButton() {
+
       const container = document.getElementById("paypal-button-container");
       container.innerHTML = "";
 
@@ -223,6 +256,7 @@ export default {
       }));
 
       paypalSdk.Buttons({
+
         createOrder: () => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
@@ -232,7 +266,7 @@ export default {
               body: JSON.stringify({
                 items: itemsPourCommande,
                 email: this.user.email,
-                adresseLivraison: this.adresseLivraison
+                adresseLivraison: this.adresse
               })
             }
           )
@@ -250,7 +284,7 @@ export default {
                 orderId: data.orderID,
                 items: itemsPourCommande,
                 user: { email: this.user.email },
-                adresseLivraison: this.adresseLivraison
+                adresseLivraison: this.adresse
               })
             }
           )
@@ -260,8 +294,10 @@ export default {
             this.$router.push("/success");
           });
         }
+
       }).render(container);
     }
+
   }
 };
 </script>
