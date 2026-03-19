@@ -21,6 +21,7 @@
         <router-link to="/adminproduits" class="menu-btn">Admin-Produits</router-link>
         <router-link to="/admin-commandes" class="menu-btn">Admin-Commandes</router-link>
         <router-link to="/upload" class="menu-btn">UploadProduit</router-link>
+        <router-link to="/sendtoprintful" class="menu-btn">Send-to-Printful</router-link>
       </div>
 
       <!-- Panier -->
