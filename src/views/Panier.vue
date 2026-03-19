@@ -46,35 +46,36 @@
         </button>
       </div>
 
-      <!-- ================= ADRESSE STRUCTURÉE ================= -->
-
+      <!-- ================= ADRESSE ================= -->
       <div class="mt-6">
-        <h3 class="font-semibold mb-3">Adresse de livraison</h3>
+        <label class="font-semibold block mb-2">
+          Adresse de livraison
+        </label>
 
-        <div class="grid gap-3">
-          <input v-model="adresse.nom" placeholder="Nom complet" class="border p-2 rounded w-full" required />
-          <input v-model="adresse.address1" placeholder="Adresse 1" class="border p-2 rounded w-full" required />
-          <input v-model="adresse.address2" placeholder="Adresse 2 (optionnel)" class="border p-2 rounded w-full" />
-          <input v-model="adresse.city" placeholder="Ville" class="border p-2 rounded w-full" required />
-          <input v-model="adresse.zip" placeholder="Code postal" class="border p-2 rounded w-full" required />
+        <div class="grid gap-2">
+          <input v-model="address1" placeholder="Adresse ligne 1"
+            class="border p-2 w-full rounded" />
 
-          <select v-model="adresse.country_code" class="border p-2 rounded w-full" required>
-            <option value="MA">Maroc</option>
-            <option value="FR">France</option>
-            <option value="BE">Belgique</option>
-            <option value="CA">Canada</option>
-          </select>
+          <input v-model="address2" placeholder="Adresse ligne 2 (optionnel)"
+            class="border p-2 w-full rounded" />
+
+          <input v-model="ville" placeholder="Ville"
+            class="border p-2 w-full rounded" />
+
+          <input v-model="codePostal" placeholder="Code postal"
+            class="border p-2 w-full rounded" />
+
+          <input v-model="pays" placeholder="Pays (FR, MA, BE...)"
+            class="border p-2 w-full rounded" />
         </div>
       </div>
 
-      <!-- ================= TOTAL ================= -->
-
+      <!-- TOTAL -->
       <h3 class="text-lg font-bold mt-6">
         Total : {{ total }} €
       </h3>
 
-      <!-- ================= PAIEMENT ================= -->
-
+      <!-- MODE PAIEMENT -->
       <div class="mt-4">
         <label class="font-semibold block mb-2">
           Mode de paiement
@@ -86,7 +87,7 @@
         </select>
       </div>
 
-      <!-- Stripe -->
+      <!-- STRIPE -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -95,7 +96,7 @@
         Payer
       </button>
 
-      <!-- PayPal -->
+      <!-- PAYPAL -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
@@ -111,19 +112,18 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresse: {
-        nom: "",
-        address1: "",
-        address2: "",
-        city: "",
-        zip: "",
-        country_code: "MA"
-      }
+
+      address1: "",
+      address2: "",
+      ville: "",
+      codePostal: "",
+      pays: "FR"
     };
   },
 
   computed: {
     ...mapState(["cart", "user"]),
+
     total() {
       return this.cart
         .reduce((sum, item) => sum + item.prix * item.quantity, 0)
@@ -141,7 +141,7 @@ export default {
             return;
           }
 
-          if (!this.adresseComplete()) {
+          if (!this.isAdresseValide()) {
             alert("Veuillez remplir tous les champs obligatoires.");
             this.paymentMethod = "stripe";
             return;
@@ -155,13 +155,12 @@ export default {
 
   methods: {
 
-    adresseComplete() {
+    isAdresseValide() {
       return (
-        this.adresse.nom &&
-        this.adresse.address1 &&
-        this.adresse.city &&
-        this.adresse.zip &&
-        this.adresse.country_code
+        this.address1 &&
+        this.ville &&
+        this.codePostal &&
+        this.pays
       );
     },
 
@@ -183,7 +182,6 @@ export default {
     },
 
     // ================= STRIPE =================
-
     async payerStripe() {
 
       if (!this.user) {
@@ -192,7 +190,7 @@ export default {
         return;
       }
 
-      if (!this.adresseComplete()) {
+      if (!this.isAdresseValide()) {
         alert("Veuillez remplir tous les champs obligatoires.");
         return;
       }
@@ -203,8 +201,7 @@ export default {
         prix: p.prix,
         quantity: p.quantity,
         taille: p.taille,
-        couleur: p.couleur,
-        image: p.images?.[0] || p.image || "/placeholder.png"
+        couleur: p.couleur
       }));
 
       const response = await fetch(
@@ -215,17 +212,26 @@ export default {
           body: JSON.stringify({
             items: itemsPourCommande,
             email: this.user.email,
-            adresseLivraison: this.adresse
+
+            address1: this.address1,
+            address2: this.address2,
+            ville: this.ville,
+            codePostal: this.codePostal,
+            pays: this.pays
           })
         }
       );
 
       const data = await response.json();
-      if (data.url) window.location.href = data.url;
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert("Erreur lors de la création du paiement.");
+      }
     },
 
     // ================= PAYPAL =================
-
     async loadPaypalScript() {
       return new Promise((resolve) => {
         if (window.paypal) return resolve(window.paypal);
@@ -266,7 +272,12 @@ export default {
               body: JSON.stringify({
                 items: itemsPourCommande,
                 email: this.user.email,
-                adresseLivraison: this.adresse
+
+                address1: this.address1,
+                address2: this.address2,
+                ville: this.ville,
+                codePostal: this.codePostal,
+                pays: this.pays
               })
             }
           )
@@ -282,9 +293,14 @@ export default {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 orderId: data.orderID,
-                items: itemsPourCommande,
                 user: { email: this.user.email },
-                adresseLivraison: this.adresse
+                items: itemsPourCommande,
+
+                address1: this.address1,
+                address2: this.address2,
+                ville: this.ville,
+                codePostal: this.codePostal,
+                pays: this.pays
               })
             }
           )
@@ -297,12 +313,11 @@ export default {
 
       }).render(container);
     }
-
   }
 };
 </script>
 
 <style scoped>
 img { object-fit: cover; }
-textarea { resize: vertical; }
+input { outline: none; }
 </style>
