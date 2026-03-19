@@ -62,7 +62,7 @@
 
 <script>
 import axios from "axios";
-import { db } from "@/firebase"; // Ton instance Firebase
+import { db } from "../firebase"; // Ton instance Firebase
 
 export default {
   data() {
