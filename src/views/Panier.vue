@@ -1,16 +1,13 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
-
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
-    <!-- Panier vide -->
     <div v-if="cart.length === 0">
       <p class="text-gray-500">Votre panier est vide.</p>
     </div>
 
-    <!-- Panier rempli -->
     <div v-else>
-
+      <!-- Liste des produits -->
       <div
         v-for="item in cart"
         :key="item.id + '-' + item.taille + '-' + item.couleur"
@@ -25,7 +22,6 @@
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
-
           <p v-if="item.taille">📏 Taille : {{ item.taille }}</p>
           <p v-if="item.couleur">🎨 Couleur : {{ item.couleur }}</p>
 
@@ -46,48 +42,61 @@
         </button>
       </div>
 
-      <!-- ================= ADRESSE ================= -->
-      <div class="mt-6">
-        <label class="font-semibold block mb-2">
-          Adresse de livraison
-        </label>
+      <!-- Adresse structurée -->
+      <div class="mt-4">
+        <label class="font-semibold block mb-1">Adresse 1</label>
+        <input
+          v-model="address1"
+          type="text"
+          class="border p-2 w-full rounded mb-2"
+          placeholder="Ex: 2244 rue Sherbrooke"
+        />
 
-        <div class="grid gap-2">
-          <input v-model="address1" placeholder="Adresse ligne 1"
-            class="border p-2 w-full rounded" />
+        <label class="font-semibold block mb-1">Adresse 2</label>
+        <input
+          v-model="address2"
+          type="text"
+          class="border p-2 w-full rounded mb-2"
+          placeholder="Ex: Appartement, étage..."
+        />
 
-          <input v-model="address2" placeholder="Adresse ligne 2 (optionnel)"
-            class="border p-2 w-full rounded" />
+        <label class="font-semibold block mb-1">Ville</label>
+        <input
+          v-model="ville"
+          type="text"
+          class="border p-2 w-full rounded mb-2"
+        />
 
-          <input v-model="ville" placeholder="Ville"
-            class="border p-2 w-full rounded" />
+        <label class="font-semibold block mb-1">Code Postal</label>
+        <input
+          v-model="codePostal"
+          type="text"
+          class="border p-2 w-full rounded mb-2"
+        />
 
-          <input v-model="codePostal" placeholder="Code postal"
-            class="border p-2 w-full rounded" />
-
-          <input v-model="pays" placeholder="Pays (FR, MA, BE...)"
-            class="border p-2 w-full rounded" />
-        </div>
+        <label class="font-semibold block mb-1">Pays</label>
+        <input
+          v-model="pays"
+          type="text"
+          class="border p-2 w-full mb-4 rounded"
+        />
       </div>
 
       <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-6">
+      <h3 class="text-lg font-bold mt-4">
         Total : {{ total }} €
       </h3>
 
-      <!-- MODE PAIEMENT -->
+      <!-- Choix paiement -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Mode de paiement
-        </label>
-
+        <label class="font-semibold block mb-2">Mode de paiement</label>
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
           <option value="stripe">💳 Carte bancaire (Stripe)</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
       </div>
 
-      <!-- STRIPE -->
+      <!-- Bouton Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -96,11 +105,10 @@
         Payer
       </button>
 
-      <!-- PAYPAL -->
+      <!-- Bouton PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
-
     </div>
   </div>
 </template>
@@ -112,96 +120,54 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-
       address1: "",
       address2: "",
       ville: "",
       codePostal: "",
-      pays: "FR"
+      pays: "",
     };
   },
-
   computed: {
     ...mapState(["cart", "user"]),
-
     total() {
-      return this.cart
-        .reduce((sum, item) => sum + item.prix * item.quantity, 0)
-        .toFixed(2);
-    }
-  },
-
-  watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
-        this.$nextTick(() => {
-          if (!this.user) {
-            alert("Veuillez vous connecter avant de payer");
-            this.$router.push("/login");
-            return;
-          }
-
-          if (!this.isAdresseValide()) {
-            alert("Veuillez remplir tous les champs obligatoires.");
-            this.paymentMethod = "stripe";
-            return;
-          }
-
-          this.renderPaypalButton();
-        });
-      }
-    }
-  },
-
-  methods: {
-
-    isAdresseValide() {
-      return (
-        this.address1 &&
-        this.ville &&
-        this.codePostal &&
-        this.pays
-      );
+      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0).toFixed(2);
     },
-
+  },
+  methods: {
     remove(item) {
       this.$store.dispatch("removeItem", {
         id: item.id,
         taille: item.taille,
-        couleur: item.couleur
+        couleur: item.couleur,
       });
     },
-
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", {
         id: item.id,
         taille: item.taille,
         couleur: item.couleur,
-        quantity: item.quantity
+        quantity: item.quantity,
       });
     },
-
-    // ================= STRIPE =================
     async payerStripe() {
-
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
         this.$router.push("/login");
         return;
       }
 
-      if (!this.isAdresseValide()) {
-        alert("Veuillez remplir tous les champs obligatoires.");
+      if (!this.address1 || !this.ville || !this.pays) {
+        alert("Veuillez saisir votre adresse complète.");
         return;
       }
 
-      const itemsPourCommande = this.cart.map(p => ({
+      const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
         taille: p.taille,
-        couleur: p.couleur
+        couleur: p.couleur,
       }));
 
       const response = await fetch(
@@ -212,112 +178,31 @@ export default {
           body: JSON.stringify({
             items: itemsPourCommande,
             email: this.user.email,
-
-            address1: this.address1,
-            address2: this.address2,
-            ville: this.ville,
-            codePostal: this.codePostal,
-            pays: this.pays
-          })
+            adresseLivraison: {
+              address1: this.address1,
+              address2: this.address2,
+              ville: this.ville,
+              codePostal: this.codePostal,
+              pays: this.pays,
+            },
+          }),
         }
       );
 
       const data = await response.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        alert("Erreur lors de la création du paiement.");
-      }
+      if (data.url) window.location.href = data.url;
     },
-
-    // ================= PAYPAL =================
-    async loadPaypalScript() {
-      return new Promise((resolve) => {
-        if (window.paypal) return resolve(window.paypal);
-
-        const script = document.createElement("script");
-        script.src =
-          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
-
-        script.onload = () => resolve(window.paypal);
-        document.body.appendChild(script);
-      });
-    },
-
-    async renderPaypalButton() {
-
-      const container = document.getElementById("paypal-button-container");
-      container.innerHTML = "";
-
-      const paypalSdk = await this.loadPaypalScript();
-
-      const itemsPourCommande = this.cart.map(p => ({
-        id: p.id,
-        nom: p.nom,
-        prix: p.prix,
-        quantity: p.quantity,
-        taille: p.taille,
-        couleur: p.couleur
-      }));
-
-      paypalSdk.Buttons({
-
-        createOrder: () => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                items: itemsPourCommande,
-                email: this.user.email,
-
-                address1: this.address1,
-                address2: this.address2,
-                ville: this.ville,
-                codePostal: this.codePostal,
-                pays: this.pays
-              })
-            }
-          )
-          .then(res => res.json())
-          .then(order => order.id);
-        },
-
-        onApprove: (data) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: data.orderID,
-                user: { email: this.user.email },
-                items: itemsPourCommande,
-
-                address1: this.address1,
-                address2: this.address2,
-                ville: this.ville,
-                codePostal: this.codePostal,
-                pays: this.pays
-              })
-            }
-          )
-          .then(res => res.json())
-          .then(() => {
-            this.$store.dispatch("clearCart");
-            this.$router.push("/success");
-          });
-        }
-
-      }).render(container);
-    }
-  }
+  },
 };
 </script>
 
 <style scoped>
-img { object-fit: cover; }
-input { outline: none; }
+img {
+  object-fit: cover;
+}
+input,
+textarea,
+select {
+  resize: vertical;
+}
 </style>
