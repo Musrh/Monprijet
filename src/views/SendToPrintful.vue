@@ -24,23 +24,45 @@
     <!-- Formulaire de modification / vérification -->
     <div v-if="selectedOrder">
       <label class="block mb-1 font-semibold">Adresse :</label>
-      <input v-model="selectedOrder.adresse" type="text" class="border rounded px-3 py-2 w-full mb-2" />
+      <input
+        v-model="selectedOrder.adresseLivraison"
+        type="text"
+        class="border rounded px-3 py-2 w-full mb-2"
+      />
 
       <label class="block mb-1 font-semibold">Ville :</label>
-      <input v-model="selectedOrder.ville" type="text" class="border rounded px-3 py-2 w-full mb-2" />
+      <input
+        v-model="selectedOrder.ville"
+        type="text"
+        class="border rounded px-3 py-2 w-full mb-2"
+      />
 
       <label class="block mb-1 font-semibold">Code Postal :</label>
-      <input v-model="selectedOrder.codePostal" type="text" class="border rounded px-3 py-2 w-full mb-2" />
+      <input
+        v-model="selectedOrder.codePostal"
+        type="text"
+        class="border rounded px-3 py-2 w-full mb-2"
+      />
 
       <label class="block mb-1 font-semibold">Pays :</label>
-      <input v-model="selectedOrder.pays" type="text" class="border rounded px-3 py-2 w-full mb-4" />
+      <input
+        v-model="selectedOrder.pays"
+        type="text"
+        class="border rounded px-3 py-2 w-full mb-4"
+      />
 
       <h3 class="font-semibold mb-2">Produits :</h3>
       <ul class="mb-4">
-        <li v-for="(item, index) in selectedOrder.items" :key="index" class="mb-1">
-          {{ item.nom }} - {{ item.quantity }} x {{ item.couleur || '' }} / {{ item.taille || '' }}
+        <li
+          v-for="(item, index) in selectedOrder.items"
+          :key="index"
+          class="mb-1"
+        >
+          {{ item.nom }} - {{ item.quantity }} x {{ item.couleur || '' }} /
+          {{ item.taille || '' }}
           <br />
-          <strong>ID :</strong> {{ item.id }} | <strong>Variant ID :</strong> {{ item.id }}
+          <strong>ID :</strong> {{ item.id }} |
+          <strong>Variant ID :</strong> {{ item.variant_id || item.id }}
         </li>
       </ul>
 
@@ -52,7 +74,7 @@
       </button>
     </div>
 
-    <div v-if="message" class="mt-4 p-2 border rounded bg-green-100 whitespace-pre-line">
+    <div v-if="message" class="mt-4 p-2 border rounded bg-green-100">
       {{ message }}
     </div>
 
@@ -91,18 +113,29 @@ export default {
       }
     },
     onSelectOrder() {
-      this.selectedOrder = this.commandes.find(c => c.id === this.selectedOrderId) || null;
+      this.selectedOrder =
+        this.commandes.find((c) => c.id === this.selectedOrderId) || null;
 
-      // Pré-remplir pays si possible depuis adresse
+      // Pré-remplir pays si possible depuis adresseLivraison
       if (this.selectedOrder && !this.selectedOrder.pays) {
-        const address = (this.selectedOrder.adresse || "").toLowerCase();
-        if (address.includes("maroc")) this.selectedOrder.pays = "MA";
-        else if (address.includes("hollande")) this.selectedOrder.pays = "NL";
+        const address = this.selectedOrder.adresseLivraison || "";
+        if (address.toLowerCase().includes("maroc")) this.selectedOrder.pays = "MA";
+        else if (address.toLowerCase().includes("hollande")) this.selectedOrder.pays = "NL";
         else this.selectedOrder.pays = "FR"; // défaut
+      }
+
+      // Ajouter variant_id si absent
+      if (this.selectedOrder) {
+        this.selectedOrder.items = this.selectedOrder.items.map((i) => ({
+          ...i,
+          variant_id: i.variant_id || i.id,
+        }));
       }
     },
     async sendToPrintful() {
       if (!this.selectedOrder) return;
+
+      console.log("🔹 Envoi à Printful - variant_id inclus :", this.selectedOrder.items);
 
       try {
         const res = await axios.post(
@@ -111,16 +144,15 @@ export default {
         );
 
         if (res.data.success) {
-          this.message = `${res.data.message}\nVariant IDs reçus : ${res.data.items
-            .map(i => i.variant_id)
-            .join(", ")}`;
+          this.message = `Commande ${this.selectedOrderId} envoyée à Printful ✅ (Printful ID: ${res.data.printfulOrderId})`;
           this.error = "";
         } else {
-          this.error = res.data.message || "Erreur lors de l'envoi à Printful ❌";
+          this.error =
+            res.data.message || "Erreur lors de l'envoi à Printful ❌";
           this.message = "";
         }
       } catch (err) {
-        console.error(err);
+        console.error("Erreur axios:", err);
         this.error = "Erreur lors de l'envoi à Printful ❌";
         this.message = "";
       }
@@ -128,7 +160,7 @@ export default {
   },
   mounted() {
     const auth = getAuth();
-    onAuthStateChanged(auth, async user => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
         const token = await user.getIdToken();
         this.fetchCommandes(token);
@@ -139,5 +171,5 @@ export default {
 </script>
 
 <style scoped>
-/* style simple pour centrer et espacer le formulaire */
+/* Style simple pour centrer le formulaire */
 </style>
