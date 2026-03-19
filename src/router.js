@@ -16,6 +16,9 @@ import Test3D from "./views/Test3D.vue";
 import Conditions from "./views/Conditions.vue";
 import Details from "./views/Details.vue"; // ✅ CORRIGÉ
 
+import SendToPrintful from "./views/SendToPrintful.vue"; 
+
+
 const routes = [
   { path: "/", component: Home },
   { path: "/produits", component: Produits },
@@ -24,6 +27,11 @@ const routes = [
   { path: "/contact", component: Contact },
   { path: "/success", component: Success },
   { path: "/minishop", component: Minishop },
+ 
+  { path: "/sendtoprintful", 
+   component: SendToPrintful,
+   meta: { requiresAdmin: true }
+  },
 
   // ✅ ROUTE DETAILS CORRIGÉE
   {
