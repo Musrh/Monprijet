@@ -135,7 +135,7 @@ export default {
     async sendToPrintful() {
       if (!this.selectedOrder) return;
 
-      console.log("🔹 Envoi à Printful - variant_id inclus :", this.selectedOrder.items);
+      console.log("🔹 Envoi à Printful - items avec variant_id :", this.selectedOrder.items);
 
       try {
         const res = await axios.post(
@@ -143,9 +143,12 @@ export default {
           this.selectedOrder
         );
 
+        // 🔹 Affiche côté front la confirmation de réception côté serveur
         if (res.data.success) {
-          this.message = `Commande ${this.selectedOrderId} envoyée à Printful ✅ (Printful ID: ${res.data.printfulOrderId})`;
+          this.message = `Commande ${this.selectedOrderId} envoyée à Printful ✅ 
+          Printful Order ID : ${res.data.printfulOrderId || "non défini côté serveur"}`;
           this.error = "";
+          console.log("✅ Réponse serveur Printful :", res.data);
         } else {
           this.error =
             res.data.message || "Erreur lors de l'envoi à Printful ❌";
