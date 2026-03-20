@@ -7,7 +7,6 @@
     </div>
 
     <div v-else>
-      <!-- Liste des produits -->
       <div
         v-for="item in cart"
         :key="item.id + '-' + item.taille + '-' + item.couleur"
@@ -36,79 +35,33 @@
 
         <button
           @click="remove(item)"
-          class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
+          class="bg-red-500 text-white px-2 py-1 rounded"
         >
           ❌
         </button>
       </div>
 
-      <!-- Adresse structurée -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-1">Adresse 1</label>
-        <input
-          v-model="address1"
-          type="text"
-          class="border p-2 w-full rounded mb-2"
-          placeholder="Ex: 2244 rue Sherbrooke"
-        />
+      <!-- Adresse -->
+      <div class="mt-6">
+        <h3 class="font-bold mb-2">Adresse de livraison</h3>
 
-        <label class="font-semibold block mb-1">Adresse 2</label>
-        <input
-          v-model="address2"
-          type="text"
-          class="border p-2 w-full rounded mb-2"
-          placeholder="Ex: Appartement, étage..."
-        />
-
-        <label class="font-semibold block mb-1">Ville</label>
-        <input
-          v-model="ville"
-          type="text"
-          class="border p-2 w-full rounded mb-2"
-        />
-
-        <label class="font-semibold block mb-1">Code Postal</label>
-        <input
-          v-model="codePostal"
-          type="text"
-          class="border p-2 w-full rounded mb-2"
-        />
-
-        <label class="font-semibold block mb-1">Pays</label>
-        <input
-          v-model="pays"
-          type="text"
-          class="border p-2 w-full mb-4 rounded"
-        />
+        <input v-model="address1" placeholder="Adresse 1" class="input" />
+        <input v-model="address2" placeholder="Adresse 2" class="input" />
+        <input v-model="ville" placeholder="Ville" class="input" />
+        <input v-model="codePostal" placeholder="Code Postal" class="input" />
+        <input v-model="pays" placeholder="Pays" class="input" />
       </div>
 
-      <!-- TOTAL -->
       <h3 class="text-lg font-bold mt-4">
         Total : {{ total }} €
       </h3>
 
-      <!-- Choix paiement -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-2">Mode de paiement</label>
-        <select v-model="paymentMethod" class="border p-2 rounded w-full">
-          <option value="stripe">💳 Carte bancaire (Stripe)</option>
-          <option value="paypal">🅿️ PayPal</option>
-        </select>
-      </div>
-
-      <!-- Bouton Stripe -->
       <button
-        v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
-        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
+        class="bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
       >
-        Payer
+        Payer avec Stripe
       </button>
-
-      <!-- Bouton PayPal -->
-      <div v-if="paymentMethod === 'paypal'" class="mt-4">
-        <div id="paypal-button-container"></div>
-      </div>
     </div>
   </div>
 </template>
@@ -119,7 +72,6 @@ import { mapState } from "vuex";
 export default {
   data() {
     return {
-      paymentMethod: "stripe",
       address1: "",
       address2: "",
       ville: "",
@@ -127,47 +79,44 @@ export default {
       pays: "",
     };
   },
+
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0).toFixed(2);
+      return this.cart
+        .reduce((sum, item) => sum + item.prix * item.quantity, 0)
+        .toFixed(2);
     },
   },
+
   methods: {
     remove(item) {
-      this.$store.dispatch("removeItem", {
-        id: item.id,
-        taille: item.taille,
-        couleur: item.couleur,
-      });
+      this.$store.dispatch("removeItem", item);
     },
+
     updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", {
-        id: item.id,
-        taille: item.taille,
-        couleur: item.couleur,
-        quantity: item.quantity,
-      });
+      this.$store.dispatch("updateQuantity", item);
     },
+
     async payerStripe() {
       if (!this.user) {
-        alert("Veuillez vous connecter avant de payer");
+        alert("Veuillez vous connecter.");
         this.$router.push("/login");
         return;
       }
 
-      if (!this.address1 || !this.ville || !this.pays) {
-        alert("Veuillez saisir votre adresse complète.");
+      if (!this.address1 || !this.ville || !this.codePostal || !this.pays) {
+        alert("Veuillez remplir tous les champs d'adresse.");
         return;
       }
 
-      const itemsPourCommande = this.cart.map((p) => ({
+      const items = this.cart.map((p) => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
-        taille: p.taille,
-        couleur: p.couleur,
+        taille: p.taille || null,
+        couleur: p.couleur || null,
       }));
 
       const response = await fetch(
@@ -176,7 +125,7 @@ export default {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            items: itemsPourCommande,
+            items,
             email: this.user.email,
             adresseLivraison: {
               address1: this.address1,
@@ -197,12 +146,12 @@ export default {
 </script>
 
 <style scoped>
-img {
-  object-fit: cover;
-}
-input,
-textarea,
-select {
-  resize: vertical;
+.input {
+  display: block;
+  width: 100%;
+  border: 1px solid #ddd;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 6px;
 }
 </style>
