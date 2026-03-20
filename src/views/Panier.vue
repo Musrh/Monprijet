@@ -2,12 +2,10 @@
   <div class="p-4 max-w-3xl mx-auto">
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
-    <!-- Panier vide -->
     <div v-if="cart.length === 0">
       <p class="text-gray-500">Votre panier est vide.</p>
     </div>
 
-    <!-- Panier rempli -->
     <div v-else>
       <!-- Liste des produits -->
       <div
@@ -47,47 +45,23 @@
       <!-- Adresse structurée -->
       <div class="mt-4">
         <label class="font-semibold block mb-1">Adresse 1</label>
-        <input
-          v-model="address1"
-          type="text"
-          class="border p-2 w-full rounded mb-2"
-          placeholder="Ex: 2244 rue Sherbrooke"
-        />
+        <input v-model="address1" type="text" class="border p-2 w-full rounded mb-2" placeholder="Ex: 2244 rue Sherbrooke" />
 
         <label class="font-semibold block mb-1">Adresse 2</label>
-        <input
-          v-model="address2"
-          type="text"
-          class="border p-2 w-full rounded mb-2"
-          placeholder="Ex: Appartement, étage..."
-        />
+        <input v-model="address2" type="text" class="border p-2 w-full rounded mb-2" placeholder="Appartement, étage..." />
 
         <label class="font-semibold block mb-1">Ville</label>
-        <input
-          v-model="ville"
-          type="text"
-          class="border p-2 w-full mb-2"
-        />
+        <input v-model="ville" type="text" class="border p-2 w-full rounded mb-2" />
 
         <label class="font-semibold block mb-1">Code Postal</label>
-        <input
-          v-model="codePostal"
-          type="text"
-          class="border p-2 w-full mb-2"
-        />
+        <input v-model="codePostal" type="text" class="border p-2 w-full rounded mb-2" />
 
         <label class="font-semibold block mb-1">Pays</label>
-        <input
-          v-model="pays"
-          type="text"
-          class="border p-2 w-full mb-4"
-        />
+        <input v-model="pays" type="text" class="border p-2 w-full mb-4 rounded" />
       </div>
 
       <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">
-        Total : {{ total }} €
-      </h3>
+      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
 
       <!-- Choix paiement -->
       <div class="mt-4">
@@ -98,7 +72,7 @@
         </select>
       </div>
 
-      <!-- Bouton Stripe -->
+      <!-- Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -107,7 +81,7 @@
         Payer
       </button>
 
-      <!-- Container PayPal -->
+      <!-- PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
@@ -127,7 +101,6 @@ export default {
       ville: "",
       codePostal: "",
       pays: "",
-      paypalLoaded: false,
     };
   },
   computed: {
@@ -139,41 +112,23 @@ export default {
   watch: {
     paymentMethod(newMethod) {
       if (newMethod === "paypal") {
-        this.$nextTick(() => {
-          this.renderPaypalButton();
-        });
+        this.$nextTick(() => this.renderPaypalButton());
       }
     },
   },
   methods: {
     remove(item) {
-      this.$store.dispatch("removeItem", {
-        id: item.id,
-        taille: item.taille,
-        couleur: item.couleur,
-      });
+      this.$store.dispatch("removeItem", { id: item.id, taille: item.taille, couleur: item.couleur });
     },
     updateQuantity(item) {
-      this.$store.dispatch("updateQuantity", {
-        id: item.id,
-        taille: item.taille,
-        couleur: item.couleur,
-        quantity: item.quantity,
-      });
+      this.$store.dispatch("updateQuantity", { id: item.id, taille: item.taille, couleur: item.couleur, quantity: item.quantity });
     },
 
     async payerStripe() {
-      if (!this.user) {
-        alert("Veuillez vous connecter avant de payer");
-        this.$router.push("/login");
-        return;
-      }
-      if (!this.address1 || !this.ville || !this.pays) {
-        alert("Veuillez saisir votre adresse complète.");
-        return;
-      }
+      if (!this.user) { alert("Veuillez vous connecter avant de payer"); return; }
+      if (!this.address1 || !this.ville || !this.pays) { alert("Veuillez saisir votre adresse complète."); return; }
 
-      const itemsPourCommande = this.cart.map((p) => ({
+      const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
@@ -182,65 +137,48 @@ export default {
         couleur: p.couleur,
       }));
 
-      try {
-        const response = await fetch(
-          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              items: itemsPourCommande,
-              email: this.user.email,
-              adresseLivraison: {
-                address1: this.address1,
-                address2: this.address2,
-                ville: this.ville,
-                codePostal: this.codePostal,
-                pays: this.pays,
-              },
-            }),
-          }
-        );
-        const data = await response.json();
-        if (data.url) window.location.href = data.url;
-        else console.error("Erreur Stripe session:", data);
-      } catch (err) {
-        console.error("Erreur paiement Stripe:", err);
-      }
+      const adresseLivraison = {
+        address1: this.address1,
+        address2: this.address2,
+        ville: this.ville,
+        codePostal: this.codePostal,
+        pays: this.pays,
+      };
+
+      const response = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: itemsPourCommande,
+          email: this.user.email,
+          adresseLivraison,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.url) window.location.href = data.url;
     },
 
     async loadPaypalScript() {
-      if (this.paypalLoaded) return window.paypal;
-
-      return new Promise((resolve) => {
+      if (window.paypal) return window.paypal;
+      return new Promise(resolve => {
         const script = document.createElement("script");
-        script.src =
-          "https://www.paypal.com/sdk/js?client-id=YOUR_SANDBOX_CLIENT_ID&currency=EUR";
-        script.onload = () => {
-          this.paypalLoaded = true;
-          resolve(window.paypal);
-        };
+        script.src = "https://www.paypal.com/sdk/js?client-id=YOUR_SANDBOX_CLIENT_ID&currency=EUR";
+        script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
       });
     },
 
     async renderPaypalButton() {
-      if (!this.user) {
-        alert("Veuillez vous connecter avant de payer");
-        this.paymentMethod = "stripe";
-        return;
-      }
-      if (!this.address1 || !this.ville || !this.pays) {
-        alert("Veuillez saisir votre adresse complète.");
-        this.paymentMethod = "stripe";
-        return;
-      }
+      if (!this.user) return;
+      if (!this.address1 || !this.ville || !this.pays) { alert("Veuillez saisir votre adresse complète."); this.paymentMethod="stripe"; return; }
+
+      const container = document.getElementById("paypal-button-container");
+      container.innerHTML = "";
 
       const paypalSdk = await this.loadPaypalScript();
-      const container = document.getElementById("paypal-button-container");
-      container.innerHTML = ""; // reset
 
-      const itemsPourCommande = this.cart.map((p) => ({
+      const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
@@ -250,54 +188,26 @@ export default {
       }));
 
       paypalSdk.Buttons({
-        createOrder: () => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                items: itemsPourCommande,
-                email: this.user.email,
-                adresseLivraison: {
-                  address1: this.address1,
-                  address2: this.address2,
-                  ville: this.ville,
-                  codePostal: this.codePostal,
-                  pays: this.pays,
-                },
-              }),
-            }
-          )
-            .then((res) => res.json())
-            .then((order) => order.id);
-        },
-        onApprove: (data) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: data.orderID,
-                items: itemsPourCommande,
-                user: { email: this.user.email },
-                adresseLivraison: {
-                  address1: this.address1,
-                  address2: this.address2,
-                  ville: this.ville,
-                  codePostal: this.codePostal,
-                  pays: this.pays,
-                },
-              }),
-            }
-          )
-            .then((res) => res.json())
-            .then(() => {
-              this.$store.dispatch("clearCart");
-              this.$router.push("/success");
-            });
-        },
+        createOrder: () => fetch("https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            items: itemsPourCommande,
+            email: this.user.email,
+            adresseLivraison: { address1: this.address1, address2: this.address2, ville: this.ville, codePostal: this.codePostal, pays: this.pays },
+          }),
+        }).then(res => res.json()).then(order => order.id),
+
+        onApprove: (data) => fetch("https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: data.orderID,
+            items: itemsPourCommande,
+            user: { email: this.user.email },
+            adresseLivraison: { address1: this.address1, address2: this.address2, ville: this.ville, codePostal: this.codePostal, pays: this.pays },
+          }),
+        }).then(res => res.json()).then(() => { this.$store.dispatch("clearCart"); this.$router.push("/success"); }),
       }).render(container);
     },
   },
@@ -305,12 +215,6 @@ export default {
 </script>
 
 <style scoped>
-img {
-  object-fit: cover;
-}
-input,
-textarea,
-select {
-  resize: vertical;
-}
+img { object-fit: cover; }
+input, textarea, select { resize: vertical; }
 </style>
