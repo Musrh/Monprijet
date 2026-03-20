@@ -2,10 +2,12 @@
   <div class="p-4 max-w-3xl mx-auto">
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
+    <!-- Panier vide -->
     <div v-if="cart.length === 0">
       <p class="text-gray-500">Votre panier est vide.</p>
     </div>
 
+    <!-- Panier rempli -->
     <div v-else>
       <div
         v-for="item in cart"
@@ -61,6 +63,7 @@
         </select>
       </div>
 
+      <!-- Bouton Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -69,6 +72,7 @@
         Payer
       </button>
 
+      <!-- Bouton PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
@@ -83,7 +87,7 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresse: { adresse1: "", adresse2: "", codePostal: "", ville: "", pays: "" }
+      adresse: { adresse1: "", adresse2: "", codePostal: "", ville: "", pays: "" },
     };
   },
 
@@ -100,7 +104,7 @@ export default {
         this.$nextTick(() => {
           if (!this.user) { alert("Connectez-vous avant de payer"); this.$router.push("/login"); return; }
           if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) {
-            alert("Complétez votre adresse"); this.paymentMethod = "stripe"; return;
+            alert("Veuillez compléter votre adresse"); this.paymentMethod = "stripe"; return;
           }
           this.renderPaypalButton();
         });
@@ -118,7 +122,7 @@ export default {
 
     async payerStripe() {
       if (!this.user) { alert("Connectez-vous avant de payer"); this.$router.push("/login"); return; }
-      if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) { alert("Complétez votre adresse"); return; }
+      if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) { alert("Veuillez compléter votre adresse"); return; }
 
       const itemsPourCommande = this.cart.map(p => ({
         id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity, taille: p.taille, couleur: p.couleur, image: p.images?.[0] || p.image || "/placeholder.png"
@@ -147,32 +151,41 @@ export default {
     async renderPaypalButton() {
       const container = document.getElementById("paypal-button-container");
       container.innerHTML = "";
-      const paypalSdk = await this.loadPaypalScript();
 
+      const paypalSdk = await this.loadPaypalScript();
       const itemsPourCommande = this.cart.map(p => ({
         id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity, taille: p.taille, couleur: p.couleur
       }));
 
       paypalSdk.Buttons({
         style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'paypal' },
-        onInit: (data, actions) => { if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) actions.disable(); },
+
         onClick: (data, actions) => {
-          if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) { alert("Complétez votre adresse"); return actions.reject(); }
+          if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) {
+            alert("Veuillez compléter votre adresse");
+            return actions.reject();
+          }
           return actions.resolve();
         },
-        createOrder: (data, actions) => {
+
+        createOrder: () => {
           return fetch("https://ton-backend.com/create-paypal-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ items: itemsPourCommande, email: this.user.email, adresse: this.adresse })
-          }).then(res => res.json()).then(order => order.id);
+          })
+          .then(res => res.json())
+          .then(order => order.id);
         },
-        onApprove: (data, actions) => {
+
+        onApprove: (data) => {
           return fetch("https://ton-backend.com/capture-paypal-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email }, adresse: this.adresse })
-          }).then(res => res.json()).then(() => {
+          })
+          .then(res => res.json())
+          .then(() => {
             this.$store.dispatch("clearCart");
             this.$router.push("/success");
           });
@@ -182,3 +195,8 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+img { object-fit: cover; }
+input { width: 100%; }
+</style>
