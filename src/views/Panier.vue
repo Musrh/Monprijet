@@ -2,12 +2,10 @@
   <div class="p-4 max-w-3xl mx-auto">
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
-    <!-- Panier vide -->
     <div v-if="cart.length === 0">
       <p class="text-gray-500">Votre panier est vide.</p>
     </div>
 
-    <!-- Panier rempli -->
     <div v-else>
       <!-- Liste des produits -->
       <div
@@ -25,6 +23,7 @@
           <p>{{ item.prix }} €</p>
           <p v-if="item.taille">📏 Taille : {{ item.taille }}</p>
           <p v-if="item.couleur">🎨 Couleur : {{ item.couleur }}</p>
+
           <input
             type="number"
             min="1"
@@ -33,6 +32,7 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
+
         <button
           @click="remove(item)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
@@ -63,28 +63,26 @@
         <input
           v-model="ville"
           type="text"
-          class="border p-2 w-full mb-2"
+          class="border p-2 w-full mb-2 rounded"
         />
 
         <label class="font-semibold block mb-1">Code Postal</label>
         <input
           v-model="codePostal"
           type="text"
-          class="border p-2 w-full mb-2"
+          class="border p-2 w-full mb-2 rounded"
         />
 
         <label class="font-semibold block mb-1">Pays</label>
         <input
           v-model="pays"
           type="text"
-          class="border p-2 w-full mb-4"
+          class="border p-2 w-full mb-4 rounded"
         />
       </div>
 
       <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">
-        Total : {{ total }} €
-      </h3>
+      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
 
       <!-- Choix paiement -->
       <div class="mt-4">
@@ -126,14 +124,14 @@ export default {
       pays: "",
     };
   },
+
   computed: {
     ...mapState(["cart", "user"]),
     total() {
-      return this.cart
-        .reduce((sum, item) => sum + item.prix * item.quantity, 0)
-        .toFixed(2);
+      return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0).toFixed(2);
     },
   },
+
   watch: {
     paymentMethod(newMethod) {
       if (newMethod === "paypal") {
@@ -143,6 +141,7 @@ export default {
       }
     },
   },
+
   methods: {
     remove(item) {
       this.$store.dispatch("removeItem", {
@@ -151,6 +150,7 @@ export default {
         couleur: item.couleur,
       });
     },
+
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", {
         id: item.id,
@@ -160,7 +160,6 @@ export default {
       });
     },
 
-    // ================= STRIPE =================
     async payerStripe() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
@@ -204,23 +203,24 @@ export default {
       if (data.url) window.location.href = data.url;
     },
 
-    // ================= PAYPAL =================
     async loadPaypalScript() {
       return new Promise((resolve) => {
         if (window.paypal) return resolve(window.paypal);
+
         const script = document.createElement("script");
         script.src =
-          "https://www.paypal.com/sdk/js?client-id=TON_CLIENT_ID_SANDBOX&currency=EUR";
+          "https://www.paypal.com/sdk/js?client-id=YOUR_SANDBOX_CLIENT_ID&currency=EUR";
         script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
       });
     },
 
     async renderPaypalButton() {
-      const container = document.getElementById("paypal-button-container");
-      container.innerHTML = "";
-
       const paypalSdk = await this.loadPaypalScript();
+      const container = document.getElementById("paypal-button-container");
+      if (!container) return;
+
+      container.innerHTML = "";
 
       const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
@@ -254,7 +254,6 @@ export default {
             .then((res) => res.json())
             .then((order) => order.id);
         },
-
         onApprove: (data) => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
