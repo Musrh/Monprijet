@@ -2,10 +2,12 @@
   <div class="p-4 max-w-3xl mx-auto">
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
+    <!-- Panier vide -->
     <div v-if="cart.length === 0">
       <p class="text-gray-500">Votre panier est vide.</p>
     </div>
 
+    <!-- Panier rempli -->
     <div v-else>
       <!-- Liste des produits -->
       <div
@@ -18,6 +20,7 @@
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
+
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
@@ -63,14 +66,14 @@
         <input
           v-model="ville"
           type="text"
-          class="border p-2 w-full mb-2 rounded"
+          class="border p-2 w-full rounded mb-2"
         />
 
         <label class="font-semibold block mb-1">Code Postal</label>
         <input
           v-model="codePostal"
           type="text"
-          class="border p-2 w-full mb-2 rounded"
+          class="border p-2 w-full rounded mb-2"
         />
 
         <label class="font-semibold block mb-1">Pays</label>
@@ -81,8 +84,10 @@
         />
       </div>
 
-      <!-- TOTAL -->
-      <h3 class="text-lg font-bold mt-4">Total : {{ total }} €</h3>
+      <!-- Total -->
+      <h3 class="text-lg font-bold mt-4">
+        Total : {{ total }} €
+      </h3>
 
       <!-- Choix paiement -->
       <div class="mt-4">
@@ -102,8 +107,8 @@
         Payer
       </button>
 
-      <!-- Bouton PayPal -->
-      <div v-if="paymentMethod === 'paypal'" class="mt-4">
+      <!-- Conteneur PayPal (toujours présent pour éviter problème de v-if) -->
+      <div v-show="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
     </div>
@@ -117,6 +122,7 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
+      paypalSdkLoaded: false,
       address1: "",
       address2: "",
       ville: "",
@@ -124,24 +130,23 @@ export default {
       pays: "",
     };
   },
-
   computed: {
     ...mapState(["cart", "user"]),
     total() {
       return this.cart.reduce((sum, item) => sum + item.prix * item.quantity, 0).toFixed(2);
     },
   },
-
+  mounted() {
+    // Charger le SDK PayPal dès le montage
+    this.loadPaypalScript();
+  },
   watch: {
     paymentMethod(newMethod) {
       if (newMethod === "paypal") {
-        this.$nextTick(() => {
-          this.renderPaypalButton();
-        });
+        this.$nextTick(() => this.renderPaypalButton());
       }
     },
   },
-
   methods: {
     remove(item) {
       this.$store.dispatch("removeItem", {
@@ -150,7 +155,6 @@ export default {
         couleur: item.couleur,
       });
     },
-
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", {
         id: item.id,
@@ -160,6 +164,7 @@ export default {
       });
     },
 
+    // ================= STRIPE =================
     async payerStripe() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
@@ -203,20 +208,25 @@ export default {
       if (data.url) window.location.href = data.url;
     },
 
+    // ================= PAYPAL =================
     async loadPaypalScript() {
-      return new Promise((resolve) => {
-        if (window.paypal) return resolve(window.paypal);
+      if (this.paypalSdkLoaded) return window.paypal;
 
+      return new Promise((resolve) => {
         const script = document.createElement("script");
         script.src =
           "https://www.paypal.com/sdk/js?client-id=YOUR_SANDBOX_CLIENT_ID&currency=EUR";
-        script.onload = () => resolve(window.paypal);
+        script.onload = () => {
+          this.paypalSdkLoaded = true;
+          resolve(window.paypal);
+        };
         document.body.appendChild(script);
       });
     },
 
     async renderPaypalButton() {
-      const paypalSdk = await this.loadPaypalScript();
+      if (!this.paypalSdkLoaded) await this.loadPaypalScript();
+
       const container = document.getElementById("paypal-button-container");
       if (!container) return;
 
@@ -231,7 +241,7 @@ export default {
         couleur: p.couleur,
       }));
 
-      paypalSdk.Buttons({
+      window.paypal.Buttons({
         createOrder: () => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
