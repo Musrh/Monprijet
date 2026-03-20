@@ -43,23 +43,14 @@
       </div>
 
       <!-- ADRESSE -->
-      <div class="mt-4">
-        <h3 class="font-semibold mb-2">Adresse de livraison</h3>
+      <div class="mt-4 space-y-2">
+        <h3 class="font-semibold">Adresse de livraison</h3>
 
-        <input v-model="address1" placeholder="Adresse 1"
-          class="border p-2 w-full rounded mb-2" />
-
-        <input v-model="address2" placeholder="Adresse 2"
-          class="border p-2 w-full rounded mb-2" />
-
-        <input v-model="ville" placeholder="Ville"
-          class="border p-2 w-full rounded mb-2" />
-
-        <input v-model="codePostal" placeholder="Code Postal"
-          class="border p-2 w-full rounded mb-2" />
-
-        <input v-model="pays" placeholder="Pays"
-          class="border p-2 w-full rounded mb-4" />
+        <input v-model="address1" placeholder="Adresse 1" class="border p-2 w-full rounded" />
+        <input v-model="address2" placeholder="Adresse 2" class="border p-2 w-full rounded" />
+        <input v-model="ville" placeholder="Ville" class="border p-2 w-full rounded" />
+        <input v-model="codePostal" placeholder="Code Postal" class="border p-2 w-full rounded" />
+        <input v-model="pays" placeholder="Pays" class="border p-2 w-full rounded" />
       </div>
 
       <!-- TOTAL -->
@@ -69,10 +60,7 @@
 
       <!-- MODE PAIEMENT -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Mode de paiement
-        </label>
-
+        <label class="font-semibold block mb-2">Mode de paiement</label>
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
           <option value="stripe">💳 Carte bancaire (Stripe)</option>
           <option value="paypal">🅿️ PayPal</option>
@@ -121,9 +109,13 @@ export default {
   },
 
   watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
+    paymentMethod(newVal) {
+      if (newVal === "paypal") {
         this.$nextTick(() => {
+          if (!this.validateAdresse()) {
+            this.paymentMethod = "stripe";
+            return;
+          }
           this.renderPaypalButton();
         });
       }
@@ -131,6 +123,21 @@ export default {
   },
 
   methods: {
+    validateAdresse() {
+      if (!this.user) {
+        alert("Veuillez vous connecter.");
+        this.$router.push("/login");
+        return false;
+      }
+
+      if (!this.address1 || !this.ville || !this.codePostal || !this.pays) {
+        alert("Veuillez remplir tous les champs d'adresse.");
+        return false;
+      }
+
+      return true;
+    },
+
     remove(item) {
       this.$store.dispatch("removeItem", {
         id: item.id,
@@ -148,22 +155,7 @@ export default {
       });
     },
 
-    validateAdresse() {
-      if (!this.address1 || !this.ville || !this.pays) {
-        alert("Veuillez remplir adresse, ville et pays.");
-        return false;
-      }
-      return true;
-    },
-
-    // ================= STRIPE =================
     async payerStripe() {
-      if (!this.user) {
-        alert("Veuillez vous connecter.");
-        this.$router.push("/login");
-        return;
-      }
-
       if (!this.validateAdresse()) return;
 
       const itemsPourCommande = this.cart.map((p) => ({
@@ -197,25 +189,23 @@ export default {
       if (data.url) window.location.href = data.url;
     },
 
-    // ================= PAYPAL =================
     async loadPaypalScript() {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         if (window.paypal) return resolve(window.paypal);
 
         const script = document.createElement("script");
         script.src =
           "https://www.paypal.com/sdk/js?client-id=TON_CLIENT_ID_PAYPAL&currency=EUR";
+        script.async = true;
+
         script.onload = () => resolve(window.paypal);
+        script.onerror = () => reject("Erreur chargement PayPal");
+
         document.body.appendChild(script);
       });
     },
 
     async renderPaypalButton() {
-      if (!this.validateAdresse()) {
-        this.paymentMethod = "stripe";
-        return;
-      }
-
       const container = document.getElementById("paypal-button-container");
       container.innerHTML = "";
 
@@ -230,47 +220,51 @@ export default {
         couleur: p.couleur,
       }));
 
-      paypalSdk.Buttons({
-        createOrder: () => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ items: itemsPourCommande }),
-            }
-          )
-            .then((res) => res.json())
-            .then((order) => order.id);
-        },
+      paypalSdk
+        .Buttons({
+          createOrder: () => {
+            return fetch(
+              "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  items: itemsPourCommande,
+                }),
+              }
+            )
+              .then((res) => res.json())
+              .then((order) => order.id);
+          },
 
-        onApprove: (data) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: data.orderID,
-                items: itemsPourCommande,
-                email: this.user.email,
-                adresseLivraison: {
-                  address1: this.address1,
-                  address2: this.address2,
-                  ville: this.ville,
-                  codePostal: this.codePostal,
-                  pays: this.pays,
-                },
-              }),
-            }
-          )
-            .then((res) => res.json())
-            .then(() => {
-              this.$store.dispatch("clearCart");
-              this.$router.push("/success");
-            });
-        },
-      }).render(container);
+          onApprove: (data) => {
+            return fetch(
+              "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  orderId: data.orderID,
+                  items: itemsPourCommande,
+                  email: this.user.email,
+                  adresseLivraison: {
+                    address1: this.address1,
+                    address2: this.address2,
+                    ville: this.ville,
+                    codePostal: this.codePostal,
+                    pays: this.pays,
+                  },
+                }),
+              }
+            )
+              .then((res) => res.json())
+              .then(() => {
+                this.$store.dispatch("clearCart");
+                this.$router.push("/success");
+              });
+          },
+        })
+        .render(container);
     },
   },
 };
