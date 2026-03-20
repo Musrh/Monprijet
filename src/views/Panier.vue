@@ -1,6 +1,5 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
-
     <h2 class="text-xl font-bold mb-4">🛒 Mon Panier</h2>
 
     <!-- Panier vide -->
@@ -10,6 +9,7 @@
 
     <!-- Panier rempli -->
     <div v-else>
+      <!-- Liste des produits -->
       <div
         v-for="item in cart"
         :key="item.id + '-' + item.taille + '-' + item.couleur"
@@ -20,14 +20,11 @@
           :alt="item.nom"
           class="w-20 h-20 object-cover rounded mr-4"
         />
-
         <div class="flex-1">
           <h3 class="font-semibold">{{ item.nom }}</h3>
           <p>{{ item.prix }} €</p>
-
           <p v-if="item.taille">📏 Taille : {{ item.taille }}</p>
           <p v-if="item.couleur">🎨 Couleur : {{ item.couleur }}</p>
-
           <input
             type="number"
             min="1"
@@ -36,7 +33,6 @@
             class="border w-20 p-1 mt-1"
           />
         </div>
-
         <button
           @click="remove(item)"
           class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded"
@@ -45,16 +41,44 @@
         </button>
       </div>
 
-      <!-- Adresse de livraison -->
+      <!-- Adresse structurée -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Adresse de livraison
-        </label>
-        <textarea
-          v-model="adresseLivraison"
-          placeholder="Votre adresse complète"
-          class="border p-2 w-full rounded"
-        ></textarea>
+        <label class="font-semibold block mb-1">Adresse 1</label>
+        <input
+          v-model="address1"
+          type="text"
+          class="border p-2 w-full rounded mb-2"
+          placeholder="Ex: 2244 rue Sherbrooke"
+        />
+
+        <label class="font-semibold block mb-1">Adresse 2</label>
+        <input
+          v-model="address2"
+          type="text"
+          class="border p-2 w-full rounded mb-2"
+          placeholder="Ex: Appartement, étage..."
+        />
+
+        <label class="font-semibold block mb-1">Ville</label>
+        <input
+          v-model="ville"
+          type="text"
+          class="border p-2 w-full mb-2"
+        />
+
+        <label class="font-semibold block mb-1">Code Postal</label>
+        <input
+          v-model="codePostal"
+          type="text"
+          class="border p-2 w-full mb-2"
+        />
+
+        <label class="font-semibold block mb-1">Pays</label>
+        <input
+          v-model="pays"
+          type="text"
+          class="border p-2 w-full mb-4"
+        />
       </div>
 
       <!-- TOTAL -->
@@ -64,17 +88,14 @@
 
       <!-- Choix paiement -->
       <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Mode de paiement
-        </label>
-
+        <label class="font-semibold block mb-2">Mode de paiement</label>
         <select v-model="paymentMethod" class="border p-2 rounded w-full">
           <option value="stripe">💳 Carte bancaire (Stripe)</option>
           <option value="paypal">🅿️ PayPal</option>
         </select>
       </div>
 
-      <!-- Stripe -->
+      <!-- Bouton Stripe -->
       <button
         v-if="paymentMethod === 'stripe'"
         @click="payerStripe"
@@ -83,11 +104,10 @@
         Payer
       </button>
 
-      <!-- PayPal -->
+      <!-- Bouton PayPal -->
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
-
     </div>
   </div>
 </template>
@@ -99,56 +119,44 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresseLivraison: ""
+      address1: "",
+      address2: "",
+      ville: "",
+      codePostal: "",
+      pays: "",
     };
   },
-
   computed: {
     ...mapState(["cart", "user"]),
     total() {
       return this.cart
         .reduce((sum, item) => sum + item.prix * item.quantity, 0)
         .toFixed(2);
-    }
+    },
   },
-
   watch: {
     paymentMethod(newMethod) {
       if (newMethod === "paypal") {
         this.$nextTick(() => {
-          if (!this.user) {
-            alert("Veuillez vous connecter avant de payer");
-            this.$router.push("/login");
-            return;
-          }
-
-          if (!this.adresseLivraison) {
-            alert("Veuillez saisir une adresse de livraison.");
-            this.paymentMethod = "stripe";
-            return;
-          }
-
           this.renderPaypalButton();
         });
       }
-    }
+    },
   },
-
   methods: {
     remove(item) {
       this.$store.dispatch("removeItem", {
         id: item.id,
         taille: item.taille,
-        couleur: item.couleur
+        couleur: item.couleur,
       });
     },
-
     updateQuantity(item) {
       this.$store.dispatch("updateQuantity", {
         id: item.id,
         taille: item.taille,
         couleur: item.couleur,
-        quantity: item.quantity
+        quantity: item.quantity,
       });
     },
 
@@ -159,23 +167,20 @@ export default {
         this.$router.push("/login");
         return;
       }
-
-      if (!this.adresseLivraison) {
-        alert("Veuillez saisir une adresse de livraison.");
+      if (!this.address1 || !this.ville || !this.pays) {
+        alert("Veuillez saisir votre adresse complète.");
         return;
       }
 
-      const itemsPourCommande = this.cart.map(p => ({
+      const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
         taille: p.taille,
         couleur: p.couleur,
-        image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
-      // Envoi vers serveur central Stripe
       const response = await fetch(
         "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
         {
@@ -184,8 +189,14 @@ export default {
           body: JSON.stringify({
             items: itemsPourCommande,
             email: this.user.email,
-            adresseLivraison: this.adresseLivraison
-          })
+            adresseLivraison: {
+              address1: this.address1,
+              address2: this.address2,
+              ville: this.ville,
+              codePostal: this.codePostal,
+              pays: this.pays,
+            },
+          }),
         }
       );
 
@@ -197,11 +208,9 @@ export default {
     async loadPaypalScript() {
       return new Promise((resolve) => {
         if (window.paypal) return resolve(window.paypal);
-
         const script = document.createElement("script");
         script.src =
-          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
-
+          "https://www.paypal.com/sdk/js?client-id=TON_CLIENT_ID_SANDBOX&currency=EUR";
         script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
       });
@@ -213,13 +222,13 @@ export default {
 
       const paypalSdk = await this.loadPaypalScript();
 
-      const itemsPourCommande = this.cart.map(p => ({
+      const itemsPourCommande = this.cart.map((p) => ({
         id: p.id,
         nom: p.nom,
         prix: p.prix,
         quantity: p.quantity,
         taille: p.taille,
-        couleur: p.couleur
+        couleur: p.couleur,
       }));
 
       paypalSdk.Buttons({
@@ -232,12 +241,18 @@ export default {
               body: JSON.stringify({
                 items: itemsPourCommande,
                 email: this.user.email,
-                adresseLivraison: this.adresseLivraison
-              })
+                adresseLivraison: {
+                  address1: this.address1,
+                  address2: this.address2,
+                  ville: this.ville,
+                  codePostal: this.codePostal,
+                  pays: this.pays,
+                },
+              }),
             }
           )
-          .then(res => res.json())
-          .then(order => order.id);
+            .then((res) => res.json())
+            .then((order) => order.id);
         },
 
         onApprove: (data) => {
@@ -250,23 +265,35 @@ export default {
                 orderId: data.orderID,
                 items: itemsPourCommande,
                 user: { email: this.user.email },
-                adresseLivraison: this.adresseLivraison
-              })
+                adresseLivraison: {
+                  address1: this.address1,
+                  address2: this.address2,
+                  ville: this.ville,
+                  codePostal: this.codePostal,
+                  pays: this.pays,
+                },
+              }),
             }
           )
-          .then(res => res.json())
-          .then(() => {
-            this.$store.dispatch("clearCart");
-            this.$router.push("/success");
-          });
-        }
+            .then((res) => res.json())
+            .then(() => {
+              this.$store.dispatch("clearCart");
+              this.$router.push("/success");
+            });
+        },
       }).render(container);
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-img { object-fit: cover; }
-textarea { resize: vertical; }
+img {
+  object-fit: cover;
+}
+input,
+textarea,
+select {
+  resize: vertical;
+}
 </style>
