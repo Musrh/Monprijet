@@ -160,13 +160,11 @@ export default {
             this.$router.push("/login");
             return;
           }
-
           if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) {
             alert("Veuillez compléter votre adresse de livraison.");
             this.paymentMethod = "stripe";
             return;
           }
-
           this.renderPaypalButton();
         });
       }
@@ -214,7 +212,6 @@ export default {
         image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
-      // Envoi vers serveur central Stripe
       const response = await fetch(
         "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
         {
@@ -262,7 +259,25 @@ export default {
       }));
 
       paypalSdk.Buttons({
-        createOrder: () => {
+        style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'paypal' },
+
+        // Bloquer paiement si adresse incomplète
+        onInit: (data, actions) => {
+          if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) {
+            actions.disable();
+            alert("Veuillez compléter votre adresse de livraison avant de payer.");
+          }
+        },
+
+        onClick: (data, actions) => {
+          if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) {
+            alert("Veuillez compléter votre adresse de livraison.");
+            return actions.reject();
+          }
+          return actions.resolve();
+        },
+
+        createOrder: (data, actions) => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
             {
@@ -279,7 +294,7 @@ export default {
           .then(order => order.id);
         },
 
-        onApprove: (data) => {
+        onApprove: (data, actions) => {
           return fetch(
             "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
             {
