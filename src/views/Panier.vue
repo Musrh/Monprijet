@@ -46,15 +46,44 @@
       </div>
 
       <!-- Adresse de livraison -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Adresse de livraison
-        </label>
-        <textarea
-          v-model="adresseLivraison"
-          placeholder="Votre adresse complète"
+      <div class="mt-4 grid grid-cols-1 gap-3">
+        <label class="font-semibold block">Adresse de livraison</label>
+
+        <input
+          type="text"
+          v-model="adresse.adresse1"
+          placeholder="Adresse ligne 1"
           class="border p-2 w-full rounded"
-        ></textarea>
+        />
+
+        <input
+          type="text"
+          v-model="adresse.adresse2"
+          placeholder="Adresse ligne 2 (optionnel)"
+          class="border p-2 w-full rounded"
+        />
+
+        <div class="grid grid-cols-2 gap-3">
+          <input
+            type="text"
+            v-model="adresse.codePostal"
+            placeholder="Code postal"
+            class="border p-2 w-full rounded"
+          />
+          <input
+            type="text"
+            v-model="adresse.ville"
+            placeholder="Ville"
+            class="border p-2 w-full rounded"
+          />
+        </div>
+
+        <input
+          type="text"
+          v-model="adresse.pays"
+          placeholder="Pays"
+          class="border p-2 w-full rounded"
+        />
       </div>
 
       <!-- TOTAL -->
@@ -87,7 +116,6 @@
       <div v-if="paymentMethod === 'paypal'" class="mt-4">
         <div id="paypal-button-container"></div>
       </div>
-
     </div>
   </div>
 </template>
@@ -99,7 +127,13 @@ export default {
   data() {
     return {
       paymentMethod: "stripe",
-      adresseLivraison: ""
+      adresse: {
+        adresse1: "",
+        adresse2: "",
+        codePostal: "",
+        ville: "",
+        pays: ""
+      }
     };
   },
 
@@ -109,6 +143,11 @@ export default {
       return this.cart
         .reduce((sum, item) => sum + item.prix * item.quantity, 0)
         .toFixed(2);
+    },
+    adresseComplete() {
+      return `${this.adresse.adresse1}${
+        this.adresse.adresse2 ? ", " + this.adresse.adresse2 : ""
+      }, ${this.adresse.codePostal} ${this.adresse.ville}, ${this.adresse.pays}`;
     }
   },
 
@@ -122,8 +161,8 @@ export default {
             return;
           }
 
-          if (!this.adresseLivraison) {
-            alert("Veuillez saisir une adresse de livraison.");
+          if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) {
+            alert("Veuillez compléter votre adresse de livraison.");
             this.paymentMethod = "stripe";
             return;
           }
@@ -160,8 +199,8 @@ export default {
         return;
       }
 
-      if (!this.adresseLivraison) {
-        alert("Veuillez saisir une adresse de livraison.");
+      if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) {
+        alert("Veuillez compléter votre adresse de livraison.");
         return;
       }
 
@@ -184,7 +223,7 @@ export default {
           body: JSON.stringify({
             items: itemsPourCommande,
             email: this.user.email,
-            adresseLivraison: this.adresseLivraison
+            adresseLivraison: this.adresseComplete
           })
         }
       );
@@ -232,7 +271,7 @@ export default {
               body: JSON.stringify({
                 items: itemsPourCommande,
                 email: this.user.email,
-                adresseLivraison: this.adresseLivraison
+                adresseLivraison: this.adresseComplete
               })
             }
           )
@@ -250,7 +289,7 @@ export default {
                 orderId: data.orderID,
                 items: itemsPourCommande,
                 user: { email: this.user.email },
-                adresseLivraison: this.adresseLivraison
+                adresseLivraison: this.adresseComplete
               })
             }
           )
@@ -268,5 +307,5 @@ export default {
 
 <style scoped>
 img { object-fit: cover; }
-textarea { resize: vertical; }
+input { width: 100%; }
 </style>
