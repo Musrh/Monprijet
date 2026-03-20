@@ -124,10 +124,10 @@ export default {
         id: p.id, nom: p.nom, prix: p.prix, quantity: p.quantity, taille: p.taille, couleur: p.couleur, image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
-      const response = await fetch("https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session", {
+      const response = await fetch("https://ton-backend.com/create-stripe-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: itemsPourCommande, email: this.user.email, adresseLivraison: this.adresse })
+        body: JSON.stringify({ items: itemsPourCommande, email: this.user.email, adresse: this.adresse })
       });
 
       const data = await response.json();
@@ -138,7 +138,7 @@ export default {
       return new Promise(resolve => {
         if (window.paypal) return resolve(window.paypal);
         const script = document.createElement("script");
-        script.src = "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
+        script.src = "https://www.paypal.com/sdk/js?client-id=TON_CLIENT_ID&currency=EUR";
         script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
       });
@@ -155,22 +155,20 @@ export default {
 
       paypalSdk.Buttons({
         style: { layout: 'vertical', color: 'blue', shape: 'rect', label: 'paypal' },
-        onInit: (data, actions) => {
-          if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) actions.disable();
-        },
+        onInit: (data, actions) => { if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) actions.disable(); },
         onClick: (data, actions) => {
           if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) { alert("Complétez votre adresse"); return actions.reject(); }
           return actions.resolve();
         },
         createOrder: (data, actions) => {
-          return fetch("http://localhost:3000/create-paypal-order", {
+          return fetch("https://ton-backend.com/create-paypal-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ items: itemsPourCommande, email: this.user.email, adresse: this.adresse })
           }).then(res => res.json()).then(order => order.id);
         },
         onApprove: (data, actions) => {
-          return fetch("http://localhost:3000/capture-paypal-order", {
+          return fetch("https://ton-backend.com/capture-paypal-order", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ orderId: data.orderID, items: itemsPourCommande, user: { email: this.user.email }, adresse: this.adresse })
@@ -184,8 +182,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-img { object-fit: cover; }
-input { width: 100%; }
-</style>
