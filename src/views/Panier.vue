@@ -46,15 +46,36 @@
       </div>
 
       <!-- Adresse de livraison -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Adresse de livraison
-        </label>
-        <textarea
-          v-model="adresseLivraison"
-          placeholder="Votre adresse complète"
+      <div class="mt-4 space-y-2">
+        <label class="font-semibold block">Adresse de livraison</label>
+
+        <input
+          v-model="adresse.adresse1"
+          placeholder="Adresse ligne 1"
           class="border p-2 w-full rounded"
-        ></textarea>
+        />
+        <input
+          v-model="adresse.adresse2"
+          placeholder="Adresse ligne 2"
+          class="border p-2 w-full rounded"
+        />
+        <div class="grid grid-cols-2 gap-2">
+          <input
+            v-model="adresse.codePostal"
+            placeholder="Code postal"
+            class="border p-2 rounded w-full"
+          />
+          <input
+            v-model="adresse.ville"
+            placeholder="Ville"
+            class="border p-2 rounded w-full"
+          />
+        </div>
+        <input
+          v-model="adresse.pays"
+          placeholder="Pays"
+          class="border p-2 w-full rounded"
+        />
       </div>
 
       <!-- TOTAL -->
@@ -62,32 +83,19 @@
         Total : {{ total }} €
       </h3>
 
-      <!-- Choix paiement -->
-      <div class="mt-4">
-        <label class="font-semibold block mb-2">
-          Mode de paiement
-        </label>
+      <!-- Boutons paiement séparés -->
+      <div class="mt-4 space-y-3">
+        <button
+          @click="payerStripe"
+          class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full"
+        >
+          💳 Payer avec Stripe
+        </button>
 
-        <select v-model="paymentMethod" class="border p-2 rounded w-full">
-          <option value="stripe">💳 Carte bancaire (Stripe)</option>
-          <option value="paypal">🅿️ PayPal</option>
-        </select>
+        <div>
+          <div id="paypal-button-container"></div>
+        </div>
       </div>
-
-      <!-- Stripe -->
-      <button
-        v-if="paymentMethod === 'stripe'"
-        @click="payerStripe"
-        class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded mt-4 w-full"
-      >
-        Payer
-      </button>
-
-      <!-- PayPal -->
-      <div v-if="paymentMethod === 'paypal'" class="mt-4">
-        <div id="paypal-button-container"></div>
-      </div>
-
     </div>
   </div>
 </template>
@@ -98,8 +106,13 @@ import { mapState } from "vuex";
 export default {
   data() {
     return {
-      paymentMethod: "stripe",
-      adresseLivraison: ""
+      adresse: {
+        adresse1: "",
+        adresse2: "",
+        codePostal: "",
+        ville: "",
+        pays: ""
+      }
     };
   },
 
@@ -109,29 +122,20 @@ export default {
       return this.cart
         .reduce((sum, item) => sum + item.prix * item.quantity, 0)
         .toFixed(2);
+    },
+    adresseLivraison() {
+      return `${this.adresse.adresse1} ${this.adresse.adresse2}, ${this.adresse.codePostal} ${this.adresse.ville}, ${this.adresse.pays}`;
     }
   },
 
   watch: {
-    paymentMethod(newMethod) {
-      if (newMethod === "paypal") {
-        this.$nextTick(() => {
-          if (!this.user) {
-            alert("Veuillez vous connecter avant de payer");
-            this.$router.push("/login");
-            return;
-          }
+    // Re-render PayPal quand panier ou adresse change
+    cart: { handler: "renderPaypalButton", deep: true },
+    adresse: { handler: "renderPaypalButton", deep: true }
+  },
 
-          if (!this.adresseLivraison) {
-            alert("Veuillez saisir une adresse de livraison.");
-            this.paymentMethod = "stripe";
-            return;
-          }
-
-          this.renderPaypalButton();
-        });
-      }
-    }
+  mounted() {
+    this.renderPaypalButton();
   },
 
   methods: {
@@ -160,8 +164,8 @@ export default {
         return;
       }
 
-      if (!this.adresseLivraison) {
-        alert("Veuillez saisir une adresse de livraison.");
+      if (!this.adresse.adresse1 || !this.adresse.codePostal || !this.adresse.ville || !this.adresse.pays) {
+        alert("Veuillez remplir toutes les informations de livraison.");
         return;
       }
 
@@ -175,10 +179,8 @@ export default {
         image: p.images?.[0] || p.image || "/placeholder.png"
       }));
 
-      // Envoi vers serveur central Stripe
-      const response = await fetch(
-        "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
-        {
+      try {
+        const response = await fetch("/create-stripe-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -186,11 +188,14 @@ export default {
             email: this.user.email,
             adresseLivraison: this.adresseLivraison
           })
-        }
-      );
+        });
 
-      const data = await response.json();
-      if (data.url) window.location.href = data.url;
+        const data = await response.json();
+        if (data.url) window.location.href = data.url;
+      } catch (err) {
+        console.error("Erreur Stripe:", err);
+        alert("Erreur lors de la création de la session Stripe.");
+      }
     },
 
     // ================= PAYPAL =================
@@ -199,19 +204,21 @@ export default {
         if (window.paypal) return resolve(window.paypal);
 
         const script = document.createElement("script");
-        script.src =
-          "https://www.paypal.com/sdk/js?client-id=AfeH12AsZ1GhWJ0Ig2P2cRp98arFXAdpUDeIOaZ6g3WBFAhEcorGVjcjyBFPKQhlQ0Rw66RqJxMwtD9e&currency=EUR";
-
+        script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.VUE_APP_PAYPAL_CLIENT_ID}&currency=EUR`;
         script.onload = () => resolve(window.paypal);
         document.body.appendChild(script);
       });
     },
 
     async renderPaypalButton() {
+      if (!this.user) return;
+
       const container = document.getElementById("paypal-button-container");
+      if (!container) return;
       container.innerHTML = "";
 
       const paypalSdk = await this.loadPaypalScript();
+      if (!paypalSdk) return;
 
       const itemsPourCommande = this.cart.map(p => ({
         id: p.id,
@@ -224,36 +231,29 @@ export default {
 
       paypalSdk.Buttons({
         createOrder: () => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                items: itemsPourCommande,
-                email: this.user.email,
-                adresseLivraison: this.adresseLivraison
-              })
-            }
-          )
+          return fetch("/create-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items: itemsPourCommande,
+              email: this.user.email,
+              adresseLivraison: this.adresseLivraison
+            })
+          })
           .then(res => res.json())
           .then(order => order.id);
         },
-
         onApprove: (data) => {
-          return fetch(
-            "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                orderId: data.orderID,
-                items: itemsPourCommande,
-                user: { email: this.user.email },
-                adresseLivraison: this.adresseLivraison
-              })
-            }
-          )
+          return fetch("/capture-paypal-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: data.orderID,
+              items: itemsPourCommande,
+              email: this.user.email,
+              adresseLivraison: this.adresseLivraison
+            })
+          })
           .then(res => res.json())
           .then(() => {
             this.$store.dispatch("clearCart");
@@ -268,5 +268,5 @@ export default {
 
 <style scoped>
 img { object-fit: cover; }
-textarea { resize: vertical; }
+input, textarea { resize: vertical; }
 </style>
