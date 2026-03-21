@@ -23,7 +23,8 @@
         <!-- Bouton Stripe -->
         <button
           @click="checkoutStripe"
-          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          :disabled="!isLogged"
+          class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Payer avec Stripe
         </button>
@@ -31,11 +32,16 @@
         <!-- Bouton PayPal -->
         <button
           @click="checkoutPaypal"
-          class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600"
+          :disabled="!isLogged"
+          class="bg-yellow-500 text-black px-4 py-2 rounded hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Payer avec PayPal
         </button>
       </div>
+
+      <p v-if="!isLogged" class="mt-2 text-red-600">
+        Vous devez être connecté pour payer.
+      </p>
     </div>
 
     <p v-else>Votre panier est vide.</p>
@@ -43,7 +49,7 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
+import { mapState, mapGetters } from "vuex";
 import axios from "axios";
 
 export default {
@@ -59,42 +65,52 @@ export default {
   },
   computed: {
     ...mapState(["cart"]),
+    ...mapGetters(["userEmail"]), // doit renvoyer email si connecté, null sinon
+    isLogged() {
+      return !!this.userEmail; // true si connecté
+    },
   },
   methods: {
     getFullAdresse() {
       return `${this.adresse1} ${this.adresse2}, ${this.codePostal} ${this.ville}, ${this.pays}`;
     },
     async checkoutStripe() {
+      if (!this.isLogged) {
+        alert("Vous devez être connecté pour payer !");
+        return;
+      }
       try {
         const response = await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
           {
             items: this.cart,
-            email: "test@example.com", // remplacer par l'email connecté
+            email: this.userEmail,
             adresseLivraison: this.getFullAdresse(),
           }
         );
-        window.location.href = response.data.url; // redirection Stripe
+        window.location.href = response.data.url;
       } catch (err) {
         console.error("Erreur Stripe:", err);
         alert("Impossible de créer la session Stripe.");
       }
     },
     async checkoutPaypal() {
+      if (!this.isLogged) {
+        alert("Vous devez être connecté pour payer !");
+        return;
+      }
       try {
-        // 1️⃣ Création de l'ordre PayPal
         const orderResponse = await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
           { items: this.cart }
         );
         const orderId = orderResponse.data.id;
 
-        // 2️⃣ Capture du paiement
         const captureResponse = await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
           {
             orderId,
-            email: "test@example.com",
+            email: this.userEmail,
             adresseLivraison: this.getFullAdresse(),
             items: this.cart,
           }
