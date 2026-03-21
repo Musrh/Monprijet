@@ -129,7 +129,6 @@ export default {
   },
 
   watch: {
-    // Re-render PayPal quand panier ou adresse change
     cart: { handler: "renderPaypalButton", deep: true },
     adresse: { handler: "renderPaypalButton", deep: true }
   },
@@ -156,7 +155,7 @@ export default {
       });
     },
 
-    // ================= STRIPE =================
+    // ======== STRIPE ========
     async payerStripe() {
       if (!this.user) {
         alert("Veuillez vous connecter avant de payer");
@@ -180,29 +179,31 @@ export default {
       }));
 
       try {
-        const response = await fetch("/create-stripe-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            items: itemsPourCommande,
-            email: this.user.email,
-            adresseLivraison: this.adresseLivraison
-          })
-        });
+        const response = await fetch(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              items: itemsPourCommande,
+              email: this.user.email,
+              adresseLivraison: this.adresseLivraison
+            })
+          }
+        );
 
         const data = await response.json();
         if (data.url) window.location.href = data.url;
+        else console.error("Erreur backend Stripe :", data);
       } catch (err) {
-        console.error("Erreur Stripe:", err);
-        alert("Erreur lors de la création de la session Stripe.");
+        console.error("Erreur fetch Stripe :", err);
       }
     },
 
-    // ================= PAYPAL =================
+    // ======== PAYPAL ========
     async loadPaypalScript() {
-      return new Promise((resolve) => {
+      return new Promise(resolve => {
         if (window.paypal) return resolve(window.paypal);
-
         const script = document.createElement("script");
         script.src = `https://www.paypal.com/sdk/js?client-id=${process.env.VUE_APP_PAYPAL_CLIENT_ID}&currency=EUR`;
         script.onload = () => resolve(window.paypal);
@@ -230,8 +231,9 @@ export default {
       }));
 
       paypalSdk.Buttons({
-        createOrder: () => {
-          return fetch("/create-paypal-order", {
+        createOrder: () => fetch(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
+          {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -239,12 +241,12 @@ export default {
               email: this.user.email,
               adresseLivraison: this.adresseLivraison
             })
-          })
-          .then(res => res.json())
-          .then(order => order.id);
-        },
-        onApprove: (data) => {
-          return fetch("/capture-paypal-order", {
+          }
+        ).then(res => res.json()).then(order => order.id),
+
+        onApprove: (data) => fetch(
+          "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
+          {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -253,13 +255,11 @@ export default {
               email: this.user.email,
               adresseLivraison: this.adresseLivraison
             })
-          })
-          .then(res => res.json())
-          .then(() => {
-            this.$store.dispatch("clearCart");
-            this.$router.push("/success");
-          });
-        }
+          }
+        ).then(res => res.json()).then(() => {
+          this.$store.dispatch("clearCart");
+          this.$router.push("/success");
+        })
       }).render(container);
     }
   }
