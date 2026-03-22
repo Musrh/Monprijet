@@ -3,13 +3,8 @@
     <h1 class="text-2xl font-bold mb-4">Votre Panier</h1>
 
     <div v-if="!user">
-      <p class="text-red-600 font-semibold">
-        Vous devez être connecté pour payer.
-      </p>
-      <button
-        @click="$router.push('/login')"
-        class="bg-black text-white px-4 py-2 mt-3 rounded"
-      >
+      <p class="text-red-600 font-semibold">Vous devez être connecté pour payer.</p>
+      <button @click="$router.push('/login')" class="bg-black text-white px-4 py-2 mt-3 rounded">
         Se connecter
       </button>
     </div>
@@ -18,7 +13,7 @@
       <ul class="mb-6">
         <li v-for="item in cart" :key="item.id" class="flex justify-between">
           <span>{{ item.nom }} x {{ item.quantity }}</span>
-          <span>{{ item.prix * item.quantity }} €</span>
+          <span>{{ (item.prix * item.quantity).toFixed(2) }} €</span>
         </li>
       </ul>
 
@@ -31,17 +26,11 @@
       <input v-model="pays" placeholder="Pays" class="input" />
 
       <div class="flex gap-4 mt-4">
-        <button
-          @click="checkoutStripe"
-          class="bg-blue-600 text-white px-4 py-2 rounded"
-        >
+        <button @click="checkoutStripe" class="bg-blue-600 text-white px-4 py-2 rounded">
           Stripe
         </button>
 
-        <button
-          @click="checkoutPaypal"
-          class="bg-yellow-500 text-black px-4 py-2 rounded"
-        >
+        <button @click="checkoutPaypal" class="bg-yellow-500 text-black px-4 py-2 rounded">
           PayPal
         </button>
       </div>
@@ -85,37 +74,20 @@ export default {
         );
         window.location.href = response.data.url;
       } catch (err) {
-        console.error("Stripe error:", err);
+        console.error("Erreur Stripe:", err);
         alert("Impossible de créer la session Stripe.");
       }
     },
 
     async checkoutPaypal() {
-      if (!this.cart.length) {
-        alert("Votre panier est vide !");
-        return;
-      }
-
       try {
-        // Forcer types numériques
-        const itemsPayload = this.cart.map(item => ({
-          nom: item.nom,
-          prix: Number(item.prix),
-          quantity: Number(item.quantity),
-        }));
-
         const order = await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-          { items: itemsPayload }
+          { items: this.cart }
         );
-
-        const approveUrl = order.data.approveUrl;
-        if (!approveUrl) throw new Error("Aucune URL d'approbation PayPal reçue");
-
-        // Redirection vers PayPal
-        window.location.href = approveUrl;
+        window.location.href = order.data.approveUrl;
       } catch (err) {
-        console.error("PayPal error:", err);
+        console.error("Erreur PayPal:", err);
         alert("Impossible de créer l'ordre PayPal.");
       }
     },
@@ -130,5 +102,6 @@ export default {
   margin-bottom: 10px;
   padding: 8px;
   border: 1px solid #ddd;
+  border-radius: 4px;
 }
 </style>
