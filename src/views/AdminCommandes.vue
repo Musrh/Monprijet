@@ -18,9 +18,9 @@
       <tbody>
         <tr v-for="commande in commandes" :key="commande.id">
           <td class="border p-2">{{ commande.email }}</td>
-          <td class="border p-2">{{ commande.montant }} {{ commande.devise }}</td>
-          <td class="border p-2">{{ commande.statut }}</td>
-          <td class="border p-2">{{ commande.date?.toDate().toLocaleString() }}</td>
+          <td class="border p-2">{{ commande.montant }} €</td>
+          <td class="border p-2">{{ commande.status }}</td>
+          <td class="border p-2">{{ commande.createdAt?.toDate().toLocaleString() }}</td>
           <td class="border p-2">
             <ul>
               <li v-for="item in commande.items" :key="item.id">
@@ -47,7 +47,8 @@ export default {
     const fetchCommandes = async () => {
       loading.value = true;
       try {
-        const q = query(collection(db, "commandes"), orderBy("date", "desc"));
+        // 🔹 Attention ici : champ "createdAt" et non "date"
+        const q = query(collection(db, "commandes"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
         commandes.value = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       } catch (err) {
@@ -57,9 +58,7 @@ export default {
       }
     };
 
-    onMounted(() => {
-      fetchCommandes();
-    });
+    onMounted(fetchCommandes);
 
     return { commandes, loading };
   }
