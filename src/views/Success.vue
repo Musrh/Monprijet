@@ -1,9 +1,18 @@
 <template>
-  <div class="p-4 max-w-3xl mx-auto">
-    <h1 class="text-2xl font-bold mb-4">Paiement PayPal</h1>
-    <p v-if="loading">Traitement du paiement...</p>
-    <p v-else-if="success" class="text-green-600 font-semibold">Paiement réussi ! Merci pour votre commande.</p>
-    <p v-else class="text-red-600 font-semibold">Erreur lors du paiement. Veuillez réessayer.</p>
+  <div class="p-6 text-center">
+    <h1 class="text-2xl font-bold text-green-600 mb-4">
+      Paiement réussi ✅
+    </h1>
+
+    <p v-if="loading">Confirmation du paiement en cours...</p>
+
+    <p v-if="success" class="text-green-600 font-semibold">
+      Votre commande a bien été enregistrée.
+    </p>
+
+    <p v-if="error" class="text-red-600 font-semibold">
+      Une erreur est survenue.
+    </p>
   </div>
 </template>
 
@@ -16,36 +25,45 @@ export default {
     return {
       loading: true,
       success: false,
+      error: false,
     };
   },
   computed: {
-    ...mapState(["cart", "user"]),
+    ...mapState(["user", "cart"]),
   },
   async mounted() {
+    const sessionId = this.$route.query.session_id;
+    const paypalToken = this.$route.query.token;
+
     try {
-      const params = new URLSearchParams(window.location.search);
-      const orderId = params.get("token"); // PayPal renvoie l'orderId via token
+      // ================= STRIPE =================
+      if (sessionId) {
+        console.log("Stripe success:", sessionId);
+        this.success = true;
+      }
 
-      if (!orderId || !this.user) throw new Error("Données manquantes");
+      // ================= PAYPAL =================
+      if (paypalToken) {
+        console.log("Capturing PayPal order:", paypalToken);
 
-      await axios.post(
-        "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-        {
-          orderId,
-          email: this.user.email,
-          items: this.cart,
-          adresseLivraison: localStorage.getItem("adresseLivraison") || "",
-        }
-      );
+        await axios.post(
+          "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
+          {
+            orderId: paypalToken,
+            email: this.user.email,
+            adresseLivraison: "Adresse déjà fournie",
+            items: this.cart,
+          }
+        );
 
-      this.success = true;
-      localStorage.removeItem("adresseLivraison"); // Nettoyage
+        this.success = true;
+      }
     } catch (err) {
-      console.error("Erreur capture PayPal:", err);
-      this.success = false;
-    } finally {
-      this.loading = false;
+      console.error(err);
+      this.error = true;
     }
+
+    this.loading = false;
   },
 };
 </script>
