@@ -1,10 +1,12 @@
 <template>
-  <div class="p-4 max-w-3xl mx-auto">
+  <div class="p-6 max-w-3xl mx-auto">
     <h1 class="text-2xl font-bold mb-4">Votre Panier</h1>
 
     <div v-if="!user">
       <p class="text-red-600 font-semibold">Vous devez être connecté pour payer.</p>
-      <button @click="$router.push('/login')" class="btn">Se connecter</button>
+      <button @click="$router.push('/login')" class="bg-black text-white px-4 py-2 mt-3 rounded">
+        Se connecter
+      </button>
     </div>
 
     <div v-else-if="cart.length">
@@ -15,7 +17,7 @@
         </li>
       </ul>
 
-      <h2 class="font-semibold mb-2">Adresse</h2>
+      <h2 class="font-semibold mb-2">Adresse de livraison</h2>
       <input v-model="adresse1" placeholder="Adresse 1" class="input" />
       <input v-model="adresse2" placeholder="Adresse 2" class="input" />
       <input v-model="codePostal" placeholder="Code postal" class="input" />
@@ -23,8 +25,12 @@
       <input v-model="pays" placeholder="Pays" class="input" />
 
       <div class="flex gap-4 mt-4">
-        <button @click="checkoutStripe" class="bg-blue-600 text-white px-4 py-2 rounded">Stripe</button>
-        <button @click="checkoutPaypal" class="bg-yellow-500 text-black px-4 py-2 rounded">PayPal</button>
+        <button @click="checkoutStripe" class="bg-blue-600 text-white px-4 py-2 rounded">
+          Payer avec Stripe
+        </button>
+        <button @click="checkoutPaypal" class="bg-yellow-500 text-black px-4 py-2 rounded">
+          Payer avec PayPal
+        </button>
       </div>
     </div>
 
@@ -38,7 +44,13 @@ import axios from "axios";
 
 export default {
   data() {
-    return { adresse1: "", adresse2: "", codePostal: "", ville: "", pays: "" };
+    return {
+      adresse1: "",
+      adresse2: "",
+      codePostal: "",
+      ville: "",
+      pays: "",
+    };
   },
   computed: {
     ...mapState(["cart", "user"]),
@@ -48,29 +60,42 @@ export default {
       return `${this.adresse1} ${this.adresse2}, ${this.codePostal} ${this.ville}, ${this.pays}`;
     },
 
+    // ================= STRIPE =================
     async checkoutStripe() {
-      const response = await axios.post(
-        "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
-        {
-          items: this.cart,
-          email: this.user.email,
-          adresseLivraison: this.getAdresse(),
-        }
-      );
-      window.location.href = response.data.url;
+      try {
+        const response = await axios.post(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-stripe-session",
+          {
+            items: this.cart,
+            email: this.user.email,
+            adresseLivraison: this.getAdresse(),
+          }
+        );
+        window.location.href = response.data.url;
+      } catch (err) {
+        console.error("Erreur Stripe:", err);
+        alert("Impossible de créer la session Stripe.");
+      }
     },
 
+    // ================= PAYPAL =================
     async checkoutPaypal() {
-      const order = await axios.post(
-        "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-        {
-          items: this.cart,
-          email: this.user.email,
-          adresseLivraison: this.getAdresse(),
-        }
-      );
+      try {
+        const orderResponse = await axios.post(
+          "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
+          {
+            items: this.cart,
+            email: this.user.email,
+            adresseLivraison: this.getAdresse(),
+          }
+        );
 
-      window.location.href = order.data.approveUrl;
+        // Redirection vers PayPal pour approbation
+        window.location.href = orderResponse.data.approveUrl;
+      } catch (err) {
+        console.error("Erreur PayPal:", err);
+        alert("Impossible de créer l'ordre PayPal.");
+      }
     },
   },
 };
@@ -83,11 +108,6 @@ export default {
   margin-bottom: 10px;
   padding: 8px;
   border: 1px solid #ddd;
-}
-.btn {
-  background: black;
-  color: white;
-  padding: 8px 16px;
   border-radius: 4px;
 }
 </style>
