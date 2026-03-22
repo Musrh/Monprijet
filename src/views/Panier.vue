@@ -81,10 +81,19 @@ export default {
 
     async checkoutPaypal() {
       try {
+        // Sauvegarder l'adresse pour la récupérer après paiement
+        localStorage.setItem("adresseLivraison", this.getAdresse());
+
         const order = await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
-          { items: this.cart }
+          {
+            items: this.cart,
+            email: this.user.email,
+            adresseLivraison: this.getAdresse(),
+          }
         );
+
+        // Redirection vers PayPal
         window.location.href = order.data.approveUrl;
       } catch (err) {
         console.error("Erreur PayPal:", err);
