@@ -62,6 +62,7 @@ export default {
       return `${this.adresse1} ${this.adresse2}, ${this.codePostal} ${this.ville}, ${this.pays}`;
     },
 
+    // ================= STRIPE =================
     async checkoutStripe() {
       try {
         const response = await axios.post(
@@ -79,22 +80,24 @@ export default {
       }
     },
 
+    // ================= PAYPAL =================
     async checkoutPaypal() {
       try {
-        // Sauvegarder l'adresse pour la récupérer après paiement
-        localStorage.setItem("adresseLivraison", this.getAdresse());
+        const adresse = this.getAdresse();
+        // Sauvegarder l'adresse pour récupérer après paiement
+        localStorage.setItem("adresseLivraison", adresse);
 
         const order = await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
           {
             items: this.cart,
             email: this.user.email,
-            adresseLivraison: this.getAdresse(),
+            adresseLivraison: adresse,
           }
         );
 
-        // Redirection vers PayPal
-        window.location.href = order.data.approveUrl;
+        // Redirection vers PayPal (url renvoyée par le serveur)
+        window.location.href = order.data.url;
       } catch (err) {
         console.error("Erreur PayPal:", err);
         alert("Impossible de créer l'ordre PayPal.");
