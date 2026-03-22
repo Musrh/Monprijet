@@ -1,12 +1,3 @@
-<template>
-  <div class="p-6 text-center">
-    <h1 class="text-2xl font-bold text-green-600">
-      Paiement confirmé ✅
-    </h1>
-    <p class="mt-4">Merci pour votre commande.</p>
-  </div>
-</template>
-
 <script>
 import axios from "axios";
 import { mapState } from "vuex";
@@ -17,30 +8,28 @@ export default {
   },
 
   async mounted() {
-    const urlParams = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("token"); // PayPal renvoie token
 
-    const sessionId = urlParams.get("session_id"); // Stripe
-    const orderId = urlParams.get("token");        // PayPal
+    if (!orderId) return;
 
     try {
-      // 🟡 PAYPAL
-      if (orderId) {
-        await axios.post(
-          "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-          {
-            orderId,
-            email: this.user.email,
-            adresseLivraison: "Adresse déjà fournie",
-            items: this.cart, // 🔥 IMPORTANT
-          }
-        );
-      }
+      console.log("Capture PayPal pour:", orderId);
 
-      // 🧹 Vider panier après succès
+      await axios.post(
+        "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
+        {
+          orderId,
+          email: this.user.email,
+          adresseLivraison: "Adresse déjà fournie",
+          items: this.cart,
+        }
+      );
+
       this.$store.commit("clearCart");
 
-    } catch (error) {
-      console.error("Erreur confirmation paiement:", error);
+    } catch (err) {
+      console.error("Erreur capture PayPal:", err);
     }
   },
 };
