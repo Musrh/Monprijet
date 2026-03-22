@@ -18,7 +18,6 @@
       </ul>
 
       <h2 class="font-semibold mb-2">Adresse</h2>
-
       <input v-model="adresse1" placeholder="Adresse 1" class="input" />
       <input v-model="adresse2" placeholder="Adresse 2" class="input" />
       <input v-model="codePostal" placeholder="Code postal" class="input" />
@@ -62,7 +61,6 @@ export default {
       return `${this.adresse1} ${this.adresse2}, ${this.codePostal} ${this.ville}, ${this.pays}`;
     },
 
-    // ================= STRIPE =================
     async checkoutStripe() {
       try {
         const response = await axios.post(
@@ -80,24 +78,22 @@ export default {
       }
     },
 
-    // ================= PAYPAL =================
     async checkoutPaypal() {
       try {
-        const adresse = this.getAdresse();
-        // Sauvegarder l'adresse pour récupérer après paiement
-        localStorage.setItem("adresseLivraison", adresse);
+        // Sauvegarder l'adresse pour la récupérer après paiement
+        localStorage.setItem("adresseLivraison", this.getAdresse());
 
         const order = await axios.post(
-          "https://stripe-backend-production-2ac4.up.railway.app/create-paypal-order",
+          "https://paypalbackend-production.up.railway.app/create-paypal-order",
           {
             items: this.cart,
             email: this.user.email,
-            adresseLivraison: adresse,
+            adresseLivraison: this.getAdresse(),
           }
         );
 
-        // Redirection vers PayPal (url renvoyée par le serveur)
-        window.location.href = order.data.url;
+        // Redirection vers PayPal
+        window.location.href = order.data.approveUrl || order.data.url;
       } catch (err) {
         console.error("Erreur PayPal:", err);
         alert("Impossible de créer l'ordre PayPal.");
