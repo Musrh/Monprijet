@@ -13,36 +13,35 @@ import { mapState } from "vuex";
 import axios from "axios";
 
 export default {
-  data() {
-    return { loading: true, success: false, error: false };
-  },
+  data() { return { loading: true, success: false, error: false }; },
   computed: { ...mapState(["user", "cart"]) },
   async mounted() {
-    const sessionId = this.$route.query.session_id;
-    const paypalToken = this.$route.query.token;
-
     try {
-      // Stripe success
+      const sessionId = this.$route.query.session_id;
+      const paypalToken = this.$route.query.token;
+
+      // Stripe
       if (sessionId) {
         console.log("Stripe success:", sessionId);
         this.success = true;
       }
 
-      // PayPal success
+      // PayPal capture
       if (paypalToken) {
-        console.log("Capture PayPal order:", paypalToken);
+        console.log("Capturing PayPal order:", paypalToken);
+
         await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
           { orderId: paypalToken }
         );
+
         this.success = true;
       }
     } catch (err) {
       console.error(err);
       this.error = true;
-    } finally {
-      this.loading = false;
     }
+    this.loading = false;
   },
 };
 </script>
