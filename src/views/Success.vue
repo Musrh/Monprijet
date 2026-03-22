@@ -1,38 +1,69 @@
+<template>
+  <div class="p-6 text-center">
+    <h1 class="text-2xl font-bold text-green-600 mb-4">
+      Paiement réussi ✅
+    </h1>
+
+    <p v-if="loading">Confirmation du paiement en cours...</p>
+
+    <p v-if="success" class="text-green-600 font-semibold">
+      Votre commande a bien été enregistrée.
+    </p>
+
+    <p v-if="error" class="text-red-600 font-semibold">
+      Une erreur est survenue.
+    </p>
+  </div>
+</template>
+
 <script>
 import axios from "axios";
 import { mapState } from "vuex";
 
 export default {
-  computed: {
-    ...mapState(["cart", "user"]),
+  data() {
+    return {
+      loading: true,
+      success: false,
+      error: false,
+    };
   },
-
+  computed: {
+    ...mapState(["user", "cart"]),
+  },
   async mounted() {
-    const params = new URLSearchParams(window.location.search);
-    const orderId = params.get("token");
-
-    console.log("Token reçu:", orderId);
-
-    if (!orderId) return;
+    const sessionId = this.$route.query.session_id;
+    const paypalToken = this.$route.query.token;
 
     try {
-      const response = await axios.post(
-        "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-        {
-          orderId,
-          email: this.user.email,
-          adresseLivraison: "Adresse déjà fournie",
-          items: this.cart,
-        }
-      );
+      // ================= STRIPE =================
+      if (sessionId) {
+        console.log("Stripe success:", sessionId);
+        this.success = true;
+      }
 
-      console.log("Capture response:", response.data);
+      // ================= PAYPAL =================
+      if (paypalToken) {
+        console.log("Capturing PayPal order:", paypalToken);
 
-      this.$store.commit("clearCart");
+        await axios.post(
+          "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
+          {
+            orderId: paypalToken,
+            email: this.user.email,
+            adresseLivraison: "Adresse déjà fournie",
+            items: this.cart,
+          }
+        );
 
+        this.success = true;
+      }
     } catch (err) {
-      console.error("Erreur capture PayPal:", err);
+      console.error(err);
+      this.error = true;
     }
+
+    this.loading = false;
   },
 };
 </script>
