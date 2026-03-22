@@ -1,69 +1,48 @@
 <template>
   <div class="p-6 text-center">
-    <h1 class="text-2xl font-bold text-green-600 mb-4">
-      Paiement réussi ✅
-    </h1>
+    <h1 class="text-2xl font-bold text-green-600 mb-4">Paiement réussi ✅</h1>
 
     <p v-if="loading">Confirmation du paiement en cours...</p>
-
-    <p v-if="success" class="text-green-600 font-semibold">
-      Votre commande a bien été enregistrée.
-    </p>
-
-    <p v-if="error" class="text-red-600 font-semibold">
-      Une erreur est survenue.
-    </p>
+    <p v-if="success" class="text-green-600 font-semibold">Votre commande a bien été enregistrée.</p>
+    <p v-if="error" class="text-red-600 font-semibold">Une erreur est survenue.</p>
   </div>
 </template>
 
 <script>
-import axios from "axios";
 import { mapState } from "vuex";
+import axios from "axios";
 
 export default {
   data() {
-    return {
-      loading: true,
-      success: false,
-      error: false,
-    };
+    return { loading: true, success: false, error: false };
   },
-  computed: {
-    ...mapState(["user", "cart"]),
-  },
+  computed: { ...mapState(["user", "cart"]) },
   async mounted() {
     const sessionId = this.$route.query.session_id;
     const paypalToken = this.$route.query.token;
 
     try {
-      // ================= STRIPE =================
+      // Stripe success
       if (sessionId) {
         console.log("Stripe success:", sessionId);
         this.success = true;
       }
 
-      // ================= PAYPAL =================
+      // PayPal success
       if (paypalToken) {
-        console.log("Capturing PayPal order:", paypalToken);
-
+        console.log("Capture PayPal order:", paypalToken);
         await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
-          {
-            orderId: paypalToken,
-            email: this.user.email,
-            adresseLivraison: "Adresse déjà fournie",
-            items: this.cart,
-          }
+          { orderId: paypalToken }
         );
-
         this.success = true;
       }
     } catch (err) {
       console.error(err);
       this.error = true;
+    } finally {
+      this.loading = false;
     }
-
-    this.loading = false;
   },
 };
 </script>
