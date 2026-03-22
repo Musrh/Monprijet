@@ -9,14 +9,14 @@ export default {
 
   async mounted() {
     const params = new URLSearchParams(window.location.search);
-    const orderId = params.get("token"); // PayPal renvoie token
+    const orderId = params.get("token");
+
+    console.log("Token reçu:", orderId);
 
     if (!orderId) return;
 
     try {
-      console.log("Capture PayPal pour:", orderId);
-
-      await axios.post(
+      const response = await axios.post(
         "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
         {
           orderId,
@@ -25,6 +25,8 @@ export default {
           items: this.cart,
         }
       );
+
+      console.log("Capture response:", response.data);
 
       this.$store.commit("clearCart");
 
