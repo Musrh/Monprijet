@@ -32,16 +32,14 @@ export default {
     ...mapState(["user", "cart"]),
   },
   async mounted() {
-    const sessionId = this.$route.query.session_id;
-    const paypalToken = this.$route.query.token;
+    const sessionId = this.$route.query.session_id; // Stripe
+    const paypalToken = this.$route.query.token;   // PayPal
 
     try {
       // ================= STRIPE =================
       if (sessionId) {
+        // Capture non nécessaire, Stripe via webhook Firestore
         console.log("Stripe success:", sessionId);
-
-        // 🔹 On peut appeler un endpoint backend si besoin pour Firestore
-        // ici Stripe webhook déjà gère l'enregistrement
         this.success = true;
       }
 
@@ -49,25 +47,29 @@ export default {
       if (paypalToken) {
         console.log("Capture PayPal order:", paypalToken);
 
-        // 🔹 On capture le paiement et enregistre items et adresse
         await axios.post(
           "https://stripe-backend-production-2ac4.up.railway.app/capture-paypal-order",
           {
             orderId: paypalToken,
             email: this.user.email,
             adresseLivraison: "Adresse déjà fournie",
-            items: this.cart,
+            items: this.cart, // <- Items correctement envoyés pour Firestore
           }
         );
 
         this.success = true;
       }
+
+      // 🔹 Vider le panier après succès
+      if (this.success) {
+        this.$store.commit("clearCart");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Erreur confirmation paiement:", err);
       this.error = true;
-    } finally {
-      this.loading = false;
     }
+
+    this.loading = false;
   },
 };
 </script>
