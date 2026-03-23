@@ -1,21 +1,3 @@
-<template>
-  <div class="p-6 text-center">
-    <h1 class="text-2xl font-bold text-green-600 mb-4">
-      Paiement réussi ✅
-    </h1>
-
-    <p v-if="loading">Confirmation du paiement en cours...</p>
-
-    <p v-if="success" class="text-green-600 font-semibold">
-      Votre commande a bien été enregistrée.
-    </p>
-
-    <p v-if="error" class="text-red-600 font-semibold">
-      Une erreur est survenue.
-    </p>
-  </div>
-</template>
-
 <script>
 import axios from "axios";
 import { mapState } from "vuex";
@@ -33,8 +15,8 @@ export default {
     ...mapState(["user", "cart"]),
   },
   async mounted() {
-    const sessionId = this.$route.query.session_id; // Stripe
-    const paypalToken = this.$route.query.token;    // PayPal
+    const sessionId = this.$route.query.session_id;
+    const paypalToken = this.$route.query.token;
 
     try {
       // ================= STRIPE =================
@@ -47,21 +29,32 @@ export default {
       if (paypalToken) {
         console.log("Capture PayPal order:", paypalToken);
 
-        await axios.post(
+        if (!this.user || !this.user.email) {
+          throw new Error("Utilisateur non connecté");
+        }
+
+        const response = await axios.post(
           "https://paypalbackend-production.up.railway.app/capture-paypal-order",
           {
             orderId: paypalToken,
             email: this.user.email,
-            items: this.cart,
+            items: this.cart || [],
             adresseLivraison: localStorage.getItem("adresseLivraison") || "",
           }
         );
 
-        this.success = true;
-        localStorage.removeItem("adresseLivraison");
+        if (response.data.success) {
+          this.success = true;
+
+          // 🔹 Nettoyage
+          localStorage.removeItem("adresseLivraison");
+          this.$store.commit("clearCart"); // si mutation existe
+        } else {
+          throw new Error("Capture non confirmée");
+        }
       }
     } catch (err) {
-      console.error(err);
+      console.error("Erreur Success:", err);
       this.error = true;
     }
 
@@ -69,9 +62,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-h1 {
-  color: green;
-}
-</style>
