@@ -23,6 +23,7 @@ export default createStore({
   state: {
     user: null,
     cart: [],
+    paypalAdresseLivraison: "", // 🆕 pour PayPal
     produits: [
       { id: 1, nom: "Produit A", prix: 100, image: produit1 },
       { id: 2, nom: "Produit B", prix: 200, image: produit2 },
@@ -50,7 +51,6 @@ export default createStore({
 
     ADD_TO_CART(state, produit) {
       const cartId = `${produit.id}-${produit.taille || ""}-${produit.couleur || ""}`;
-
       const existing = state.cart.find(p => p.cartId === cartId);
 
       if (existing) {
@@ -80,6 +80,11 @@ export default createStore({
 
     CLEAR_CART(state) {
       state.cart = [];
+      state.paypalAdresseLivraison = ""; // 🆕 réinitialisation
+    },
+
+    SET_PAYPAL_ADRESSE(state, adresse) {
+      state.paypalAdresseLivraison = adresse; // 🆕 stocke l'adresse avant PayPal
     }
   },
 
@@ -175,6 +180,11 @@ export default createStore({
 
     clearCart({ commit }) {
       commit("CLEAR_CART");
+    },
+
+    // 🆕 pour PayPal
+    setPaypalAdresse({ commit }, adresse) {
+      commit("SET_PAYPAL_ADRESSE", adresse);
     }
   }
 });
