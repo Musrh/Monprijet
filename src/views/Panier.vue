@@ -17,7 +17,7 @@
         </li>
       </ul>
 
-      <h2 class="font-semibold mb-2">Adresse de livraison</h2>
+      <h2 class="font-semibold mb-2">Adresse</h2>
       <input v-model="adresse1" placeholder="Adresse 1" class="input" />
       <input v-model="adresse2" placeholder="Adresse 2" class="input" />
       <input v-model="codePostal" placeholder="Code postal" class="input" />
@@ -56,11 +56,12 @@ export default {
   },
   computed: {
     ...mapState(["cart", "user"]),
-    fullAdresse() {
-      return `${this.adresse1} ${this.adresse2}, ${this.codePostal} ${this.ville}, ${this.pays}`;
-    },
   },
   methods: {
+    getAdresse() {
+      return `${this.adresse1} ${this.adresse2}, ${this.codePostal} ${this.ville}, ${this.pays}`;
+    },
+
     async checkoutStripe() {
       try {
         const response = await axios.post(
@@ -68,7 +69,7 @@ export default {
           {
             items: this.cart,
             email: this.user.email,
-            adresseLivraison: this.fullAdresse,
+            adresseLivraison: this.getAdresse(),
           }
         );
         window.location.href = response.data.url;
@@ -80,16 +81,19 @@ export default {
 
     async checkoutPaypal() {
       try {
+        // 🔹 Stocker l'adresse dans le store Vuex
+        this.$store.dispatch("setPaypalAdresse", this.getAdresse());
+
         const order = await axios.post(
           "https://paypalbackend-production.up.railway.app/create-paypal-order",
           {
             items: this.cart,
             email: this.user.email,
-            adresseLivraison: this.fullAdresse,
+            adresseLivraison: this.$store.state.paypalAdresseLivraison, // ✅ utilise Vuex
           }
         );
 
-        // Redirection vers PayPal
+        // Redirection PayPal
         window.location.href = order.data.url || order.data.approveUrl;
       } catch (err) {
         console.error("Erreur PayPal:", err);
@@ -99,14 +103,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-.input {
-  display: block;
-  width: 100%;
-  margin-bottom: 10px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-</style>
