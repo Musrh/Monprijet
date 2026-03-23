@@ -44,6 +44,7 @@ import { mapState } from "vuex";
 import axios from "axios";
 
 export default {
+  name: "Panier",
   data() {
     return {
       adresse1: "",
@@ -71,6 +72,7 @@ export default {
             adresseLivraison: this.getAdresse(),
           }
         );
+        // Redirection Stripe
         window.location.href = response.data.url;
       } catch (err) {
         console.error("Erreur Stripe:", err);
@@ -80,7 +82,7 @@ export default {
 
     async checkoutPaypal() {
       try {
-        // Sauvegarder l'adresse pour la récupérer après paiement
+        // Sauvegarde l'adresse pour la récupérer après paiement
         localStorage.setItem("adresseLivraison", this.getAdresse());
 
         const order = await axios.post(
@@ -92,8 +94,8 @@ export default {
           }
         );
 
-        // Redirection vers PayPal
-        window.location.href = order.data.approveUrl || order.data.url;
+        // Redirection PayPal
+        window.location.href = order.data.url || order.data.approveUrl;
       } catch (err) {
         console.error("Erreur PayPal:", err);
         alert("Impossible de créer l'ordre PayPal.");
