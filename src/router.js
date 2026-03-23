@@ -27,6 +27,14 @@ const routes = [
   { path: "/contact", component: Contact },
   { path: "/success", component: Success },
   { path: "/minishop", component: Minishop },
+
+{
+  path: "/paypal-success",
+  name: "PayPalSuccess",
+  component: () => import("./views/SuccessPayPal.vue")
+},
+
+  
  
   { path: "/sendtoprintful", 
    component: SendToPrintful,
