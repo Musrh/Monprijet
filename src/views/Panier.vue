@@ -56,12 +56,11 @@ export default {
   },
   computed: {
     ...mapState(["cart", "user"]),
-  },
-  methods: {
-    getAdresse() {
+    userAdresse() {
       return `${this.adresse1} ${this.adresse2}, ${this.codePostal} ${this.ville}, ${this.pays}`;
     },
-
+  },
+  methods: {
     async checkoutStripe() {
       try {
         const response = await axios.post(
@@ -69,10 +68,9 @@ export default {
           {
             items: this.cart,
             email: this.user.email,
-            adresseLivraison: this.getAdresse(),
+            adresseLivraison: this.userAdresse,
           }
         );
-        // Redirection Stripe
         window.location.href = response.data.url;
       } catch (err) {
         console.error("Erreur Stripe:", err);
@@ -82,19 +80,19 @@ export default {
 
     async checkoutPaypal() {
       try {
-        // Sauvegarde l'adresse pour la récupérer après paiement
-        localStorage.setItem("adresseLivraison", this.getAdresse());
+        const payload = {
+          items: this.cart,
+          email: this.user.email,
+          adresseLivraison: this.userAdresse,
+        };
 
+        // Création de l'ordre PayPal côté serveur
         const order = await axios.post(
           "https://paypalbackend-production.up.railway.app/create-paypal-order",
-          {
-            items: this.cart,
-            email: this.user.email,
-            adresseLivraison: this.getAdresse(),
-          }
+          payload
         );
 
-        // Redirection PayPal
+        // Redirection vers PayPal
         window.location.href = order.data.url || order.data.approveUrl;
       } catch (err) {
         console.error("Erreur PayPal:", err);
