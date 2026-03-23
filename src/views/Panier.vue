@@ -17,7 +17,7 @@
         </li>
       </ul>
 
-      <h2 class="font-semibold mb-2">Adresse</h2>
+      <h2 class="font-semibold mb-2">Adresse de livraison</h2>
       <input v-model="adresse1" placeholder="Adresse 1" class="input" />
       <input v-model="adresse2" placeholder="Adresse 2" class="input" />
       <input v-model="codePostal" placeholder="Code postal" class="input" />
@@ -56,7 +56,7 @@ export default {
   },
   computed: {
     ...mapState(["cart", "user"]),
-    userAdresse() {
+    fullAdresse() {
       return `${this.adresse1} ${this.adresse2}, ${this.codePostal} ${this.ville}, ${this.pays}`;
     },
   },
@@ -68,7 +68,7 @@ export default {
           {
             items: this.cart,
             email: this.user.email,
-            adresseLivraison: this.userAdresse,
+            adresseLivraison: this.fullAdresse,
           }
         );
         window.location.href = response.data.url;
@@ -80,16 +80,13 @@ export default {
 
     async checkoutPaypal() {
       try {
-        const payload = {
-          items: this.cart,
-          email: this.user.email,
-          adresseLivraison: this.userAdresse,
-        };
-
-        // Création de l'ordre PayPal côté serveur
         const order = await axios.post(
           "https://paypalbackend-production.up.railway.app/create-paypal-order",
-          payload
+          {
+            items: this.cart,
+            email: this.user.email,
+            adresseLivraison: this.fullAdresse,
+          }
         );
 
         // Redirection vers PayPal
