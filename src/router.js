@@ -18,6 +18,7 @@ import Details from "./views/Details.vue"; // ✅ CORRIGÉ
 
 import SendToPrintful from "./views/SendToPrintful.vue"; 
 
+import AffiliateProducts from "./views/AffiliateProducts.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -28,6 +29,8 @@ const routes = [
   { path: "/success", component: Success },
   { path: "/minishop", component: Minishop },
 
+{ path: "/affiliateproducts", component: AffiliateProducts },
+  
 {
   path: "/paypal-success",
   name: "PayPalSuccess",
