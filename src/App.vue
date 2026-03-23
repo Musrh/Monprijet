@@ -14,7 +14,9 @@
 
       <router-link to="/" class="menu-btn">Accueil</router-link>
       <router-link to="/contact" class="menu-btn">Contact</router-link>
-
+      <router-link to="/affiliateproducts" class="hover:text-yellow-500">
+  Produits partenaires
+</router-link>
       <!-- Admin menu -->
       <div v-if="isAdmin" class="flex gap-1">
         <router-link to="/admin" class="menu-btn">Admin</router-link>
