@@ -18,7 +18,7 @@ import Details from "./views/Details.vue"; // ✅ CORRIGÉ
 
 import SendToPrintful from "./views/SendToPrintful.vue"; 
 
-import AffiliateProducts from "../views/AffiliateProducts.vue";
+import AffiliateProducts from "./views/AffiliateProducts.vue";
 
 const routes = [
   { path: "/", component: Home },
