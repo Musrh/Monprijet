@@ -1,27 +1,27 @@
 <template>
   <div class="p-6 text-center">
     <h1 class="text-2xl font-bold text-green-600 mb-4">
-      {{ $t("success.title") }} ✅
+      Paiement PayPal réussi ✅
     </h1>
 
-    <p v-if="loading">{{ $t("success.loading") }}</p>
+    <p v-if="loading">Confirmation du paiement en cours...</p>
 
     <p v-if="success" class="text-green-600 font-semibold">
-      {{ $t("success.successMessage") }}
+      Votre commande a bien été enregistrée.
     </p>
 
     <p v-if="error" class="text-red-600 font-semibold">
-      {{ $t("success.errorMessage") }}
+      Une erreur est survenue.
     </p>
   </div>
 </template>
 
 <script>
-import axios from "axios";
 import { mapState } from "vuex";
+import axios from "axios";
 
 export default {
-  name: "Success",
+  name: "SuccessPayPal",
   data() {
     return {
       loading: true,
@@ -30,51 +30,34 @@ export default {
     };
   },
   computed: {
-    ...mapState(["user", "cart"]),
-    currentLang() {
-      return this.$store.getters["language/currentLanguage"];
-    }
+    ...mapState(["user", "cart", "paypalAdresseLivraison"]),
   },
   async mounted() {
+    const paypalToken = this.$route.query.token; // token PayPal
+
+    if (!paypalToken) {
+      this.error = true;
+      this.loading = false;
+      return;
+    }
+
     try {
-      const sessionId = this.$route.query.session_id; // Stripe
-      const paypalToken = this.$route.query.token;    // PayPal
-
-      // ================= STRIPE =================
-      if (sessionId) {
-        console.log("Stripe payment success:", sessionId);
-        this.success = true;
-        this.loading = false;
-        return;
-      }
-
-      // ================= PAYPAL =================
-      if (paypalToken) {
-        console.log("PayPal token:", paypalToken);
-
-        if (!this.user || !this.user.email) {
-          throw new Error(this.$t("success.userNotLoggedIn"));
+      await axios.post(
+        "https://paypalbackend-production.up.railway.app/capture-paypal-order",
+        {
+          orderId: paypalToken,
+          email: this.user.email,
+          items: this.cart,
+          adresseLivraison: this.paypalAdresseLivraison,
         }
+      );
 
-        const adresse = localStorage.getItem("adresseLivraison") || "";
+      this.success = true;
 
-        await axios.post(
-          "https://paypalbackend-production.up.railway.app/capture-paypal-order",
-          {
-            orderId: paypalToken,
-            email: this.user.email,
-            items: this.cart || [],
-            adresseLivraison: adresse,
-          }
-        );
-
-        this.success = true;
-
-        // nettoyer pour éviter d’envoyer à nouveau
-        localStorage.removeItem("adresseLivraison");
-      }
+      // 🔹 vider le panier et l'adresse PayPal
+      this.$store.dispatch("clearCart");
     } catch (err) {
-      console.error("Erreur Success.vue :", err);
+      console.error(err);
       this.error = true;
     } finally {
       this.loading = false;
@@ -82,9 +65,3 @@ export default {
   },
 };
 </script>
-
-<style scoped>
-h1 {
-  color: green;
-}
-</style>
