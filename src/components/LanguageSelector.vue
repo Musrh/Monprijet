@@ -23,13 +23,13 @@ export default {
     };
   },
   computed: {
-    // 🔹 accès à la langue dans le module namespaced 'language'
+    // 🔹 Utiliser le getter namespaced pour la réactivité
     currentLang() {
-      return this.$store.state.language.currentLanguage;
+      return this.$store.getters["language/currentLanguage"];
     }
   },
   methods: {
-    // 🔹 changer la langue via le module namespaced
+    // 🔹 Dispatch vers le module namespaced
     changeLanguage(lang) {
       this.$store.dispatch("language/changeLanguage", lang);
     }
