@@ -8,14 +8,14 @@
         :key="product.id"
         class="border rounded p-4 shadow hover:shadow-lg transition"
       >
-        <!-- Carrousel simple des images -->
-        <div class="mb-3">
+        <!-- Images en grille 2 colonnes -->
+        <div class="grid grid-cols-2 gap-2 mb-3">
           <img
             v-for="(img, index) in product.image"
             :key="index"
             :src="img"
             :alt="product.title"
-            class="w-full h-40 object-cover mb-2 rounded"
+            class="w-full h-24 object-cover rounded"
           />
         </div>
 
@@ -64,7 +64,6 @@ export default {
           price: data.price || 0,
         };
       });
-      console.log("Produits affiliés chargés:", this.products);
     } catch (error) {
       console.error("Erreur chargement affiliate:", error);
     }
