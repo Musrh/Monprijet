@@ -35,7 +35,9 @@ export default {
       { name: "Cuisine", slug: "cuisine", emoji: "🍳" },
       { name: "Accessoires", slug: "accessoires", emoji: "🎒" },
       { name: "Maison", slug: "maison", emoji: "🏠" },
-      { name: "Beauté", slug: "beaute", emoji: "💄" }
+      { name: "Beauté", slug: "beaute", emoji: "💄" },
+
+      { name: "Montres", slug: "watch", emoji: "⌚" }
     ];
 
     const goToCategory = (slug) => {
