@@ -35,7 +35,7 @@
             @click="ajouterAuPanier(produit)"
             class="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
           >
-            Ajouter au panier
+            {{ t("addToCart") }}
           </button>
 
           <!-- Badge promo -->
@@ -43,7 +43,7 @@
             v-if="produit.promo"
             class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
           >
-            PROMO
+            {{ t("promo") }}
           </span>
         </div>
       </div>
@@ -81,10 +81,19 @@ export default {
     const currentIndex = ref(0);
     let timer = null;
 
+    // 🔹 Langue courante depuis Vuex
+    const currentLang = computed(() => store.getters["language/currentLanguage"]);
+
+    // 🔹 Traductions
+    const translations = {
+      fr: { addToCart: "Ajouter au panier", promo: "PROMO" },
+      en: { addToCart: "Add to Cart", promo: "SALE" },
+    };
+
+    const t = (key) => translations[currentLang.value][key];
+
     // 🔹 Produits promo uniquement
-    const produitsPromos = computed(() =>
-      props.produits.filter((p) => p.promo === true)
-    );
+    const produitsPromos = computed(() => props.produits.filter((p) => p.promo === true));
 
     const next = () => {
       if (!produitsPromos.value.length) return;
@@ -107,7 +116,7 @@ export default {
         images: produit.images,
         quantity: 1,
       });
-      alert(`Le produit "${produit.nom}" a été ajouté au panier !`);
+      alert(`${t("addToCart")}: "${produit.nom}"`);
     };
 
     // 🔹 Auto-slide
@@ -118,10 +127,9 @@ export default {
       if (timer) clearInterval(timer);
     });
 
-    // 🔹 Reset index si produits changent
     watch(() => props.produits, () => currentIndex.value = 0);
 
-    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier };
+    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier, t };
   },
 };
 </script>
