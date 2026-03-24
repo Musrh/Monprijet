@@ -68,9 +68,9 @@ export default {
       "cartItemCount"
     ]),
 
-    // ✅ Accès direct au state pour la langue
+    // ✅ Accès via le module namespaced 'language'
     currentLang() {
-      return this.$store.state.currentLanguage;
+      return this.$store.getters["language/currentLanguage"];
     }
   },
 
