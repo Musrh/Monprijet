@@ -7,7 +7,7 @@
     <!-- Section produits Printful -->
     <PrintfulProducts :api-url="printfulUrl" />
 
-    <!-- Vitrine catégories après Printful -->
+    <!-- Vitrine catégories -->
     <Vitrine :categories="categoriesLocalized" />
 
   </div>
@@ -15,6 +15,7 @@
 
 <script>
 import { ref, computed, onMounted } from "vue";
+import { useStore } from "vuex";
 import SliderProducts from "../components/SliderProducts.vue";
 import Vitrine from "../components/Vitrine.vue";
 import PrintfulProducts from "./PrintfulProducts.vue";
@@ -22,20 +23,33 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 
 export default {
-  components: { SliderProducts, Vitrine, PrintfulProducts },
-  setup(_, { root }) {
+  name: "Home",
+  components: {
+    SliderProducts,
+    Vitrine,
+    PrintfulProducts
+  },
+
+  setup() {
+
+    const store = useStore();
+
     const produitsPromos = ref([]);
 
-    // 🔹 Accès au store pour langue
-    const currentLang = computed(() => root.$store.getters["language/currentLanguage"]);
+    // 🔹 Langue actuelle (module namespaced)
+    const currentLang = computed(() =>
+      store.getters["language/currentLanguage"]
+    );
 
-    // 🔹 Catégories multilingues
+    // 🔹 Catégories FR
     const categoriesFR = [
       { name: "T-shirts", slug: "t-shirts", emoji: "👕" },
       { name: "Sweats", slug: "sweats", emoji: "🧥" },
       { name: "Accessoires", slug: "accessoires", emoji: "🎒" },
       { name: "Montres", slug: "watch", emoji: "⌚" }
     ];
+
+    // 🔹 Catégories EN
     const categoriesEN = [
       { name: "T-shirts", slug: "t-shirts", emoji: "👕" },
       { name: "Sweatshirts", slug: "sweats", emoji: "🧥" },
@@ -43,22 +57,35 @@ export default {
       { name: "Watches", slug: "watch", emoji: "⌚" }
     ];
 
-    const categoriesLocalized = computed(() => currentLang.value === "fr" ? categoriesFR : categoriesEN);
+    // 🔹 Catégories dynamiques selon langue
+    const categoriesLocalized = computed(() =>
+      currentLang.value === "fr" ? categoriesFR : categoriesEN
+    );
 
-    const printfulUrl = "https://printfulapi-production.up.railway.app/printful/products";
+    const printfulUrl =
+      "https://printfulapi-production.up.railway.app/printful/products";
 
-    // 🔹 Récupération des promos depuis Firestore
+    // 🔹 Charger produits en promo
     const fetchPromos = async () => {
-      const snapshot = await getDocs(collection(db, "products"));
-      snapshot.forEach(doc => {
-        const produit = { id: doc.id, ...doc.data() };
-        if (produit.promo) produitsPromos.value.push(produit);
-      });
+      try {
+        const snapshot = await getDocs(collection(db, "products"));
+
+        produitsPromos.value = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter(product => product.promo === true);
+
+      } catch (error) {
+        console.error("Erreur chargement promos:", error);
+      }
     };
 
     onMounted(fetchPromos);
 
-    return { produitsPromos, categoriesLocalized, printfulUrl };
-  },
+    return {
+      produitsPromos,
+      categoriesLocalized,
+      printfulUrl
+    };
+  }
 };
 </script>
