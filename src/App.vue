@@ -14,7 +14,7 @@
 
       <router-link to="/" class="menu-btn">Accueil</router-link>
       <router-link to="/contact" class="menu-btn">Contact</router-link>
-      <router-link to="/affiliateproducts" class="hover:text-yellow-500">
+      <router-link to="/affiliateproducts" class="menu-btn">
   Produits partenaires
 </router-link>
       <!-- Admin menu -->
