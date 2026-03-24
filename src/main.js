@@ -9,6 +9,8 @@ import "./style.css";
 import './themes/dark.css';
 import './themes/pastel.css';
 
+import languageStore from "./components/storeLanguage"; 
+
 const app = createApp(App);
 
 // 🔥 Important : initialise Vuex et le router
