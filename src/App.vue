@@ -10,6 +10,7 @@
     </div>
 
     <!-- Menu principal -->
+    <LanguageSelector />
     <nav class="bg-white px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto">
 
       <router-link to="/" class="menu-btn">Accueil</router-link>
@@ -55,6 +56,8 @@
 </template>
 
 <script>
+import LanguageSelector from "./components/LanguageSelector.vue";
+
 import { mapGetters } from "vuex";
 import HeaderSearch from "./components/HeaderSearch.vue";
 import Footer from "./components/Footer.vue";
@@ -67,7 +70,8 @@ export default {
       "isAuthenticated",
       "userEmail",
       "isAdmin",
-      "cartItemCount"
+      "cartItemCount",
+      currentLang: state => state.currentLanguage
     ])
   },
 
