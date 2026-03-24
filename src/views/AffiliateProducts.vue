@@ -8,6 +8,14 @@
         :key="product.id"
         class="border rounded p-4 shadow hover:shadow-lg transition"
       >
+        <!-- Image du produit -->
+        <img
+          v-if="product.image"
+          :src="product.image"
+          :alt="product.title"
+          class="w-full h-40 object-cover mb-2 rounded"
+        />
+
         <h2 class="font-semibold mb-2">{{ product.title }}</h2>
 
         <a
