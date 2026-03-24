@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gray-100 py-10">
 
     <h1 class="text-3xl font-bold text-center mb-8">
-      Contact
+      {{ titles.contact }}
     </h1>
 
     <!-- Conteneur -->
@@ -14,7 +14,7 @@
         <form @submit.prevent="sendMessage" class="space-y-4">
 
           <div>
-            <label class="block font-semibold mb-1">Nom</label>
+            <label class="block font-semibold mb-1">{{ titles.name }}</label>
             <input
               v-model="form.name"
               type="text"
@@ -24,7 +24,7 @@
           </div>
 
           <div>
-            <label class="block font-semibold mb-1">Email</label>
+            <label class="block font-semibold mb-1">{{ titles.email }}</label>
             <input
               v-model="form.email"
               type="email"
@@ -34,7 +34,7 @@
           </div>
 
           <div>
-            <label class="block font-semibold mb-1">Message</label>
+            <label class="block font-semibold mb-1">{{ titles.message }}</label>
             <textarea
               v-model="form.message"
               rows="4"
@@ -47,7 +47,7 @@
             type="submit"
             class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
           >
-            Envoyer
+            {{ titles.send }}
           </button>
 
         </form>
@@ -60,8 +60,8 @@
 </template>
 
 <script>
-import { db } from "../firebase"
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"
+import { db } from "../firebase";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export default {
   data() {
@@ -74,36 +74,56 @@ export default {
     };
   },
 
+  computed: {
+    // 🔹 Obtenir la langue courante depuis Vuex
+    currentLang() {
+      return this.$store.getters["language/currentLanguage"];
+    },
+
+    // 🔹 Titres et labels selon la langue
+    titles() {
+      const translations = {
+        fr: {
+          contact: "Contact",
+          name: "Nom",
+          email: "Email",
+          message: "Message",
+          send: "Envoyer"
+        },
+        en: {
+          contact: "Contact",
+          name: "Name",
+          email: "Email",
+          message: "Message",
+          send: "Send"
+        }
+      };
+      return translations[this.currentLang] || translations.fr;
+    }
+  },
+
   methods: {
-
     async sendMessage() {
-
       try {
-
         await addDoc(collection(db, "contacts"), {
           name: this.form.name,
           email: this.form.email,
           message: this.form.message,
           createdAt: serverTimestamp()
-        })
+        });
 
-        alert("Message envoyé avec succès !")
+        alert(this.currentLang === "fr" ? "Message envoyé avec succès !" : "Message sent successfully!");
 
         this.form = {
           name: "",
           email: "",
           message: ""
-        }
-
+        };
       } catch (error) {
-
-        console.error("Erreur Firestore:", error)
-        alert("Erreur lors de l'envoi du message")
-
+        console.error("Erreur Firestore:", error);
+        alert(this.currentLang === "fr" ? "Erreur lors de l'envoi du message" : "Error sending message");
       }
-
     }
-
   }
-}
+};
 </script>
