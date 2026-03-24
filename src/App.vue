@@ -68,7 +68,6 @@ export default {
       "cartItemCount"
     ]),
 
-    // ✅ Accès via le module namespaced 'language'
     currentLang() {
       return this.$store.getters["language/currentLanguage"];
     }
@@ -85,60 +84,59 @@ export default {
 
 <style scoped>
 /* Bande du menu */
-nav{
-  border-bottom:1px solid #e5e7eb;
+nav {
+  border-bottom: 1px solid #e5e7eb;
 }
 
 /* Boutons menu */
-.menu-btn{
-  background:#ffffff;
-  color:#dc2626;           /* rouge */
-  font-weight:bold;
-  text-decoration:underline;
-  padding:5px 10px;
-  border-radius:6px;
-  font-size:16px;
-  transition:all 0.2s;
-  white-space:nowrap;
+.menu-btn {
+  background: #ffffff;
+  color: #dc2626;           /* rouge */
+  font-weight: bold;
+  text-decoration: underline;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
 /* Hover */
-.menu-btn:hover{
-  color:#b91c1c;
+.menu-btn:hover {
+  color: #b91c1c;
 }
 
 /* Lien actif après clic */
-.router-link-exact-active{
-  color:#16a34a !important;   /* vert */
-  font-weight:bold;
+.router-link-exact-active {
+  color: #16a34a !important;   /* vert */
+  font-weight: bold;
 }
 
 /* User badge */
-.user-badge{
-  background:#22c55e;
-  color:white;
-  padding:3px 5px;
-  border-radius:6px;
-  font-size:12px;
+.user-badge {
+  background: #22c55e;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-left: 8px;
+  font-size: 14px;
 }
 
-/* Logout */
-.logout-btn{
-  background:#ef4444;
-  color:white;
-  padding:3px 5px;
-  border-radius:6px;
-  font-size:13px;
+/* Logout bouton */
+.logout-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-left: 5px;
+  cursor: pointer;
+  font-size: 14px;
 }
 
-.logout-btn:hover{
-  background:#dc2626;
-}
-
-@media (max-width:768px){
-  .menu-btn{
-    font-size:13px;
-    padding:4px 6px;
-  }
+.logout-btn:hover {
+  background: #dc2626;
 }
 </style>
