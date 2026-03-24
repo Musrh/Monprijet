@@ -11,13 +11,12 @@
 
     <!-- Menu principal -->
     <LanguageSelector />
-    <nav class="bg-white px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto">
 
+    <nav class="bg-white px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto">
       <router-link to="/" class="menu-btn">Accueil</router-link>
       <router-link to="/contact" class="menu-btn">Contact</router-link>
-      <router-link to="/affiliateproducts" class="menu-btn">
-  Produits partenaires
-</router-link>
+      <router-link to="/affiliateproducts" class="menu-btn">Produits partenaires</router-link>
+
       <!-- Admin menu -->
       <div v-if="isAdmin" class="flex gap-1">
         <router-link to="/admin" class="menu-btn">Admin</router-link>
@@ -38,45 +37,41 @@
 
       <!-- Login / Logout -->
       <router-link v-if="!isAuthenticated" to="/login" class="menu-btn">Login</router-link>
-
       <template v-if="isAuthenticated">
         <span class="user-badge">{{ userEmail }}</span>
         <button @click="logout" class="logout-btn">Logout</button>
       </template>
-
     </nav>
 
-    <!-- Contenu -->
+    <!-- Contenu : se recharge si langue change -->
     <router-view :key="currentLang" />
 
     <!-- Footer -->
     <Footer />
-
   </div>
 </template>
 
 <script>
 import LanguageSelector from "./components/LanguageSelector.vue";
-
-import { mapGetters } from "vuex";
 import HeaderSearch from "./components/HeaderSearch.vue";
 import Footer from "./components/Footer.vue";
+import { mapGetters } from "vuex";
 
 export default {
-  components: { HeaderSearch, Footer },
+  components: { HeaderSearch, Footer, LanguageSelector },
 
   computed: {
     ...mapGetters([
       "isAuthenticated",
       "userEmail",
       "isAdmin",
-      "cartItemCount",
-      
+      "cartItemCount"
     ]),
 
+    // ✅ Accès direct au state pour la langue
     currentLang() {
-    return this.$store.state.currentLanguage; // accès direct au state
-  }
+      return this.$store.state.currentLanguage;
+    }
   },
 
   methods: {
@@ -89,7 +84,6 @@ export default {
 </script>
 
 <style scoped>
-
 /* Bande du menu */
 nav{
   border-bottom:1px solid #e5e7eb;
@@ -142,11 +136,9 @@ nav{
 }
 
 @media (max-width:768px){
-
   .menu-btn{
     font-size:13px;
     padding:4px 6px;
   }
-
 }
 </style>
