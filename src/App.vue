@@ -71,8 +71,12 @@ export default {
       "userEmail",
       "isAdmin",
       "cartItemCount",
-      currentLang: state => state.currentLanguage
-    ])
+      
+    ]),
+
+    currentLang() {
+    return this.$store.state.currentLanguage; // accès direct au state
+  }
   },
 
   methods: {
