@@ -1,6 +1,7 @@
 <template>
-  <div class="slider-wrapper w-full md:w-3/4">
+  <div class="slider-wrapper w-full md:w-3/4 mx-auto">
     <div class="slider-container relative overflow-hidden">
+
       <div
         class="slider-track flex transition-transform duration-500"
         :style="{ transform: `translateX(-${currentIndex * 100}%)` }"
@@ -35,7 +36,7 @@
             @click="ajouterAuPanier(produit)"
             class="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
           >
-            {{ t("addToCart") }}
+            {{ titles.addToCart }}
           </button>
 
           <!-- Badge promo -->
@@ -43,7 +44,7 @@
             v-if="produit.promo"
             class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
           >
-            {{ t("promo") }}
+            {{ titles.promo }}
           </span>
         </div>
       </div>
@@ -61,6 +62,7 @@
       >
         ›
       </button>
+
     </div>
   </div>
 </template>
@@ -76,38 +78,49 @@ export default {
     auto: { type: Boolean, default: true },
     interval: { type: Number, default: 3000 },
   },
-  setup(props) {
-    const store = useStore();
-    const currentIndex = ref(0);
-    let timer = null;
 
-    // 🔹 Langue courante depuis Vuex
-    const currentLang = computed(() => store.getters["language/currentLanguage"]);
+  data() {
+    return {
+      currentIndex: 0,
+      timer: null
+    };
+  },
+
+  computed: {
+    // 🔹 Langue depuis Vuex
+    currentLang() {
+      return this.$store.getters["language/currentLanguage"] || "fr";
+    },
 
     // 🔹 Traductions
-    const translations = {
-      fr: { addToCart: "Ajouter au panier", promo: "PROMO" },
-      en: { addToCart: "Add to Cart", promo: "SALE" },
-    };
-
-    const t = (key) => translations[currentLang.value][key];
+    titles() {
+      const translations = {
+        fr: { addToCart: "Ajouter au panier", promo: "PROMO" },
+        en: { addToCart: "Add to Cart", promo: "SALE" },
+      };
+      return translations[this.currentLang] || translations.fr;
+    },
 
     // 🔹 Produits promo uniquement
-    const produitsPromos = computed(() => props.produits.filter((p) => p.promo === true));
+    produitsPromos() {
+      return this.produits.filter((p) => p.promo === true);
+    }
+  },
 
-    const next = () => {
-      if (!produitsPromos.value.length) return;
-      currentIndex.value = (currentIndex.value + 1) % produitsPromos.value.length;
-    };
-    const prev = () => {
-      if (!produitsPromos.value.length) return;
-      currentIndex.value =
-        (currentIndex.value - 1 + produitsPromos.value.length) %
-        produitsPromos.value.length;
-    };
+  methods: {
+    next() {
+      if (!this.produitsPromos.length) return;
+      this.currentIndex = (this.currentIndex + 1) % this.produitsPromos.length;
+    },
 
-    // 🔹 Ajouter au panier
-    const ajouterAuPanier = (produit) => {
+    prev() {
+      if (!this.produitsPromos.length) return;
+      this.currentIndex =
+        (this.currentIndex - 1 + this.produitsPromos.length) % this.produitsPromos.length;
+    },
+
+    ajouterAuPanier(produit) {
+      const store = this.$store;
       const prix = produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
       store.dispatch("addToCart", {
         id: produit.id,
@@ -116,21 +129,23 @@ export default {
         images: produit.images,
         quantity: 1,
       });
-      alert(`${t("addToCart")}: "${produit.nom}"`);
-    };
-
-    // 🔹 Auto-slide
-    onMounted(() => {
-      if (props.auto) timer = setInterval(next, props.interval);
-    });
-    onBeforeUnmount(() => {
-      if (timer) clearInterval(timer);
-    });
-
-    watch(() => props.produits, () => currentIndex.value = 0);
-
-    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier, t };
+      alert(`${this.titles.addToCart}: "${produit.nom}"`);
+    }
   },
+
+  mounted() {
+    if (this.auto) this.timer = setInterval(this.next, this.interval);
+  },
+
+  beforeUnmount() {
+    if (this.timer) clearInterval(this.timer);
+  },
+
+  watch: {
+    produits() {
+      this.currentIndex = 0;
+    }
+  }
 };
 </script>
 
