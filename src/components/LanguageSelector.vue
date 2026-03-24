@@ -12,29 +12,27 @@
 </template>
 
 <script>
-import { mapGetters, mapActions } from "vuex";
-
 export default {
   name: "LanguageSelector",
   data() {
     return {
       languages: [
         { code: "fr", label: "FR" },
-        { code: "en", label: "EN" },
-      ],
+        { code: "en", label: "EN" }
+      ]
     };
   },
   computed: {
-    ...mapGetters(["currentLanguage"]),
+    // 🔹 accès à la langue dans le module namespaced 'language'
     currentLang() {
-      return this.currentLanguage;
-    },
+      return this.$store.state.language.currentLanguage;
+    }
   },
   methods: {
-    ...mapActions(["setLanguage"]),
+    // 🔹 changer la langue via le module namespaced
     changeLanguage(lang) {
-      this.setLanguage(lang);
-    },
-  },
+      this.$store.dispatch("language/changeLanguage", lang);
+    }
+  }
 };
 </script>
