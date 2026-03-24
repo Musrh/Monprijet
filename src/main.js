@@ -9,7 +9,7 @@ import "./style.css";
 import './themes/dark.css';
 import './themes/pastel.css';
 
-import languageStore from "./storeLanguage"; 
+//import languageStore from "./storeLanguage"; 
 
 const app = createApp(App);
 
@@ -18,7 +18,7 @@ app.use(store);
 
 
 // 🔹 Ajouter le module de langue (si tu veux l’injecter en module séparé)
-app.use(languageStore);
+//app.use(languageStore);
 
 app.use(router);
 
