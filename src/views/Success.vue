@@ -17,8 +17,8 @@
 </template>
 
 <script>
-import { mapState } from "vuex";
 import axios from "axios";
+import { mapState } from "vuex";
 
 export default {
   name: "Success",
@@ -31,20 +31,24 @@ export default {
   },
   computed: {
     ...mapState(["user", "cart", "paypalAdresseLivraison"]),
+
+    // 🔹 langue courante depuis Vuex
     currentLang() {
       return this.$store.getters["language/currentLanguage"];
     },
+
+    // 🔹 titres selon langue
     titles() {
       const translations = {
         fr: {
           payment_success: "Paiement réussi ✅",
-          confirming: "Confirmation de votre commande en cours...",
+          confirming: "Confirmation du paiement en cours...",
           order_recorded: "Votre commande a bien été enregistrée.",
           error: "Une erreur est survenue."
         },
         en: {
           payment_success: "Payment successful ✅",
-          confirming: "Confirming your order...",
+          confirming: "Confirming payment...",
           order_recorded: "Your order has been recorded.",
           error: "An error occurred."
         }
@@ -53,46 +57,40 @@ export default {
     }
   },
   async mounted() {
-    const stripeSessionId = this.$route.query.session_id; // Stripe
-    const paypalToken = this.$route.query.token;          // PayPal
-
-    if (!this.user || (!stripeSessionId && !paypalToken)) {
-      this.error = true;
-      this.loading = false;
-      return;
-    }
+    const sessionId = this.$route.query.session_id; // Stripe
+    const paypalToken = this.$route.query.token;    // PayPal
 
     try {
-      if (stripeSessionId) {
-        // 🔹 Confirmation Stripe
-        await axios.post(
-          "https://stripe-backend-production-2ac4.up.railway.app/confirm-stripe-payment",
-          {
-            sessionId: stripeSessionId,
-            email: this.user.email,
-            items: this.cart,
-          }
-        );
-      } else if (paypalToken) {
-        // 🔹 Confirmation PayPal
+      // ================= STRIPE =================
+      if (sessionId) {
+        console.log("Stripe payment success:", sessionId);
+        this.success = true;
+        return;
+      }
+
+      // ================= PAYPAL =================
+      if (paypalToken) {
+        console.log("PayPal token:", paypalToken);
+
+        if (!this.user || !this.user.email) throw new Error("Utilisateur non connecté");
+
         await axios.post(
           "https://paypalbackend-production.up.railway.app/capture-paypal-order",
           {
             orderId: paypalToken,
             email: this.user.email,
-            items: this.cart,
-            adresseLivraison: this.paypalAdresseLivraison
+            items: this.cart || [],
+            adresseLivraison: this.paypalAdresseLivraison || "",
           }
         );
+
+        this.success = true;
+
+        // 🔹 vider adresse PayPal dans Vuex
+        this.$store.dispatch("setPaypalAdresse", "");
       }
-
-      this.success = true;
-
-      // 🔹 Vider le panier et l'adresse PayPal
-      this.$store.dispatch("clearCart");
-      if (paypalToken) this.$store.dispatch("setPaypalAdresse", "");
     } catch (err) {
-      console.error("Erreur confirmation paiement:", err);
+      console.error("Erreur Success.vue :", err);
       this.error = true;
     } finally {
       this.loading = false;
@@ -102,5 +100,7 @@ export default {
 </script>
 
 <style scoped>
-/* Optionnel : style minimal */
+h1 {
+  color: green;
+}
 </style>
