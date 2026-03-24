@@ -16,7 +16,7 @@
           class="w-full h-40 object-cover mb-2 rounded"
         />
 
-        <h2 class="font-semibold mb-2">{{ product.title }}</h2>
+        <h2 class="font-semibold mb-2 line-clamp-3">{{ product.title }}</h2>
 
         <a
           :href="product.affiliateUrl"
