@@ -29,6 +29,7 @@ export default {
       { name: "T-shirts", slug: "t-shirts", emoji: "👕" },
       { name: "Sweats", slug: "sweats", emoji: "🧥" },
       { name: "Accessoires", slug: "accessoires", emoji: "🎒" },
+      { name: "Montres", slug: "watch", emoji: "⌚" }
     ]);
 
     const printfulUrl = "https://printfulapi-production.up.railway.app/printful/products";
