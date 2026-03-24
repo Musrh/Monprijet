@@ -2,26 +2,38 @@
   <div class="p-6">
     <h1 class="text-2xl font-bold mb-6">Produits Partenaires</h1>
 
-    <div v-if="products.length" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div v-if="products.length" class="grid grid-cols-2 md:grid-cols-4 gap-6">
       <div
         v-for="product in products"
         :key="product.id"
-        class="border rounded p-4 shadow hover:shadow-lg transition"
+        class="border rounded-xl p-4 shadow hover:shadow-xl transition"
       >
-        <!-- Image du produit -->
-        <img
-          v-if="product.image"
-          :src="product.image"
-          :alt="product.title"
-          class="w-full h-40 object-cover mb-2 rounded"
-        />
+        <!-- 🔹 Galerie Images -->
+        <div v-if="product.image && product.image.length">
+          <img
+            v-for="(img, index) in product.image"
+            :key="index"
+            :src="img"
+            :alt="product.title"
+            class="w-full h-40 object-cover mb-2 rounded"
+          />
+        </div>
 
-        <h2 class="font-semibold mb-2 line-clamp-3">{{ product.title }}</h2>
+        <h2 class="font-semibold mb-2 text-sm line-clamp-3">
+          {{ product.title }}
+        </h2>
 
+        <!-- 🔹 Prix -->
+        <p class="text-orange-600 font-bold mb-3">
+          {{ product.price }} €
+        </p>
+
+        <!-- 🔹 Bouton affilié -->
         <a
           :href="product.affiliateUrl"
           target="_blank"
-          class="bg-orange-500 text-white px-3 py-2 rounded inline-block"
+          rel="noopener noreferrer"
+          class="bg-orange-500 text-white px-3 py-2 rounded inline-block w-full text-center"
         >
           Voir le produit
         </a>
@@ -33,7 +45,7 @@
 </template>
 
 <script>
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 
 export default {
@@ -47,7 +59,13 @@ export default {
 
   async mounted() {
     try {
-      const snap = await getDocs(collection(db, "affiliateProducts"));
+      // 🔹 Exemple : filtrer catégorie "watch"
+      const q = query(
+        collection(db, "affiliateProducts"),
+        where("category", "==", "watch")
+      );
+
+      const snap = await getDocs(q);
 
       this.products = snap.docs.map(doc => ({
         id: doc.id,
