@@ -1,3 +1,4 @@
+// store.js
 import { createStore } from "vuex";
 import { auth, db } from "./firebase";
 import {
@@ -89,7 +90,6 @@ export default createStore({
   },
 
   actions: {
-
     // 🔥 INIT AUTH
     initAuth({ commit }) {
       return new Promise(resolve => {
@@ -185,6 +185,29 @@ export default createStore({
     // 🆕 pour PayPal
     setPaypalAdresse({ commit }, adresse) {
       commit("SET_PAYPAL_ADRESSE", adresse);
+    }
+  },
+
+  // 🔹 Module langue
+  modules: {
+    language: {
+      namespaced: true,
+      state: () => ({
+        currentLanguage: "fr" // valeur par défaut
+      }),
+      mutations: {
+        SET_LANGUAGE(state, lang) {
+          state.currentLanguage = lang;
+        }
+      },
+      actions: {
+        changeLanguage({ commit }, lang) {
+          commit("SET_LANGUAGE", lang);
+        }
+      },
+      getters: {
+        currentLanguage: state => state.currentLanguage
+      }
     }
   }
 });
