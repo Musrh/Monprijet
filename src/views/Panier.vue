@@ -1,28 +1,30 @@
 <template>
   <div class="p-4 max-w-3xl mx-auto">
-    <h1 class="text-2xl font-bold mb-4">Votre Panier</h1>
+    <h1 class="text-2xl font-bold mb-4">
+      {{ $t("panier.title") }}
+    </h1>
 
     <div v-if="!user">
-      <p class="text-red-600 font-semibold">Vous devez être connecté pour payer.</p>
+      <p class="text-red-600 font-semibold">{{ $t("panier.loginRequired") }}</p>
       <button @click="$router.push('/login')" class="bg-black text-white px-4 py-2 mt-3 rounded">
-        Se connecter
+        {{ $t("panier.login") }}
       </button>
     </div>
 
     <div v-else-if="cart.length">
       <ul class="mb-6">
-        <li v-for="item in cart" :key="item.id" class="flex justify-between">
+        <li v-for="item in cart" :key="item.cartId" class="flex justify-between">
           <span>{{ item.nom }} x {{ item.quantity }}</span>
           <span>{{ (item.prix * item.quantity).toFixed(2) }} €</span>
         </li>
       </ul>
 
-      <h2 class="font-semibold mb-2">Adresse</h2>
-      <input v-model="adresse1" placeholder="Adresse 1" class="input" />
-      <input v-model="adresse2" placeholder="Adresse 2" class="input" />
-      <input v-model="codePostal" placeholder="Code postal" class="input" />
-      <input v-model="ville" placeholder="Ville" class="input" />
-      <input v-model="pays" placeholder="Pays" class="input" />
+      <h2 class="font-semibold mb-2">{{ $t("panier.address") }}</h2>
+      <input v-model="adresse1" :placeholder="$t('panier.address1')" class="input" />
+      <input v-model="adresse2" :placeholder="$t('panier.address2')" class="input" />
+      <input v-model="codePostal" :placeholder="$t('panier.postalCode')" class="input" />
+      <input v-model="ville" :placeholder="$t('panier.city')" class="input" />
+      <input v-model="pays" :placeholder="$t('panier.country')" class="input" />
 
       <div class="flex gap-4 mt-4">
         <button @click="checkoutStripe" class="bg-blue-600 text-white px-4 py-2 rounded">
@@ -35,7 +37,7 @@
       </div>
     </div>
 
-    <p v-else>Votre panier est vide.</p>
+    <p v-else>{{ $t("panier.empty") }}</p>
   </div>
 </template>
 
@@ -56,6 +58,9 @@ export default {
   },
   computed: {
     ...mapState(["cart", "user"]),
+    currentLang() {
+      return this.$store.getters["language/currentLanguage"];
+    }
   },
   methods: {
     getAdresse() {
@@ -75,29 +80,25 @@ export default {
         window.location.href = response.data.url;
       } catch (err) {
         console.error("Erreur Stripe:", err);
-        alert("Impossible de créer la session Stripe.");
+        alert(this.currentLang === "fr" ? "Impossible de créer la session Stripe." : "Unable to create Stripe session.");
       }
     },
 
     async checkoutPaypal() {
       try {
-        // 🔹 Stocker l'adresse dans le store Vuex
         this.$store.dispatch("setPaypalAdresse", this.getAdresse());
-
         const order = await axios.post(
           "https://paypalbackend-production.up.railway.app/create-paypal-order",
           {
             items: this.cart,
             email: this.user.email,
-            adresseLivraison: this.$store.state.paypalAdresseLivraison, // ✅ utilise Vuex
+            adresseLivraison: this.$store.state.paypalAdresseLivraison,
           }
         );
-
-        // Redirection PayPal
         window.location.href = order.data.url || order.data.approveUrl;
       } catch (err) {
         console.error("Erreur PayPal:", err);
-        alert("Impossible de créer l'ordre PayPal.");
+        alert(this.currentLang === "fr" ? "Impossible de créer l'ordre PayPal." : "Unable to create PayPal order.");
       }
     },
   },
