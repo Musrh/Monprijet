@@ -44,7 +44,9 @@
     </nav>
 
     <!-- Contenu : se recharge si langue change -->
-    <router-view :key="currentLang" />
+    
+    <!-- App.vue -->
+<router-view :key="$store.getters['language/currentLanguage']" />
 
     <!-- Footer -->
     <Footer />
