@@ -47,7 +47,7 @@
     </nav>
 
     <!-- Contenu -->
-    <router-view />
+    <router-view :key="currentLang" />
 
     <!-- Footer -->
     <Footer />
