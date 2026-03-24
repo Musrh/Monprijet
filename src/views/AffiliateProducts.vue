@@ -1,79 +1,55 @@
 <template>
-  <section class="px-4 mt-6">
-    <h1 class="text-2xl font-bold mb-4">
-      Produits Partenaires
-    </h1>
+  <div class="p-6">
+    <h1 class="text-2xl font-bold mb-6">Produits Partenaires</h1>
 
-    <div v-if="loading" class="text-center py-10">
-      Chargement...
-    </div>
-
-    <div
-      v-else
-      class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
-    >
+    <div v-if="products.length" class="grid grid-cols-2 md:grid-cols-4 gap-4">
       <div
         v-for="product in products"
-        :key="product.slug"
-        class="bg-white shadow rounded-xl p-3 hover:shadow-lg transition"
+        :key="product.id"
+        class="border rounded p-4 shadow hover:shadow-lg transition"
       >
-        <img
-          :src="product.image"
-          class="w-full h-40 object-cover rounded mb-2"
-        />
+        <h2 class="font-semibold mb-2">{{ product.title }}</h2>
 
-        <h2 class="font-semibold text-sm mb-1">
-          {{ product.title }}
-        </h2>
-
-        <p class="text-green-600 font-bold mb-2">
-          {{ product.price }} €
-        </p>
-
-        <button
-          @click="goToAffiliate(product.slug)"
-          class="w-full bg-yellow-500 hover:bg-yellow-600 text-black py-2 rounded-lg text-sm font-semibold"
+        <a
+          :href="product.affiliateUrl"
+          target="_blank"
+          class="bg-orange-500 text-white px-3 py-2 rounded inline-block"
         >
-          Voir sur AliExpress
-        </button>
+          Voir le produit
+        </a>
       </div>
     </div>
-  </section>
+
+    <p v-else>Aucun produit partenaire disponible.</p>
+  </div>
 </template>
 
 <script>
-import axios from "axios";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../firebase";
 
 export default {
   name: "AffiliateProducts",
+
   data() {
     return {
-      products: [],
-      loading: true,
+      products: []
     };
   },
-  methods: {
-    async fetchProducts() {
-      try {
-        const res = await axios.get(
-          "https://ton-backend.com/affiliate-products"
-        );
-        this.products = res.data;
-      } catch (error) {
-        console.error("Erreur chargement produits affiliés", error);
-      } finally {
-        this.loading = false;
-      }
-    },
-    goToAffiliate(slug) {
-      window.open(
-        `https://ton-backend.com/go/${slug}`,
-        "_blank"
-      );
-    },
-  },
-  mounted() {
-    this.fetchProducts();
-  },
+
+  async mounted() {
+    try {
+      const snap = await getDocs(collection(db, "affiliateProducts"));
+
+      this.products = snap.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      console.log("Produits affiliés chargés:", this.products);
+    } catch (error) {
+      console.error("Erreur chargement affiliate:", error);
+    }
+  }
 };
 </script>
