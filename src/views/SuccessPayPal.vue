@@ -59,13 +59,13 @@ export default {
   computed: {
     ...mapState(["user", "cart", "paypalAdresseLivraison"]),
 
+    // 🔹 Récupérer la langue courante depuis Vuex
     currentLang() {
       return this.$store.getters["language/currentLanguage"];
-    }
+    },
   },
 
   async mounted() {
-
     const paypalToken = this.$route.query.token;
 
     if (!paypalToken) {
@@ -82,7 +82,6 @@ export default {
     }
 
     try {
-
       await axios.post(
         "https://paypalbackend-production.up.railway.app/capture-paypal-order",
         {
@@ -108,11 +107,11 @@ export default {
   },
 
   methods: {
-
     goHome() {
       this.$router.push("/");
     },
 
+    // 🔹 Fonction de traduction simple
     t(key) {
       const translations = {
         fr: {
@@ -133,7 +132,12 @@ export default {
 
       return translations[this.currentLang][key];
     }
-
   }
 };
 </script>
+
+<style scoped>
+h1 {
+  color: green;
+}
+</style>
