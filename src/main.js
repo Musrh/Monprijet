@@ -13,6 +13,11 @@ const app = createApp(App);
 
 // 🔥 Important : initialise Vuex et le router
 app.use(store);
+
+
+// 🔹 Ajouter le module de langue (si tu veux l’injecter en module séparé)
+app.use(languageStore);
+
 app.use(router);
 
 // 🔥 Initialisation de l'auth Firebase avant rendu du menu
