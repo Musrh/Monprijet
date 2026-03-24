@@ -1,6 +1,6 @@
-import { createStore } from "vuex";
-
-export default createStore({
+// storeLanguage.js
+export default {
+  namespaced: true, // 🔹 important pour éviter conflits
   state: {
     currentLanguage: "fr", // langue par défaut
   },
@@ -10,11 +10,11 @@ export default createStore({
     },
   },
   actions: {
-    setLanguage({ commit }, lang) {
+    changeLanguage({ commit }, lang) {
       commit("SET_LANGUAGE", lang);
     },
   },
   getters: {
     currentLanguage: (state) => state.currentLanguage,
   },
-});
+};
