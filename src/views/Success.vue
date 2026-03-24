@@ -1,24 +1,24 @@
 <template>
-  <div class="p-6 text-center min-h-screen flex flex-col justify-center items-center">
+  <div class="p-6 text-center">
     <h1 class="text-2xl font-bold text-green-600 mb-4">
-      {{ titles.payment_success }}
+      {{ titles.paymentSuccess }}
     </h1>
 
-    <p v-if="loading">{{ titles.confirming }}</p>
+    <p v-if="loading">{{ titles.loading }}</p>
 
     <p v-if="success" class="text-green-600 font-semibold">
-      {{ titles.order_recorded }}
+      {{ titles.orderConfirmed }}
     </p>
 
     <p v-if="error" class="text-red-600 font-semibold">
-      {{ titles.error }}
+      {{ titles.errorOccurred }}
     </p>
   </div>
 </template>
 
 <script>
-import axios from "axios";
 import { mapState } from "vuex";
+import axios from "axios";
 
 export default {
   name: "Success",
@@ -30,41 +30,41 @@ export default {
     };
   },
   computed: {
-    ...mapState(["user", "cart", "paypalAdresseLivraison"]),
+    ...mapState(["user", "cart"]),
 
-    // 🔹 langue courante depuis Vuex
+    // 🔹 Module langue depuis Vuex
     currentLang() {
       return this.$store.getters["language/currentLanguage"];
     },
 
-    // 🔹 titres selon langue
     titles() {
       const translations = {
         fr: {
-          payment_success: "Paiement réussi ✅",
-          confirming: "Confirmation du paiement en cours...",
-          order_recorded: "Votre commande a bien été enregistrée.",
-          error: "Une erreur est survenue."
+          paymentSuccess: "Paiement réussi ✅",
+          loading: "Confirmation du paiement en cours...",
+          orderConfirmed: "Votre commande a bien été enregistrée.",
+          errorOccurred: "Une erreur est survenue.",
         },
         en: {
-          payment_success: "Payment successful ✅",
-          confirming: "Confirming payment...",
-          order_recorded: "Your order has been recorded.",
-          error: "An error occurred."
-        }
+          paymentSuccess: "Payment successful ✅",
+          loading: "Confirming your payment...",
+          orderConfirmed: "Your order has been successfully recorded.",
+          errorOccurred: "An error occurred.",
+        },
       };
       return translations[this.currentLang] || translations.fr;
-    }
+    },
   },
   async mounted() {
-    const sessionId = this.$route.query.session_id; // Stripe
-    const paypalToken = this.$route.query.token;    // PayPal
-
     try {
+      const sessionId = this.$route.query.session_id; // Stripe
+      const paypalToken = this.$route.query.token;    // PayPal
+
       // ================= STRIPE =================
       if (sessionId) {
         console.log("Stripe payment success:", sessionId);
         this.success = true;
+        this.loading = false;
         return;
       }
 
@@ -72,7 +72,12 @@ export default {
       if (paypalToken) {
         console.log("PayPal token:", paypalToken);
 
-        if (!this.user || !this.user.email) throw new Error("Utilisateur non connecté");
+        if (!this.user || !this.user.email) {
+          throw new Error("Utilisateur non connecté");
+        }
+
+        // 🔹 Adresse depuis Vuex au lieu de localStorage
+        const adresse = this.$store.state.paypalAdresseLivraison || "";
 
         await axios.post(
           "https://paypalbackend-production.up.railway.app/capture-paypal-order",
@@ -80,14 +85,11 @@ export default {
             orderId: paypalToken,
             email: this.user.email,
             items: this.cart || [],
-            adresseLivraison: this.paypalAdresseLivraison || "",
+            adresseLivraison: adresse,
           }
         );
 
         this.success = true;
-
-        // 🔹 vider adresse PayPal dans Vuex
-        this.$store.dispatch("setPaypalAdresse", "");
       }
     } catch (err) {
       console.error("Erreur Success.vue :", err);
@@ -95,7 +97,7 @@ export default {
     } finally {
       this.loading = false;
     }
-  }
+  },
 };
 </script>
 
