@@ -231,8 +231,8 @@ export default {
       return [
         "px-3 py-1 border rounded text-sm transition",
         this.selectedSize[this.selectedProduct.id] === size
-          ? "bg-yellow-500 text-white"
-          : "bg-gray-100 hover:bg-gray-200"
+          ? "bg-gray-100 text-red-300 border-red-300"
+          : "bg-gray-100 text-gray-500 hover:text-black hover:border-black"
       ];
     },
 
@@ -240,8 +240,8 @@ export default {
       return [
         "px-3 py-1 border rounded text-sm transition",
         this.selectedColor[this.selectedProduct.id] === color
-          ? "bg-yellow-500 text-white"
-          : "bg-gray-100 hover:bg-gray-200"
+          ? "bg-gray-100 text-red-300 border-red-300"
+          : "bg-gray-100 text-gray-500 hover:text-black hover:border-black"
       ];
     }
 
