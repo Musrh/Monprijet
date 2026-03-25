@@ -85,7 +85,7 @@ export default {
     );
 
     const goToCategory = (slug) => {
-      router.push({ name: "Details", params: { slug } });
+    router.push({ name: "CategoryResults", params: { slug } });
     };
 
     return { categoriesTranslated, goToCategory, t };
