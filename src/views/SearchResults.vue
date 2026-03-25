@@ -11,9 +11,12 @@
         :key="product.id"
         class="border rounded p-3 hover:shadow-lg transition"
       >
-        <img :src="product.image" alt="" class="w-full h-32 object-cover mb-2 rounded" />
-        <h3 class="font-semibold">{{ product.nom || product.name }}</h3>
-        <p class="text-gray-600">{{ product.price }} €</p>
+        <img :src="product.images[0]" alt="" class="w-full h-32 object-cover mb-2 rounded" />
+        <h3 class="font-semibold">
+          {{ currentLang === 'fr' ? product.nom : product.name || product.nom }}
+        </h3>
+        <p class="text-gray-600">{{ product.prix }} €</p>
+        <p class="text-sm text-gray-500">{{ product.categorie }}</p>
       </div>
     </div>
 
@@ -34,11 +37,30 @@ export default {
     return {
       search: "",
       products: [
-        // Exemple de produits, à remplacer par ta liste réelle
-        { id: 1, nom: "Chaussures", name: "Shoes", price: 50, image: "/images/shoes.jpg" },
-        { id: 2, nom: "Sac à dos", name: "Backpack", price: 35, image: "/images/backpack.jpg" },
-        { id: 3, nom: "Montre", name: "Watch", price: 80, image: "/images/watch.jpg" },
-        { id: 4, nom: "Lunettes", name: "Glasses", price: 20, image: "/images/glasses.jpg" }
+        {
+          id: 1,
+          nom: "t-shirt-can-maroc-rouge",
+          name: "can-maroc-red-tshirt",
+          prix: 20,
+          categorie: "t-shirts",
+          images: ["https://res.cloudinary.com/dla18l69k/image/upload/v1773831629/y9mtfcojvm1wbyngkgs7.jpg"]
+        },
+        {
+          id: 2,
+          nom: "t-shirt-france-bleu",
+          name: "france-blue-tshirt",
+          prix: 22,
+          categorie: "t-shirts",
+          images: ["https://res.cloudinary.com/dla18l69k/image/upload/v1773831629/example2.jpg"]
+        },
+        {
+          id: 3,
+          nom: "casquette-maroc-noire",
+          name: "maroc-black-cap",
+          prix: 15,
+          categorie: "casquettes",
+          images: ["https://res.cloudinary.com/dla18l69k/image/upload/v1773831629/example3.jpg"]
+        }
       ]
     };
   },
@@ -46,7 +68,9 @@ export default {
   computed: {
     filteredProducts() {
       if (!this.search) return this.products;
+
       const searchLower = this.search.toLowerCase();
+
       return this.products.filter(p =>
         (p.nom && p.nom.toLowerCase().includes(searchLower)) ||
         (p.name && p.name.toLowerCase().includes(searchLower))
@@ -59,14 +83,8 @@ export default {
 
     texts() {
       const translations = {
-        fr: {
-          resultsFor: "Résultats pour",
-          noResults: "Aucun produit trouvé"
-        },
-        en: {
-          resultsFor: "Results for",
-          noResults: "No products found"
-        }
+        fr: { resultsFor: "Résultats pour", noResults: "Aucun produit trouvé" },
+        en: { resultsFor: "Results for", noResults: "No products found" }
       };
       return translations[this.currentLang] || translations.en;
     }
