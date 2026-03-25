@@ -1,20 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-100">
 
-    <!-- Header avec logo + recherche -->
-    <header class="bg-white border-b shadow-md relative z-20">
-      <div class="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
-        <!-- Logo -->
-        <div class="flex items-center gap-3">
-          <img src="./assets/logowell.png" alt="logo" class="h-10" />
-          <span class="font-bold text-lg">Wellshoppings</span>
-        </div>
-        <ThemeSwitcher />
-      </div>
-
-      <!-- Barre recherche -->
-      <HeaderSearch v-model:search="globalSearch" />
-    </header>
+    <!-- Header avec recherche (logo inclus dans HeaderSearch) -->
+    <HeaderSearch v-model:search="globalSearch" />
 
     <!-- Barre mobile -->
     <div class="md:hidden bg-gray-100 px-2 py-1 flex justify-between items-center text-black">
@@ -70,11 +58,10 @@
 import LanguageSelector from "./components/LanguageSelector.vue";
 import HeaderSearch from "./components/HeaderSearch.vue";
 import Footer from "./components/Footer.vue";
-import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 import { mapGetters } from "vuex";
 
 export default {
-  components: { HeaderSearch, Footer, LanguageSelector, ThemeSwitcher },
+  components: { HeaderSearch, Footer, LanguageSelector },
 
   data() {
     return {
@@ -103,58 +90,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Bande du menu */
-nav {
-  border-bottom: 1px solid #e5e7eb;
-}
-
-/* Boutons menu */
-.menu-btn {
-  background: #ffffff;
-  color: #dc2626;           
-  font-weight: bold;
-  text-decoration: underline;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.menu-btn:hover {
-  color: #b91c1c;
-}
-
-.router-link-exact-active {
-  color: #16a34a !important;   
-  font-weight: bold;
-}
-
-.user-badge {
-  background: #22c55e;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: bold;
-  margin-left: 8px;
-  font-size: 14px;
-}
-
-.logout-btn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  margin-left: 5px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.logout-btn:hover {
-  background: #dc2626;
-}
-</style>
