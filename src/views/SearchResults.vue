@@ -1,72 +1,86 @@
 <template>
-  <div class="p-6 max-w-6xl mx-auto">
-    <h1 class="text-2xl font-bold mb-4">
-      {{ titles.results }} "{{ searchTerm }}"
-    </h1>
+  <section class="max-w-7xl mx-auto px-4 py-6">
 
-    <div v-if="results.length">
+    <h2 class="text-2xl font-bold mb-4">
+      {{ texts.resultsFor }} "{{ search }}"
+    </h2>
+
+    <div v-if="filteredProducts.length" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
       <div
-        v-for="product in results"
+        v-for="product in filteredProducts"
         :key="product.id"
-        class="border p-4 mb-3 rounded shadow"
+        class="border rounded p-3 hover:shadow-lg transition"
       >
-        <h2 class="font-semibold">{{ product.nom }}</h2>
-        <p>{{ product.prix }} €</p>
+        <img :src="product.image" alt="" class="w-full h-32 object-cover mb-2 rounded" />
+        <h3 class="font-semibold">{{ product.nom || product.name }}</h3>
+        <p class="text-gray-600">{{ product.price }} €</p>
       </div>
     </div>
 
-    <p v-else class="text-gray-500">
-      {{ titles.noResults }}
-    </p>
-  </div>
+    <div v-else class="text-gray-500">
+      {{ texts.noResults }}
+    </div>
+
+  </section>
 </template>
 
 <script>
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import { useRoute } from "vue-router";
 
 export default {
+  name: "SearchResult",
+
   data() {
     return {
-      results: [],
-      searchTerm: ""
+      search: "",
+      products: [
+        // Exemple de produits, à remplacer par ta liste réelle
+        { id: 1, nom: "Chaussures", name: "Shoes", price: 50, image: "/images/shoes.jpg" },
+        { id: 2, nom: "Sac à dos", name: "Backpack", price: 35, image: "/images/backpack.jpg" },
+        { id: 3, nom: "Montre", name: "Watch", price: 80, image: "/images/watch.jpg" },
+        { id: 4, nom: "Lunettes", name: "Glasses", price: 20, image: "/images/glasses.jpg" }
+      ]
     };
   },
 
   computed: {
-    currentLang() {
-      return this.$store.getters["language/currentLanguage"] || "fr";
+    filteredProducts() {
+      if (!this.search) return this.products;
+      const searchLower = this.search.toLowerCase();
+      return this.products.filter(p =>
+        (p.nom && p.nom.toLowerCase().includes(searchLower)) ||
+        (p.name && p.name.toLowerCase().includes(searchLower))
+      );
     },
 
-    titles() {
+    currentLang() {
+      return this.$store.getters["language/currentLanguage"] || "en";
+    },
+
+    texts() {
       const translations = {
         fr: {
-          results: "Résultats pour",
-          noResults: "Aucun produit trouvé."
+          resultsFor: "Résultats pour",
+          noResults: "Aucun produit trouvé"
         },
         en: {
-          results: "Results for",
-          noResults: "No products found."
+          resultsFor: "Results for",
+          noResults: "No products found"
         }
       };
-      return translations[this.currentLang] || translations.fr;
+      return translations[this.currentLang] || translations.en;
     }
   },
 
-  async mounted() {
-    this.searchTerm = this.$route.query.search || "";
-
-    if (!this.searchTerm) return;
-
-    const snapshot = await getDocs(collection(db, "products"));
-
-    const term = this.searchTerm.toLowerCase();
-
-    this.results = snapshot.docs
-      .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(product =>
-        product.nom?.toLowerCase().includes(term)   // 👈 C'EST ICI
-      );
+  mounted() {
+    const route = useRoute();
+    this.search = route.query.search || "";
   }
 };
 </script>
+
+<style scoped>
+img {
+  object-fit: cover;
+}
+</style>
