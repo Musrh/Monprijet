@@ -10,7 +10,7 @@
           :key="produit.id"
           class="slider-item w-full flex-shrink-0 p-2 text-center relative bg-white rounded shadow"
         >
-          <!-- Image réduite proportionnellement -->
+          <!-- Image -->
           <div class="w-full h-40 md:h-48 flex items-center justify-center overflow-hidden rounded mb-2">
             <img
               :src="produit.images?.[0]"
@@ -37,7 +37,7 @@
             @click="ajouterAuPanier(produit)"
             class="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
           >
-            Ajouter au panier
+            {{ texts.addToCart }}
           </button>
 
           <!-- Badge promo -->
@@ -45,18 +45,20 @@
             v-if="produit.promo"
             class="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded text-xs"
           >
-            PROMO
+            {{ texts.promo }}
           </span>
         </div>
       </div>
 
-      <!-- Flèches -->
+      <!-- Flèche gauche -->
       <button
         @click="prev"
         class="absolute top-1/2 left-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
       >
         ‹
       </button>
+
+      <!-- Flèche droite -->
       <button
         @click="next"
         class="absolute top-1/2 right-2 -translate-y-1/2 bg-green-600 text-white p-2 rounded-full hover:bg-green-700"
@@ -78,19 +80,46 @@ export default {
     auto: { type: Boolean, default: true },
     interval: { type: Number, default: 3000 },
   },
+
   setup(props) {
     const store = useStore();
     const currentIndex = ref(0);
     let timer = null;
 
+    // 🔹 Langue actuelle (comme Contact.vue)
+    const currentLang = computed(() =>
+      store.getters["language/currentLanguage"] || "fr"
+    );
+
+    // 🔹 Traductions
+    const texts = computed(() => {
+      const translations = {
+        fr: {
+          addToCart: "Ajouter au panier",
+          promo: "PROMO",
+          added: "a été ajouté au panier !",
+        },
+        en: {
+          addToCart: "Add to cart",
+          promo: "SALE",
+          added: "has been added to cart!",
+        },
+      };
+
+      return translations[currentLang.value] || translations.fr;
+    });
+
+    // 🔹 Produits en promo
     const produitsPromos = computed(() =>
       props.produits.filter((p) => p.promo === true)
     );
 
     const next = () => {
       if (!produitsPromos.value.length) return;
-      currentIndex.value = (currentIndex.value + 1) % produitsPromos.value.length;
+      currentIndex.value =
+        (currentIndex.value + 1) % produitsPromos.value.length;
     };
+
     const prev = () => {
       if (!produitsPromos.value.length) return;
       currentIndex.value =
@@ -99,7 +128,10 @@ export default {
     };
 
     const ajouterAuPanier = (produit) => {
-      const prix = produit.promo ? Math.round(produit.prix * 0.5) : produit.prix;
+      const prix = produit.promo
+        ? Math.round(produit.prix * 0.5)
+        : produit.prix;
+
       store.dispatch("addToCart", {
         id: produit.id,
         nom: produit.nom,
@@ -107,31 +139,50 @@ export default {
         images: produit.images,
         quantity: 1,
       });
-      alert(`Le produit "${produit.nom}" a été ajouté au panier !`);
+
+      alert(`${produit.nom} ${texts.value.added}`);
     };
 
     onMounted(() => {
       if (props.auto) timer = setInterval(next, props.interval);
     });
+
     onBeforeUnmount(() => {
       if (timer) clearInterval(timer);
     });
 
-    watch(() => props.produits, () => currentIndex.value = 0);
+    watch(() => props.produits, () => (currentIndex.value = 0));
 
-    return { currentIndex, next, prev, produitsPromos, ajouterAuPanier };
+    return {
+      currentIndex,
+      next,
+      prev,
+      produitsPromos,
+      ajouterAuPanier,
+      texts,
+    };
   },
 };
 </script>
 
 <style scoped>
-.slider-container { position: relative; }
-.slider-track { display: flex; width: 100%; }
-.slider-item { position: relative; }
+.slider-container {
+  position: relative;
+}
+
+.slider-track {
+  display: flex;
+  width: 100%;
+}
+
+.slider-item {
+  position: relative;
+}
 
 .slider-item img {
   transition: transform 0.3s;
 }
+
 .slider-item img:hover {
   transform: scale(1.05);
 }
