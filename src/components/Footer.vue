@@ -1,21 +1,24 @@
-<!-- Footer.vue -->
 <template>
-  <footer class="bg-white text-left py-4 text-sm">
+  <footer class="bg-white text-left py-4 text-sm px-4">
     <p>
       © 2026 WellShoppings •
+
       <router-link 
         to="/" 
         class="footer-link" 
         :class="{ active: $route.path === '/' }"
       >
-        Accueil
-      </router-link> •
+        {{ texts.home }}
+      </router-link>
+
+      •
+
       <router-link 
         to="/conditions" 
         class="footer-link" 
         :class="{ active: $route.path === '/conditions' }"
       >
-        Conditions de Vente
+        {{ texts.conditions }}
       </router-link>
     </p>
   </footer>
@@ -24,25 +27,43 @@
 <script>
 export default {
   name: "Footer",
+
+  computed: {
+    currentLang() {
+      return this.$store.getters["language/currentLanguage"] || "fr";
+    },
+
+    texts() {
+      const translations = {
+        fr: {
+          home: "Accueil",
+          conditions: "Conditions de Vente",
+        },
+        en: {
+          home: "Home",
+          conditions: "Terms of Sale",
+        }
+      };
+
+      return translations[this.currentLang] || translations.fr;
+    }
+  }
 };
 </script>
 
 <style scoped>
-/* Liens du footer */
 .footer-link {
-  color: #dc2626; /* rouge */
+  color: #dc2626;
   text-decoration: none;
   transition: color 0.2s;
 }
 
-/* Hover */
 .footer-link:hover {
-  color: #b91c1c; /* rouge foncé */
+  color: #b91c1c;
 }
 
-/* Lien actif = page courante */
 .footer-link.active {
-  color: #16a34a; /* vert */
+  color: #16a34a;
   font-weight: bold;
 }
 </style>
