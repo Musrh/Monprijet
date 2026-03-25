@@ -22,11 +22,12 @@
             type="text"
             :placeholder="texts.searchPlaceholder"
             class="w-full border rounded px-3 py-2"
+            @keyup.enter="rechercher"
           />
 
           <button
             @click="rechercher"
-            class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+            class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
           >
             {{ texts.searchButton }}
           </button>
@@ -60,10 +61,12 @@ export default {
   },
 
   computed: {
+    // 🔹 Langue actuelle (anglais par défaut)
     currentLang() {
-      return this.$store.getters["language/currentLanguage"] || "fr";
+      return this.$store.getters["language/currentLanguage"] || "en";
     },
 
+    // 🔹 Textes dynamiques
     texts() {
       const translations = {
         fr: {
@@ -76,18 +79,21 @@ export default {
         }
       };
 
-      return translations[this.currentLang] || translations.fr;
+      return translations[this.currentLang] || translations.en;
     }
   },
 
   mounted() {
+    // Pré-remplir si on revient sur la page
     this.search = this.route.query.search || "";
   },
 
   methods: {
     rechercher() {
+      if (!this.search.trim()) return;
+
       this.router.push({
-        path: "/",
+        path: "/search",
         query: {
           search: this.search
         }
