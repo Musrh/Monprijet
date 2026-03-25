@@ -1,7 +1,8 @@
 <template>
   <section class="max-w-7xl mx-auto px-4 py-6">
 
-    <h2 class="text-2xl font-bold mb-4">
+    <!-- 🔹 Affiche le texte uniquement si l'utilisateur a saisi quelque chose -->
+    <h2 v-if="search && search.trim()" class="text-2xl font-bold mb-4">
       {{ texts.resultsFor }} "{{ search }}"
     </h2>
 
@@ -27,7 +28,7 @@
       </div>
     </div>
 
-    <div v-else class="text-gray-500">
+    <div v-else-if="search && search.trim()" class="text-gray-500">
       {{ texts.noResults }}
     </div>
 
@@ -36,7 +37,7 @@
 
 <script>
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase"; // ⚠️ ton fichier firebase.js
+import { db } from "@/firebase"; // 🔹 ton fichier firebase.js
 import { useRoute } from "vue-router";
 
 export default {
@@ -64,7 +65,8 @@ export default {
     },
 
     filteredProducts() {
-      if (!this.search) return this.products;
+      // 🔹 Si le champ est vide, ne rien afficher
+      if (!this.search || !this.search.trim()) return [];
 
       const s = this.search.toLowerCase();
       return this.products.filter(p =>
