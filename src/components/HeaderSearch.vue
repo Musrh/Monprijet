@@ -11,43 +11,26 @@
       <ThemeSwitcher />
     </div>
 
-    <!-- Barre catégories + recherche -->
-    <div class="bg-gray-100 py-2">
-      <div class="max-w-7xl mx-auto flex flex-col gap-2 px-4">
+    <!-- Barre recherche uniquement -->
+    <div class="bg-gray-100 py-3">
+      <div class="max-w-7xl mx-auto px-4 flex justify-center">
 
-        <!-- Catégories -->
-        <div class="flex gap-2 flex-wrap">
-          <select
-            v-model="categorie"
-            @change="filterCategorie"
-            class="border rounded px-3 py-2 bg-white"
+        <div class="flex gap-2 w-full max-w-md">
+
+          <input
+            v-model="search"
+            type="text"
+            :placeholder="texts.searchPlaceholder"
+            class="w-full border rounded px-3 py-2"
+          />
+
+          <button
+            @click="rechercher"
+            class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
           >
-            <option value="">Toutes catégories</option>
-            <option value="phones">Téléphones</option>
-            <option value="pc">PC</option>
-            <option value="accessoires">Accessoires</option>
-          </select>
-        </div>
+            {{ texts.searchButton }}
+          </button>
 
-        <!-- Recherche -->
-        <div class="flex justify-center mt-1">
-          <div class="flex gap-2 w-full max-w-md">
-
-            <input
-              v-model="search"
-              type="text"
-              placeholder="Vous cherchez quoi ?..."
-              class="w-full border rounded px-3 py-2"
-            />
-
-            <button
-              @click="rechercher"
-              class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
-            >
-              🔍
-            </button>
-
-          </div>
         </div>
 
       </div>
@@ -66,8 +49,7 @@ export default {
 
   data() {
     return {
-      search: "",
-      categorie: ""
+      search: ""
     };
   },
 
@@ -77,38 +59,46 @@ export default {
     return { router, route };
   },
 
+  computed: {
+    currentLang() {
+      return this.$store.getters["language/currentLanguage"] || "fr";
+    },
+
+    texts() {
+      const translations = {
+        fr: {
+          searchPlaceholder: "Vous cherchez quoi ?...",
+          searchButton: "Rechercher"
+        },
+        en: {
+          searchPlaceholder: "What are you looking for?",
+          searchButton: "Search"
+        }
+      };
+
+      return translations[this.currentLang] || translations.fr;
+    }
+  },
+
   mounted() {
-    // récupérer les critères depuis l'URL
     this.search = this.route.query.search || "";
-    this.categorie = this.route.query.categorie || "";
   },
 
   methods: {
-
     rechercher() {
       this.router.push({
         path: "/",
         query: {
-          search: this.search,
-          categorie: this.categorie
-        }
-      });
-    },
-
-    filterCategorie() {
-      this.router.push({
-        path: "/",
-        query: {
-          search: this.search,
-          categorie: this.categorie
+          search: this.search
         }
       });
     }
-
   }
 };
 </script>
 
 <style scoped>
-input { min-width: 0; }
+input {
+  min-width: 0;
+}
 </style>
