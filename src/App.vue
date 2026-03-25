@@ -2,7 +2,8 @@
   <div class="min-h-screen bg-gray-100">
 
     <!-- Header -->
-    <HeaderSearch />
+
+    <HeaderSearch v-model:search="globalSearch" />
 
     <!-- Barre mobile -->
     <div class="md:hidden bg-gray-100 px-2 py-1 flex justify-between items-center text-black">
