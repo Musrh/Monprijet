@@ -36,7 +36,7 @@ const routes = [
   {
   path: "/categorie/:slug",
   name: "CategoryResults",
-  component: () => import("../views/CategoryResults.vue")
+  component: () => import("./views/CategoryResults.vue")
 },
   
   {
