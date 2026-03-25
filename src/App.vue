@@ -90,3 +90,62 @@ export default {
   }
 };
 </script>
+
+<style scoped>
+/* Bande du menu */
+nav {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+/* Boutons menu : rouge par défaut */
+.menu-btn {
+  background: #ffffff;
+  color: #dc2626;           /* rouge */
+  font-weight: bold;
+  text-decoration: underline;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+/* Survol : vert */
+.menu-btn:hover {
+  color: #16a34a;           /* vert */
+}
+
+/* Lien actif après clic : vert */
+.router-link-exact-active {
+  color: #16a34a !important; 
+  font-weight: bold;
+}
+
+/* Badge utilisateur */
+.user-badge {
+  background: #22c55e;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+/* Logout bouton */
+.logout-btn {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-weight: bold;
+  margin-left: 5px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.logout-btn:hover {
+  background: #16a34a; /* vert au survol */
+}
+</style>
