@@ -7,14 +7,12 @@
         <img src="../assets/logowell.png" alt="logo" class="h-10" />
         <span class="font-bold text-lg">Wellshoppings</span>
       </div>
-
       <ThemeSwitcher />
     </div>
 
-    <!-- Barre recherche uniquement -->
+    <!-- Barre recherche -->
     <div class="bg-gray-100 py-3">
       <div class="max-w-7xl mx-auto px-4 flex justify-center">
-
         <div class="flex gap-2 w-full max-w-md">
 
           <input
@@ -22,18 +20,17 @@
             type="text"
             :placeholder="texts.searchPlaceholder"
             class="w-full border rounded px-3 py-2"
-            @keyup.enter="rechercher"
+            @input="updateSearch"
           />
 
           <button
-            @click="rechercher"
+            @click="goSearch"
             class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
           >
             {{ texts.searchButton }}
           </button>
 
         </div>
-
       </div>
     </div>
 
@@ -41,7 +38,7 @@
 </template>
 
 <script>
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import ThemeSwitcher from "./ThemeSwitcher.vue";
 
 export default {
@@ -56,17 +53,15 @@ export default {
 
   setup() {
     const router = useRouter();
-    const route = useRoute();
-    return { router, route };
+    return { router };
   },
 
   computed: {
     currentLang() {
       return this.$store.getters["language/currentLanguage"] || "en";
     },
-
     texts() {
-      const translations = {
+      return {
         fr: {
           searchPlaceholder: "Vous cherchez quoi ?...",
           searchButton: "Rechercher"
@@ -75,33 +70,22 @@ export default {
           searchPlaceholder: "What are you looking for?",
           searchButton: "Search"
         }
-      };
-
-      return translations[this.currentLang] || translations.en;
+      }[this.currentLang];
     }
   },
 
-  mounted() {
-    // Pré-remplir si on revient sur la page
-    this.search = this.route.query.search || "";
-  },
-
   methods: {
-    rechercher() {
-      const trimmed = this.search.trim();
-      if (!trimmed) return;
+    updateSearch() {
+      this.$emit("update:search", this.search);
+    },
 
+    goSearch() {
+      if (!this.search.trim()) return;
       this.router.push({
         path: "/search",
-        query: { search: trimmed }
+        query: { search: this.search }
       });
     }
   }
 };
 </script>
-
-<style scoped>
-input {
-  min-width: 0;
-}
-</style>
