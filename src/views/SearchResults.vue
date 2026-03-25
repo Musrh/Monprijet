@@ -35,8 +35,6 @@
 </template>
 
 <script>
-import { useRoute } from "vue-router";
-
 export default {
   name: "SearchResult",
 
@@ -45,7 +43,7 @@ export default {
   data() {
     return {
       search: "",
-      products: [] // ⚠️ ici tu mets tes produits Firestore
+      products: [] // 🔥 Ici tu charges Firestore
     };
   },
 
@@ -80,13 +78,14 @@ export default {
   },
 
   mounted() {
-    const route = useRoute();
-    this.search = route.query.search || this.globalSearch || "";
+    // 🔥 Initialisation depuis globalSearch
+    this.search = this.globalSearch || "";
   },
 
   watch: {
-    globalSearch(val) {
-      this.search = val;
+    // 🔥 Recherche live quand on tape
+    globalSearch(newVal) {
+      this.search = newVal || "";
     }
   }
 };
