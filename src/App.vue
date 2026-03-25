@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen bg-gray-100">
 
-    <!-- Header avec recherche (logo inclus dans HeaderSearch) -->
+    <!-- Header avec recherche -->
     <HeaderSearch v-model:search="globalSearch" />
 
     <!-- Barre mobile -->
@@ -13,17 +13,17 @@
     <LanguageSelector />
 
     <nav class="bg-white px-2 py-1 flex items-center gap-2 flex-nowrap overflow-x-auto">
-      <router-link to="/" class="menu-btn">Accueil</router-link>
-      <router-link to="/contact" class="menu-btn">Contact</router-link>
-      <router-link to="/affiliateproducts" class="menu-btn">Produits partenaires</router-link>
+      <router-link to="/" class="menu-btn">{{ textsMenu.accueil }}</router-link>
+      <router-link to="/contact" class="menu-btn">{{ textsMenu.contact }}</router-link>
+      <router-link to="/affiliateproducts" class="menu-btn">{{ textsMenu.partenaires }}</router-link>
 
       <!-- Admin menu -->
       <div v-if="isAdmin" class="flex gap-1">
-        <router-link to="/admin" class="menu-btn">Admin</router-link>
-        <router-link to="/adminproduits" class="menu-btn">Admin-Produits</router-link>
-        <router-link to="/admin-commandes" class="menu-btn">Admin-Commandes</router-link>
-        <router-link to="/upload" class="menu-btn">UploadProduit</router-link>
-        <router-link to="/sendtoprintful" class="menu-btn">Send-to-Printful</router-link>
+        <router-link to="/admin" class="menu-btn">{{ textsMenu.admin }}</router-link>
+        <router-link to="/adminproduits" class="menu-btn">{{ textsMenu.adminProduits }}</router-link>
+        <router-link to="/admin-commandes" class="menu-btn">{{ textsMenu.adminCommandes }}</router-link>
+        <router-link to="/upload" class="menu-btn">{{ textsMenu.upload }}</router-link>
+        <router-link to="/sendtoprintful" class="menu-btn">{{ textsMenu.sendPrintful }}</router-link>
       </div>
 
       <!-- Panier -->
@@ -36,7 +36,7 @@
       </router-link>
 
       <!-- Login / Logout -->
-      <router-link v-if="!isAuthenticated" to="/login" class="menu-btn">Login</router-link>
+      <router-link v-if="!isAuthenticated" to="/login" class="menu-btn">{{ textsMenu.login }}</router-link>
       <template v-if="isAuthenticated">
         <span class="user-badge">{{ userEmail }}</span>
         <button @click="logout" class="logout-btn">Logout</button>
@@ -65,7 +65,7 @@ export default {
 
   data() {
     return {
-      globalSearch: ""
+      globalSearch: "" // nécessaire pour v-model
     };
   },
 
@@ -78,7 +78,35 @@ export default {
     ]),
 
     currentLang() {
-      return this.$store.getters["language/currentLanguage"];
+      return this.$store.getters["language/currentLanguage"] || "en";
+    },
+
+    // 🔹 Texte dynamique du menu
+    textsMenu() {
+      return {
+        fr: {
+          accueil: "Accueil",
+          contact: "Contact",
+          partenaires: "Partenaires",
+          login: "Login",
+          admin: "Admin",
+          adminProduits: "Admin-Produits",
+          adminCommandes: "Admin-Commandes",
+          upload: "UploadProduit",
+          sendPrintful: "Send-to-Printful"
+        },
+        en: {
+          accueil: "Home",
+          contact: "Contact",
+          partenaires: "Partners",
+          login: "Login",
+          admin: "Admin",
+          adminProduits: "Admin-Products",
+          adminCommandes: "Admin-Orders",
+          upload: "UploadProduct",
+          sendPrintful: "Send-to-Printful"
+        }
+      }[this.currentLang];
     }
   },
 
@@ -92,15 +120,15 @@ export default {
 </script>
 
 <style scoped>
-/* Bande du menu */
+/* Menu */
 nav {
   border-bottom: 1px solid #e5e7eb;
 }
 
-/* Boutons menu : rouge par défaut */
+/* Boutons menu rouge / survol vert */
 .menu-btn {
   background: #ffffff;
-  color: #dc2626;           /* rouge */
+  color: #dc2626;           
   font-weight: bold;
   text-decoration: underline;
   padding: 5px 10px;
@@ -110,18 +138,17 @@ nav {
   white-space: nowrap;
 }
 
-/* Survol : vert */
 .menu-btn:hover {
-  color: #16a34a;           /* vert */
+  color: #16a34a; /* vert au survol */
 }
 
-/* Lien actif après clic : vert */
+/* Lien actif */
 .router-link-exact-active {
-  color: #16a34a !important; 
+  color: #16a34a !important;
   font-weight: bold;
 }
 
-/* Badge utilisateur */
+/* User badge */
 .user-badge {
   background: #22c55e;
   color: white;
@@ -146,6 +173,6 @@ nav {
 }
 
 .logout-btn:hover {
-  background: #16a34a; /* vert au survol */
+  background: #dc2626;
 }
 </style>
