@@ -2,7 +2,6 @@
   <div class="min-h-screen bg-gray-100">
 
     <!-- Header -->
-
     <HeaderSearch v-model:search="globalSearch" />
 
     <!-- Barre mobile -->
@@ -30,24 +29,29 @@
       <!-- Panier -->
       <router-link to="/panier" class="menu-btn relative">
         🛒
-        <span v-if="cartItemCount > 0"
+        <span
+          v-if="cartItemCount > 0"
           class="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
           {{ cartItemCount }}
         </span>
       </router-link>
 
       <!-- Login / Logout -->
-      <router-link v-if="!isAuthenticated" to="/login" class="menu-btn">Login</router-link>
+      <router-link v-if="!isAuthenticated" to="/login" class="menu-btn">
+        Login
+      </router-link>
+
       <template v-if="isAuthenticated">
         <span class="user-badge">{{ userEmail }}</span>
         <button @click="logout" class="logout-btn">Logout</button>
       </template>
     </nav>
 
-    <!-- Contenu : se recharge si langue change -->
-    
-    <!-- App.vue -->
-<router-view :key="$store.getters['language/currentLanguage']" />
+    <!-- Contenu -->
+    <router-view
+      :key="$store.getters['language/currentLanguage']"
+      :globalSearch="globalSearch"
+    />
 
     <!-- Footer -->
     <Footer />
@@ -62,6 +66,12 @@ import { mapGetters } from "vuex";
 
 export default {
   components: { HeaderSearch, Footer, LanguageSelector },
+
+  data() {
+    return {
+      globalSearch: "" // ✅ nécessaire pour v-model
+    };
+  },
 
   computed: {
     ...mapGetters([
@@ -84,62 +94,3 @@ export default {
   }
 };
 </script>
-
-<style scoped>
-/* Bande du menu */
-nav {
-  border-bottom: 1px solid #e5e7eb;
-}
-
-/* Boutons menu */
-.menu-btn {
-  background: #ffffff;
-  color: #dc2626;           /* rouge */
-  font-weight: bold;
-  text-decoration: underline;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 16px;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-/* Hover */
-.menu-btn:hover {
-  color: #b91c1c;
-}
-
-/* Lien actif après clic */
-.router-link-exact-active {
-  color: #16a34a !important;   /* vert */
-  font-weight: bold;
-}
-
-/* User badge */
-.user-badge {
-  background: #22c55e;
-  color: white;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: bold;
-  margin-left: 8px;
-  font-size: 14px;
-}
-
-/* Logout bouton */
-.logout-btn {
-  background: #ef4444;
-  color: white;
-  border: none;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  margin-left: 5px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.logout-btn:hover {
-  background: #dc2626;
-}
-</style>
