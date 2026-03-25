@@ -16,11 +16,11 @@
         <div class="flex gap-2 w-full max-w-md">
 
           <input
-            v-model="search"
+            :value="search"
+            @input="onInput"
             type="text"
             :placeholder="texts.searchPlaceholder"
             class="w-full border rounded px-3 py-2"
-            @input="updateSearch"
           />
 
           <button
@@ -45,11 +45,15 @@ export default {
   name: "HeaderSearch",
   components: { ThemeSwitcher },
 
-  data() {
-    return {
-      search: ""
-    };
+  // 🔥 IMPORTANT pour v-model:search
+  props: {
+    search: {
+      type: String,
+      default: ""
+    }
   },
+
+  emits: ["update:search"],
 
   setup() {
     const router = useRouter();
@@ -75,12 +79,13 @@ export default {
   },
 
   methods: {
-    updateSearch() {
-      this.$emit("update:search", this.search);
+    onInput(event) {
+      this.$emit("update:search", event.target.value);
     },
 
     goSearch() {
       if (!this.search.trim()) return;
+
       this.router.push({
         path: "/search",
         query: { search: this.search }
