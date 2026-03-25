@@ -35,6 +35,10 @@
 </template>
 
 <script>
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/firebase"; // ⚠️ ton fichier firebase.js
+import { useRoute } from "vue-router";
+
 export default {
   name: "SearchResult",
 
@@ -43,49 +47,50 @@ export default {
   data() {
     return {
       search: "",
-      products: [] // 🔥 Ici tu charges Firestore
+      products: []
     };
   },
 
   computed: {
-    filteredProducts() {
-      if (!this.search) return this.products;
-
-      const s = this.search.toLowerCase();
-
-      return this.products.filter(p =>
-        (p.nom && p.nom.toLowerCase().includes(s)) ||
-        (p.name && p.name.toLowerCase().includes(s))
-      );
-    },
-
     currentLang() {
       return this.$store.getters["language/currentLanguage"] || "en";
     },
 
     texts() {
       return {
-        fr: {
-          resultsFor: "Résultats pour",
-          noResults: "Aucun produit trouvé"
-        },
-        en: {
-          resultsFor: "Results for",
-          noResults: "No products found"
-        }
+        fr: { resultsFor: "Résultats pour", noResults: "Aucun produit trouvé" },
+        en: { resultsFor: "Results for", noResults: "No products found" }
       }[this.currentLang];
+    },
+
+    filteredProducts() {
+      if (!this.search) return this.products;
+
+      const s = this.search.toLowerCase();
+      return this.products.filter(p =>
+        (p.nom && p.nom.toLowerCase().includes(s)) ||
+        (p.name && p.name.toLowerCase().includes(s))
+      );
     }
   },
 
-  mounted() {
-    // 🔥 Initialisation depuis globalSearch
-    this.search = this.globalSearch || "";
+  async mounted() {
+    const route = useRoute();
+
+    // 🔹 Charger tous les produits depuis Firestore
+    const snapshot = await getDocs(collection(db, "products"));
+    this.products = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    // 🔹 Initialiser la recherche
+    this.search = route.query.search || this.globalSearch || "";
   },
 
   watch: {
-    // 🔥 Recherche live quand on tape
-    globalSearch(newVal) {
-      this.search = newVal || "";
+    globalSearch(val) {
+      this.search = val;
     }
   }
 };
