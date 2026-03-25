@@ -57,10 +57,10 @@
         <button
           :disabled="isSelectionInvalid"
           @click="addToCart(selectedProduct)"
-          class="w-full py-2 px-6 rounded text-white transition"
+          class="w-full py-2 px-6 rounded text-black font-bold transition"
           :class="isSelectionInvalid 
-            ? 'bg-gray-400 cursor-not-allowed' 
-            : 'bg-blue-600 hover:bg-blue-700'"
+            ? 'bg-yellow-200 cursor-not-allowed' 
+            : 'bg-yellow-300 hover:bg-yellow-400'"
         >
           {{ t("addToCart") }}
         </button>
@@ -229,19 +229,19 @@ export default {
 
     sizeButtonClass(size) {
       return [
-        "px-3 py-1 border rounded text-sm transition",
+        "px-3 py-1 border rounded text-sm transition font-semibold",
         this.selectedSize[this.selectedProduct.id] === size
-          ? "bg-gray-100 text-red-300 border-red-300"
-          : "bg-gray-100 text-gray-500 hover:text-black hover:border-black"
+          ? "bg-yellow-400 text-black"
+          : "bg-yellow-200 text-black hover:bg-yellow-300"
       ];
     },
 
     colorButtonClass(color) {
       return [
-        "px-3 py-1 border rounded text-sm transition",
+        "px-3 py-1 border rounded text-sm transition font-semibold",
         this.selectedColor[this.selectedProduct.id] === color
-          ? "bg-gray-100 text-red-300 border-red-300"
-          : "bg-gray-100 text-gray-500 hover:text-black hover:border-black"
+          ? "bg-yellow-400 text-black"
+          : "bg-yellow-200 text-black hover:bg-yellow-300"
       ];
     }
 
