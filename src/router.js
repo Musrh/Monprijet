@@ -22,6 +22,8 @@ import AffiliateProducts from "./views/AffiliateProducts.vue";
 
 import SearchResults from "./views/SearchResults.vue";
 
+
+
 const routes = [
   { path: "/", component: Home },
   { path: "/produits", component: Produits },
@@ -30,6 +32,12 @@ const routes = [
   { path: "/contact", component: Contact },
   { path: "/success", component: Success },
   { path: "/minishop", component: Minishop },
+
+  {
+  path: "/categorie/:slug",
+  name: "CategoryResults",
+  component: () => import("../views/CategoryResults.vue")
+},
   
   {
   path: "/search",
