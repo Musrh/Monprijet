@@ -61,12 +61,10 @@ export default {
   },
 
   computed: {
-    // 🔹 Langue actuelle (anglais par défaut)
     currentLang() {
       return this.$store.getters["language/currentLanguage"] || "en";
     },
 
-    // 🔹 Textes dynamiques
     texts() {
       const translations = {
         fr: {
@@ -90,13 +88,12 @@ export default {
 
   methods: {
     rechercher() {
-      if (!this.search.trim()) return;
+      const trimmed = this.search.trim();
+      if (!trimmed) return;
 
       this.router.push({
         path: "/search",
-        query: {
-          search: this.search
-        }
+        query: { search: trimmed }
       });
     }
   }
