@@ -59,10 +59,9 @@ export default {
   computed: {
     ...mapState(["user", "cart", "paypalAdresseLivraison"]),
 
-    // 🔹 Récupérer la langue courante depuis Vuex
     currentLang() {
-      return this.$store.getters["language/currentLanguage"];
-    },
+      return this.$store.getters["language/currentLanguage"] || "en";
+    }
   },
 
   async mounted() {
@@ -74,9 +73,11 @@ export default {
       return;
     }
 
-    // 🔒 Sécurité utilisateur
-    if (!this.user || !this.user.email) {
-      this.error = true;
+    // 🔒 Empêche double capture si composant rechargé (changement langue)
+    const alreadyCaptured = sessionStorage.getItem("paypalCaptured");
+
+    if (alreadyCaptured === paypalToken) {
+      this.success = true;
       this.loading = false;
       return;
     }
@@ -86,15 +87,18 @@ export default {
         "https://paypalbackend-production.up.railway.app/capture-paypal-order",
         {
           orderId: paypalToken,
-          email: this.user.email,
+          email: this.user?.email || "",
           items: this.cart || [],
           adresseLivraison: this.paypalAdresseLivraison || "",
         }
       );
 
+      // ✅ Marquer comme capturé
+      sessionStorage.setItem("paypalCaptured", paypalToken);
+
       this.success = true;
 
-      // 🛒 Nettoyage propre
+      // 🛒 Nettoyage
       this.$store.dispatch("clearCart");
       this.$store.dispatch("setPaypalAdresse", "");
 
@@ -111,7 +115,6 @@ export default {
       this.$router.push("/");
     },
 
-    // 🔹 Fonction de traduction simple
     t(key) {
       const translations = {
         fr: {
