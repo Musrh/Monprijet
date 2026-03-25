@@ -20,7 +20,7 @@ import SendToPrintful from "./views/SendToPrintful.vue";
 
 import AffiliateProducts from "./views/AffiliateProducts.vue";
 
-import SearchResults from "../views/SearchResults.vue";
+import SearchResults from "./views/SearchResults.vue";
 
 
 
