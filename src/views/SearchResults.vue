@@ -37,7 +37,7 @@
 
 <script>
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/firebase"; // 🔹 ton fichier firebase.js
+import { db } from "../firebase"; // 🔹 ton fichier firebase.js
 import { useRoute } from "vue-router";
 
 export default {
